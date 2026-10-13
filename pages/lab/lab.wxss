@@ -1,0 +1,28 @@
+/* 实验报告 —— 复用 app.wxss 的 .card/.badge/.btn 等 */
+
+.lab-title { font-size: 29rpx; font-weight: 600; min-width: 0; }
+
+/* 待提交操作按钮行 */
+.lab-actions { gap: 16rpx; }
+.lab-action { flex: 1; }
+
+/* 教师评语（原型 bg-subtle 内嵌卡片） */
+.lab-comment {
+  background: var(--bg-subtle);
+  border-radius: 20rpx;
+  padding: 20rpx;
+}
+
+/* AI 查重结果（查重率 / 相似来源，UI 设计 7.13） */
+.lab-plag {
+  border: 1rpx solid var(--border);
+  border-radius: 20rpx;
+  padding: 20rpx;
+  background: var(--bg-subtle);
+}
+.lab-plag-title { font-size: 26rpx; font-weight: 600; }
+.lab-plag-rate { font-size: 24rpx; color: var(--ink-500); }
+.lab-plag-num { font-size: 30rpx; font-weight: 700; color: var(--success); }
+.lab-plag-src-label { margin-bottom: 8rpx; }
+.lab-plag-src { padding: 8rpx 0; }
+.lab-plag-src .small { min-width: 0; }

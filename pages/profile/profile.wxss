@@ -1,0 +1,13 @@
+/* 我的页 —— 复用 app.wxss 的 .card/.set-row/.stat-grid/.avatar/.badge，仅写本页私有样式 */
+.avatar-lg { width: 108rpx; height: 108rpx; font-size: 40rpx; }
+.flex1 { flex: 1; min-width: 0; }
+.name { font-size: 32rpx; font-weight: 700; }
+.entry-icon { font-size: 30rpx; margin-right: 4rpx; }
+.chevron { color: var(--ink-400); font-size: 30rpx; }
+.stat-cell { display: block; }
+.logout-btn {
+  margin-top: 32rpx;
+  color: var(--error);
+  border-color: #fca5a5;
+  border-radius: 14rpx;
+}

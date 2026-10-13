@@ -1,0 +1,149 @@
+/* AI 答疑 —— 原型：ui-prototype/mp/app-ai.html */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-soft);
+}
+
+/* 顶部知识库选择栏（课程知识库 / 历史会话 / 清空会话） */
+.kb-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx 8rpx;
+}
+.kb-picker { flex: none; }
+.kb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  font-size: 24rpx;
+  color: var(--brand-700);
+  background: var(--brand-50);
+  border: 1rpx solid var(--brand-100);
+  border-radius: 999rpx;
+  padding: 8rpx 20rpx;
+}
+.kb-caret { font-size: 20rpx; color: var(--brand-700); }
+.kb-actions { display: flex; gap: 24rpx; }
+.kb-act { font-size: 24rpx; color: var(--ink-500); }
+
+/* 知识库范围提示 */
+.kb-tip {
+  padding: 0 24rpx 8rpx;
+}
+
+/* 消息列表 */
+.chat-scroll {
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+}
+.chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  padding: 16rpx 24rpx;
+}
+
+/* 小号头像 / 图标（气泡旁） */
+.avatar-sm { width: 60rpx; height: 60rpx; font-size: 26rpx; flex: none; }
+.icon-sm { width: 60rpx; height: 60rpx; font-size: 26rpx; flex: none; }
+
+/* 引用来源标题 */
+.chat-ref .ref-title {
+  display: block;
+  color: var(--brand-700);
+  font-weight: 600;
+  margin-bottom: 4rpx;
+}
+
+/* 置信度不足的降级提示 */
+.deg {
+  margin-top: 12rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: var(--bg-soft);
+  border: 1rpx dashed var(--border);
+  font-size: 23rpx;
+  color: var(--ink-600);
+  line-height: 1.65;
+}
+
+/* 检索中打字动画 */
+.typing {
+  display: inline-flex;
+  gap: 8rpx;
+  align-items: center;
+  margin-right: 8rpx;
+  vertical-align: middle;
+}
+.typing .dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: var(--brand-100);
+  animation: blink 1.2s infinite;
+}
+.typing .dot:nth-child(2) { animation-delay: 0.2s; }
+.typing .dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink {
+  0%, 60%, 100% { opacity: 0.25; }
+  30% { opacity: 1; }
+}
+
+/* 底部输入区 */
+.chat-foot {
+  position: relative; /* 由 .page flex 布局接管，不再 fixed */
+  display: flex;
+  gap: 16rpx;
+  align-items: center;
+  padding: 16rpx 24rpx 8rpx;
+  background: #fff;
+  border-top: 1rpx solid var(--border);
+  box-sizing: border-box;
+}
+.input-round { border-radius: 999rpx; }
+.btn-round { border-radius: 999rpx; flex: none; padding: 0 36rpx; }
+
+/* 快捷问题（横向滚动胶囊） */
+.quick-wrap {
+  background: #fff;
+  padding: 8rpx 24rpx calc(env(safe-area-inset-bottom) + 16rpx);
+  box-sizing: border-box;
+}
+.quick-scroll { width: 100%; white-space: nowrap; }
+.quick-row { display: inline-flex; gap: 16rpx; }
+.quick-item {
+  flex: none;
+  font-size: 24rpx;
+  color: var(--brand-700);
+  background: var(--brand-50);
+  border: 1rpx solid var(--brand-100);
+  border-radius: 999rpx;
+  padding: 12rpx 24rpx;
+}
+
+/* AI 回答反馈（点赞 / 点踩） */
+.fb-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 8rpx;
+  padding-left: 4rpx;
+}
+.fb-btn {
+  font-size: 20rpx;
+  color: var(--ink-400);
+  background: var(--bg-soft);
+  border-radius: 999rpx;
+  padding: 4rpx 16rpx;
+}
+.fb-btn.on {
+  color: var(--brand-700);
+  background: var(--brand-100);
+  font-weight: 600;
+}

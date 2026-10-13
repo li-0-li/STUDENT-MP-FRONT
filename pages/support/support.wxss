@@ -1,0 +1,157 @@
+/* 客服与帮助 —— 手风琴 / 标签；.card/.btn/.badge/.icon-box 等见 app.wxss */
+.strong { font-weight: 600; }
+.support-mid { flex: 1; min-width: 0; }
+.go-arrow { color: var(--ink-400); font-size: 32rpx; flex: none; }
+
+/* 服务信息行 */
+.srow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
+  padding: 18rpx 0;
+  font-size: 26rpx;
+  border-bottom: 1rpx dashed var(--border);
+}
+.srow:last-of-type { border-bottom: none; }
+.srow .k { color: var(--ink-500); }
+.srow-tip { margin-top: 20rpx; line-height: 1.75; }
+
+/* FAQ 顶部搜索框 */
+.faq-search {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: var(--bg-subtle);
+  border: 1rpx solid var(--border);
+  border-radius: 999rpx;
+  padding: 0 24rpx;
+  margin-bottom: 8rpx;
+}
+.faq-search-icon { font-size: 26rpx; color: var(--ink-400); flex: none; }
+.faq-search-input { flex: 1; height: 72rpx; font-size: 26rpx; background: transparent; }
+.faq-search-clear { color: var(--ink-400); font-size: 26rpx; flex: none; padding: 8rpx; }
+
+/* 常见问题手风琴 */
+.faq { border-bottom: 1rpx dashed var(--border); }
+.faq:last-child { border-bottom: none; }
+.faq-q {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 24rpx 0;
+  font-size: 27rpx;
+  font-weight: 600;
+}
+.faq-q-icon { flex: none; font-size: 26rpx; }
+.faq-q-text { flex: 1; }
+.faq-arw { color: var(--ink-400); transition: transform 0.2s; }
+.faq-arw.on { transform: rotate(90deg); }
+.faq-a {
+  display: none;
+  font-size: 25rpx;
+  color: var(--ink-600);
+  line-height: 1.8;
+  padding: 0 0 24rpx 44rpx;
+}
+.faq.open .faq-a { display: block; }
+
+/* 可咨询范围标签 */
+.tag-box { display: flex; flex-wrap: wrap; padding-bottom: 4rpx; }
+.tag {
+  padding: 6rpx 20rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  background: var(--brand-100);
+  color: var(--brand-700);
+  margin: 0 16rpx 16rpx 0;
+}
+.tag.gray { background: var(--bg-soft); color: var(--ink-500); }
+
+/* 底部按钮 */
+.support-foot { padding: 24rpx; }
+
+/* 意见反馈弹层 */
+.fb-mask {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 300;
+}
+.fb-panel {
+  position: fixed; left: 24rpx; right: 24rpx; bottom: 24rpx;
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 32rpx;
+  z-index: 301;
+}
+.fb-head { margin-bottom: 20rpx; }
+.fb-title { font-size: 30rpx; font-weight: 700; }
+.fb-close { color: var(--ink-400); font-size: 30rpx; padding: 8rpx; }
+.fb-textarea {
+  height: 200rpx;
+  padding: 16rpx;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+.field { display: flex; flex-direction: column; gap: 8rpx; margin-bottom: 16rpx; }
+.label { font-size: 22rpx; color: var(--ink-600); }
+
+/* 在线客服会话浮层（.chat-msg/.chat-bub/.chat-foot 基础样式见 app.wxss） */
+.chat-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-soft);
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+}
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 28rpx;
+  background: #fff;
+  border-bottom: 1rpx solid var(--border);
+  flex: none;
+}
+.chat-back {
+  font-size: 52rpx;
+  line-height: 1;
+  color: var(--ink-600);
+  padding: 4rpx 12rpx;
+}
+.chat-head-mid { flex: 1; min-width: 0; }
+.chat-head-name { font-size: 30rpx; font-weight: 700; }
+.chat-body { flex: 1; padding: 24rpx; box-sizing: border-box; }
+.chat-bub-sys {
+  background: var(--bg-soft);
+  color: var(--ink-500);
+  font-size: 24rpx;
+  text-align: center;
+  margin: 12rpx auto 28rpx;
+  border-radius: 16rpx;
+  padding: 10rpx 20rpx;
+  width: fit-content;
+}
+.chat-tm { font-size: 20rpx; opacity: 0.65; margin-top: 6rpx; text-align: right; }
+/* 覆盖 app.wxss 的 fixed 定位，改为浮层内流式底栏 */
+.chat-foot {
+  position: static;
+  padding: 16rpx 24rpx;
+  background: #fff;
+  border-top: 1rpx solid var(--border);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.chat-foot .input {
+  flex: 1;
+  border-radius: 999rpx;
+  background: var(--bg-soft);
+  border-color: transparent;
+}

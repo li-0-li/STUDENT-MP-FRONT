@@ -1,0 +1,58 @@
+<!-- 章节作业 —— 原型：ui-prototype/mp/app-course-detail.html -->
+<!-- 数据：表 3-2 课程详情（课程信息 + 周目录）+ 表 3-5 本课程作业列表（真实接口，按周挂载） -->
+<view class="page">
+
+  <!-- 课程头部信息（表 3-2） -->
+  <view wx:if="{{course}}" class="card">
+    <view class="between">
+      <view class="row">
+        <view class="icon-box">∑</view>
+        <view>
+          <view class="cd-title">{{course.courseName}}</view>
+          <view class="small muted mt4">{{course.teacherName}} · {{course.statusText}}</view>
+        </view>
+      </view>
+      <view class="badge {{course.badge}}">{{course.statusText}}</view>
+    </view>
+    <view class="small muted mt8">课程码 <text class="cd-code">{{course.courseCode}}</text></view>
+  </view>
+  <view wx:elif="{{loading}}" class="empty">
+    <view class="small">加载中…</view>
+  </view>
+
+  <!-- 课程导学：说课视频（三重认证 approved 才展示，原型 pc/student-course-detail.html） -->
+  <view wx:if="{{intro}}" class="card">
+    <view class="cd-title" style="font-size:30rpx;">课程导学</view>
+    <video class="mt8" src="{{intro.src}}" style="width:100%;border-radius:12rpx;"
+           controls show-center-play-btn object-fit="contain"></video>
+    <view class="small muted mt8">🎬 说课视频{{intro.durationText ? ' · ' + intro.durationText : ''}}</view>
+  </view>
+
+  <!-- 章节 + 作业 信息流（UI 设计 7.7：按章节列出学习资源，并在对应章节下挂载作业任务） -->
+  <view class="sec">章节</view>
+  <view wx:if="{{weeks.length}}">
+    <view wx:for="{{weeks}}" wx:key="weekNum" class="card cd-chapter">
+      <view class="between">
+        <view class="cd-chapter-title">{{item.weekNum ? '第 ' + item.weekNum + ' 周 ' : ''}}{{item.title}}</view>
+        <view class="badge badge-info">{{item.weekNum ? '教学周' : '作业'}}</view>
+      </view>
+      <!-- 学习资源入口 -->
+      <view class="row mt8 cd-actions">
+        <view class="btn btn-outline btn-sm cd-action" bindtap="goResources">📖 查看资源</view>
+      </view>
+      <!-- 挂载在本章节下的作业任务（截止时间与状态） -->
+      <view wx:for="{{item.homeworks}}" wx:for-item="hw" wx:key="id" class="cd-hw"
+            bindtap="goSubmission" data-id="{{hw.id}}">
+        <view class="between">
+          <view class="cd-chapter-title">{{hw.title}}</view>
+          <view class="badge {{hw.badge}}">{{hw.statusText}}</view>
+        </view>
+        <view class="small muted mt8">{{hw.meta}}</view>
+      </view>
+    </view>
+  </view>
+  <view wx:elif="{{!loading}}" class="empty">
+    <view class="small">课程尚未发布章节目录</view>
+  </view>
+
+</view>

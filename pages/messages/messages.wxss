@@ -1,0 +1,161 @@
+/* 消息通知 —— 通知/会话 tab / 会话条目 / 聊天详情；.card/.pilltabs/.empty/.chat-msg 等见 app.wxss */
+
+/* 顶部 通知 / 会话 切换 tab 通栏 */
+.top-tabs { margin: 24rpx 24rpx 16rpx; }
+.top-tabs .pill { flex: 1; }
+
+/* 消息条目（通知 + 会话共用头像样式） */
+.msg { display: flex; gap: 20rpx; align-items: flex-start; }
+.msg-av {
+  width: 84rpx;
+  height: 84rpx;
+  flex: none;
+  border-radius: 22rpx;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.msg-av-sys { background: #64748b; font-size: 36rpx; }
+/* 未读红点 */
+.msg-dot {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  min-width: 34rpx;
+  height: 34rpx;
+  border-radius: 999rpx;
+  background: var(--error);
+  border: 4rpx solid #fff;
+  box-sizing: border-box;
+}
+/* 会话未读数（带数字） */
+.msg-dot-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18rpx;
+  color: #fff;
+  font-weight: 700;
+  padding: 0 6rpx;
+}
+.msg-mid { flex: 1; min-width: 0; }
+.msg-name { font-size: 28rpx; font-weight: 600; }
+.msg-name-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-text2 {
+  color: var(--ink-500);
+  margin-top: 6rpx;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* 会话条目（原型 .conv：白底分隔，非卡片） */
+.conv {
+  display: flex;
+  gap: 22rpx;
+  align-items: center;
+  padding: 22rpx 24rpx;
+  background: #fff;
+  border-bottom: 1rpx solid var(--border);
+}
+.conv:active { background: var(--bg-soft); }
+.conv-time { flex: none; }
+.conv-last {
+  color: var(--ink-500);
+  margin-top: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-end { padding: 24rpx 0 48rpx; }
+
+/* 发起新对话悬浮按钮（原型 .fab，仅学生会话页显示） */
+.fab {
+  position: fixed;
+  right: 32rpx;
+  bottom: 64rpx;
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+  background: var(--brand-600);
+  color: #fff;
+  font-size: 44rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 28rpx rgba(13, 148, 136, 0.4);
+  z-index: 60;
+}
+
+/* 聊天详情浮层（原型 .chat-view，静态演示 TODO M-E） */
+.chat-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-soft);
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+}
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 28rpx;
+  background: #fff;
+  border-bottom: 1rpx solid var(--border);
+  flex: none;
+}
+.chat-back {
+  font-size: 52rpx;
+  line-height: 1;
+  color: var(--ink-600);
+  padding: 4rpx 12rpx;
+}
+.chat-head-mid { flex: 1; min-width: 0; }
+.chat-head-name { font-size: 30rpx; font-weight: 700; }
+/* scroll-view 竖向滚动必须显式设高（flex:1 对 scroll-view 不生效），
+   230rpx ≈ 顶栏 114 + 输入栏 105 + 余量，另减底部安全区 */
+.chat-body {
+  height: calc(100vh - 230rpx - env(safe-area-inset-bottom));
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+.chat-bub-sys {
+  background: var(--bg-soft);
+  color: var(--ink-500);
+  font-size: 24rpx;
+  text-align: center;
+  margin: 12rpx auto 28rpx;
+  border-radius: 16rpx;
+  padding: 10rpx 20rpx;
+  width: fit-content;
+}
+.chat-tm { font-size: 20rpx; opacity: 0.65; margin-top: 6rpx; text-align: right; }
+.chat-foot {
+  display: flex;
+  gap: 16rpx;
+  padding: 16rpx 24rpx;
+  background: #fff;
+  border-top: 1rpx solid var(--border);
+  flex: none;
+  align-items: center;
+}
+.chat-foot .input {
+  flex: 1;
+  border-radius: 999rpx;
+  background: var(--bg-soft);
+  border-color: transparent;
+}

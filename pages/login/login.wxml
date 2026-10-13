@@ -1,0 +1,99 @@
+<!-- 登录 —— 原型：ui-prototype/mp/app-login.html（老师 / 学生身份选择 + 密码 / 邮箱验证码 / 手机验证码，表 2-1 契约）
+     图标为 lucide 1.46.0 data-URI（见 login.wxss），小程序不支持 <svg> 标签与 emoji 会渲染不一致 -->
+<view class="auth-page">
+  <view class="auth-box">
+    <view class="logo"><view class="ic ic-gradlogo logo-ic" /></view>
+    <text class="h2">智能教学辅助平台</text>
+    <view class="sub">微信小程序端 · 选择身份登录</view>
+
+    <view class="auth-form">
+      <!-- 身份选择：老师 / 学生（管理员仅支持电脑端，小程序不开放） -->
+      <view class="m-roles">
+        <view class="m-role {{role === 'teacher' ? 'active' : ''}}" bindtap="pickRole" data-role="teacher">
+          <view class="mr-ic"><view class="ic ic-role {{role === 'teacher' ? 'ic-preswhite' : 'ic-presgray'}}" /></view>
+          <text>老师</text>
+        </view>
+        <view class="m-role {{role === 'student' ? 'active' : ''}}" bindtap="pickRole" data-role="student">
+          <view class="mr-ic"><view class="ic ic-role {{role === 'student' ? 'ic-gradwhite' : 'ic-gradgray'}}" /></view>
+          <text>学生</text>
+        </view>
+      </view>
+
+      <!-- 身份提示（仅老师身份显示；原型 showTip 非警告态） -->
+      <view class="m-tip {{role === 'teacher' ? 'show' : ''}}">
+        <view class="ic ic-tip ic-monitor" />
+        <text>教师端小程序已支持完整教学功能：备课、批改、课堂、学情</text>
+      </view>
+
+      <!-- 登录方式切换 -->
+      <view class="mtab">
+        <view class="pilltabs">
+          <view class="pill {{mode === 'pwd' ? 'active' : ''}}" bindtap="pickMode" data-mode="pwd">密码</view>
+          <view class="pill {{mode === 'mail' ? 'active' : ''}}" bindtap="pickMode" data-mode="mail">邮箱验证码</view>
+          <view class="pill {{mode === 'phone' ? 'active' : ''}}" bindtap="pickMode" data-mode="phone">手机验证码</view>
+        </view>
+      </view>
+
+      <!-- ① 密码登录（表 2-1 账号密码登录） -->
+      <view wx:if="{{mode === 'pwd'}}">
+        <view class="field">
+          <input class="input auth-input" placeholder="{{role === 'teacher' ? '工号 / 手机号' : '学号 / 手机号'}}" value="{{username}}" bindinput="onUsername" />
+        </view>
+        <view class="field">
+          <input class="input auth-input" password placeholder="密码" value="{{password}}" bindinput="onPassword" />
+        </view>
+      </view>
+
+      <!-- ② 邮箱验证码登录（发送验证码走 /auth/captcha/send scene=login） -->
+      <view wx:if="{{mode === 'mail'}}">
+        <view class="bind-note">
+          <view class="ic ic-note ic-mail" />
+          <text>仅已绑定邮箱的账号可用；未绑定请改用密码登录或在个人资料中绑定邮箱。</text>
+        </view>
+        <view class="field">
+          <input class="input auth-input" placeholder="请输入已绑定的邮箱" value="{{mailAccount}}" bindinput="onMailAccount" />
+        </view>
+        <view class="field">
+          <view class="row code-row">
+            <input class="input auth-input code-input" type="number" maxlength="6" placeholder="6 位验证码" value="{{mailCode}}" bindinput="onMailCode" />
+            <button class="btn btn-outline code-btn" size="mini" bindtap="sendMailCode" disabled="{{countingMail}}">
+              {{countingMail ? countdownMail + ' 秒后重发' : '获取验证码'}}
+            </button>
+          </view>
+        </view>
+      </view>
+
+      <!-- ③ 手机验证码登录（发送验证码走 /auth/captcha/send scene=login） -->
+      <view wx:if="{{mode === 'phone'}}">
+        <view class="bind-note">
+          <view class="ic ic-note ic-phone" />
+          <text>仅已绑定手机号的账号可用；未绑定请改用密码登录或在个人资料中绑定手机号。</text>
+        </view>
+        <view class="field">
+          <input class="input auth-input" type="number" maxlength="11" placeholder="请输入已绑定的手机号" value="{{phoneAccount}}" bindinput="onPhoneAccount" />
+        </view>
+        <view class="field">
+          <view class="row code-row">
+            <input class="input auth-input code-input" type="number" maxlength="6" placeholder="6 位验证码" value="{{phoneCode}}" bindinput="onPhoneCode" />
+            <button class="btn btn-outline code-btn" size="mini" bindtap="sendPhoneCode" disabled="{{countingPhone}}">
+              {{countingPhone ? countdownPhone + ' 秒后重发' : '获取验证码'}}
+            </button>
+          </view>
+        </view>
+      </view>
+
+      <view class="between links">
+        <text class="link" bindtap="goRegister">注册账号</text>
+        <text class="link" bindtap="goForgot">忘记密码？</text>
+      </view>
+
+      <view class="btn-row">
+        <button class="btn btn-primary auth-btn" bindtap="doLogin" disabled="{{submitting}}">登 录</button>
+      </view>
+      <view class="svc-link" bindtap="goSupport">
+        <view class="ic ic-svc ic-headphones" />
+        <text>联系客服</text>
+      </view>
+    </view>
+  </view>
+</view>

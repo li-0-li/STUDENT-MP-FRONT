@@ -1,0 +1,273 @@
+/* 全局样式 —— Token 与《UI设计文档》/ ui-prototype/assets/theme.css 一致 */
+page {
+  --brand-50: #f0fdfa;
+  --brand-100: #d8fbf4;
+  --brand-600: #0d9488;
+  --brand-700: #0f766e;
+  --ink-900: #0f172a;
+  --ink-600: #475569;
+  --ink-500: #64748b;
+  --ink-400: #94a3b8;
+  --border: #e3eaec;
+  --bg-soft: #f1f5f6;
+  --bg-subtle: #f8fafc;
+  --success: #16a34a;
+  --warning: #d97706;
+  --error: #dc2626;
+
+  background: var(--bg-soft);
+  color: var(--ink-900);
+  font-size: 28rpx;
+  line-height: 1.5;
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+/* 布局工具 */
+.page {
+  min-height: 100vh;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24rpx);
+}
+.sec { font-size: 28rpx; font-weight: 600; margin: 24rpx 24rpx 12rpx; }
+.small { font-size: 22rpx; }
+.muted { color: var(--ink-400); }
+.center { display: flex; align-items: center; justify-content: center; }
+.row { display: flex; align-items: center; gap: 12rpx; }
+.between { display: flex; align-items: center; justify-content: space-between; }
+.mt4 { margin-top: 8rpx; }
+.mt8 { margin-top: 16rpx; }
+.mt12 { margin-top: 24rpx; }
+.mt16 { margin-top: 32rpx; }
+.mb8 { margin-bottom: 16rpx; }
+.mb12 { margin-bottom: 24rpx; }
+
+/* 卡片 */
+.card {
+  background: #fff;
+  border: 1rpx solid var(--border);
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin: 0 24rpx 16rpx;
+}
+
+/* 按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  height: 72rpx;
+  padding: 0 24rpx;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 72rpx;
+}
+.btn-primary { background: var(--brand-600); color: #fff; }
+.btn-outline { border: 1rpx solid var(--border); color: var(--ink-900); background: #fff; }
+.btn-block { width: 100%; }
+.btn-sm { height: 56rpx; line-height: 56rpx; padding: 0 18rpx; font-size: 22rpx; }
+
+/* 徽标 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+}
+.badge-info    { background: var(--brand-100); color: var(--brand-700); }
+.badge-success { background: #dcfce7; color: var(--success); }
+.badge-warning { background: #fef3c7; color: var(--warning); }
+.badge-error   { background: #fee2e2; color: var(--error); }
+.badge-neutral { background: var(--bg-soft); color: var(--ink-500); }
+
+/* 表单 */
+.field { display: flex; flex-direction: column; gap: 8rpx; margin-bottom: 16rpx; }
+.label { font-size: 22rpx; color: var(--ink-600); }
+.input {
+  width: 100%;
+  height: 72rpx;
+  padding: 0 16rpx;
+  border-radius: 12rpx;
+  border: 1rpx solid var(--border);
+  background: #fff;
+  color: var(--ink-900);
+  font-size: 26rpx;
+}
+.input::placeholder { color: var(--ink-400); }
+
+/* 标签胶囊 */
+.pilltabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx;
+  background: var(--bg-subtle);
+  border: 1rpx solid var(--border);
+  border-radius: 999rpx;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  color: var(--ink-500);
+  background: transparent;
+}
+.pill.active { background: #fff; color: var(--brand-700); font-weight: 600; }
+
+/* 进度条 */
+.progress {
+  height: 12rpx;
+  background: var(--bg-soft);
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+.progress i, .progress-fill { display: block; height: 100%; background: var(--brand-600); border-radius: 999rpx; }
+
+/* 图标占位 */
+.icon-box {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 14rpx;
+  background: var(--brand-100);
+  color: var(--brand-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+}
+.avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: var(--brand-100);
+  color: var(--brand-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  color: var(--ink-400);
+  padding: 48rpx 24rpx;
+}
+.empty-icon { font-size: 48rpx; margin-bottom: 12rpx; }
+
+/* 列表项 */
+.list-item {
+  background: #fff;
+  border: 1rpx solid var(--border);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin: 0 24rpx 16rpx;
+}
+.list-link { color: var(--brand-600); font-weight: 600; }
+
+/* ===== 多页共用 ===== */
+
+/* 认证页（登录 / 注册 / 找回密码） */
+.auth-page {
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx 32rpx;
+  box-sizing: border-box;
+}
+.auth-box { width: 100%; max-width: 640rpx; }
+.auth-box .logo { font-size: 56rpx; margin-bottom: 16rpx; }
+.auth-box .h2 { display: block; font-size: 32rpx; font-weight: 700; }
+.auth-box .sub { color: var(--ink-400); margin-top: 8rpx; font-size: 24rpx; }
+
+/* 区块标题（首页 / 课程 / 客服等） */
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  margin: 24rpx 24rpx 12rpx;
+}
+
+/* 课程卡片（首页「继续学习」/ 我的课程） */
+.course-card {
+  background: #fff;
+  border: 1rpx solid var(--border);
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin: 0 24rpx 16rpx;
+}
+.course-card .title { font-size: 30rpx; font-weight: 700; }
+
+/* 设置行（设置 / 修改密码 / 更换手机号） */
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  background: #fff;
+  border: 1rpx solid var(--border);
+  border-radius: 20rpx;
+  padding: 26rpx 28rpx;
+  margin: 0 24rpx 12rpx;
+  font-size: 26rpx;
+}
+.set-row.on {
+  border-color: #0d9488;
+  background: rgba(13, 148, 136, 0.06);
+  color: #0d9488;
+}
+
+/* 三列统计格（我的 / 我的学情） */
+.stat-grid {
+  display: flex;
+  gap: 16rpx;
+  margin: 0 24rpx 16rpx;
+}
+.stat-grid > .card {
+  flex: 1;
+  margin: 0;
+  padding: 24rpx 12rpx;
+  text-align: center;
+}
+.stat-num { font-size: 34rpx; font-weight: 800; display: block; }
+
+/* 聊天（消息 / AI 答疑 / 客服） */
+.chat-wrap { display: flex; flex-direction: column; }
+.chat-msg { display: flex; gap: 16rpx; max-width: 88%; }
+.chat-msg.u { align-self: flex-end; flex-direction: row-reverse; }
+.chat-bub {
+  padding: 18rpx 24rpx;
+  border-radius: 24rpx;
+  font-size: 26rpx;
+  line-height: 1.55;
+}
+.chat-msg.u .chat-bub { background: var(--brand-600); color: #fff; border-bottom-right-radius: 8rpx; }
+.chat-msg.a .chat-bub { background: #fff; border: 1rpx solid var(--border); border-bottom-left-radius: 8rpx; }
+.chat-ref {
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx dashed var(--border);
+  font-size: 22rpx;
+  color: var(--ink-400);
+}
+.chat-foot {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 16rpx;
+  align-items: center;
+  padding: 16rpx 24rpx calc(env(safe-area-inset-bottom) + 16rpx);
+  background: #fff;
+  border-top: 1rpx solid var(--border);
+  box-sizing: border-box;
+}
+.chat-foot .input { flex: 1; }

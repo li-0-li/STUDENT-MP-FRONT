@@ -1,0 +1,56 @@
+/* 注册页 —— 复用 app.wxss 的 .card/.field/.btn/.badge/.row，仅写本页私有样式 */
+.h2 { font-size: 30rpx; font-weight: 700; }
+.link { color: var(--brand-600); font-weight: 600; }
+.flex1 { flex: 1; }
+
+/* 步骤条 */
+.step-bar { justify-content: center; gap: 16rpx; margin: 8rpx 24rpx 8rpx; flex-wrap: wrap; }
+
+/* 上一步 / 下一步按钮组 */
+.btn-row { gap: 16rpx; margin-top: 24rpx; }
+
+/* 角色选择卡片 */
+.m-roles { display: flex; gap: 16rpx; margin: 8rpx 0 16rpx; }
+.m-role {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 10rpx;
+  padding: 22rpx 8rpx;
+  border: 3rpx solid var(--border); border-radius: 28rpx;
+  background: #fff;
+  color: var(--ink-600); font-size: 26rpx; font-weight: 600;
+}
+.m-role .mr-ic {
+  width: 68rpx; height: 68rpx; border-radius: 20rpx;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-soft); font-size: 34rpx;
+}
+.m-role .rd { font-size: 22rpx; font-weight: 400; color: var(--ink-400); }
+.m-role.active { border-color: var(--brand-600); background: var(--brand-50); color: var(--brand-700); }
+.m-role.active .rd { color: var(--brand-600); }
+.m-role.active .mr-ic { background: var(--brand-600); }
+
+/* 管理员提示 */
+.note {
+  font-size: 24rpx; color: var(--ink-500);
+  background: var(--bg-subtle);
+  border: 1rpx dashed var(--border);
+  border-radius: 20rpx;
+  padding: 18rpx 22rpx;
+  line-height: 1.65;
+}
+
+/* 选择器单元格 */
+.picker-cell {
+  display: flex; align-items: center; justify-content: space-between;
+  color: var(--ink-900);
+  line-height: 72rpx;
+}
+.picker-cell .chevron { color: var(--ink-400); font-size: 30rpx; }
+
+/* 验证码 */
+.code-input { flex: 1; }
+.code-btn { flex: none; white-space: nowrap; }
+.field-tip { margin-top: 6rpx; }
+
+/* 协议 */
+.agree-row { margin: 8rpx 0 0; gap: 8rpx; }

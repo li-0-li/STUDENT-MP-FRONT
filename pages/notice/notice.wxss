@@ -1,0 +1,26 @@
+/* 系统通知页 —— 复用 app.wxss 的 .between/.small/.muted/.empty，仅写本页私有样式 */
+.systab { display: flex; gap: 12rpx; margin: 16rpx 24rpx 16rpx; }
+.syspill {
+  flex: 1; text-align: center; padding: 14rpx 0;
+  border-radius: 12rpx; background: #fff; border: 1rpx solid var(--border);
+  color: var(--ink-600); font-size: 24rpx; font-weight: 600;
+}
+.syspill.active { background: var(--brand-600); color: #fff; border-color: var(--brand-600); }
+
+.sys-item {
+  display: flex; gap: 20rpx; padding: 24rpx;
+  border: 1rpx solid var(--border); border-radius: 20rpx;
+  background: #fff; margin: 0 24rpx 16rpx;
+}
+.sys-item.unread { border-color: var(--brand-600); background: var(--brand-50); }
+.ic {
+  width: 72rpx; height: 72rpx; flex: none; border-radius: 14rpx;
+  background: var(--brand-100); color: var(--brand-700);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32rpx;
+}
+.ic.warning { background: #fef3c7; color: var(--warning); }
+.ic.success { background: #dcfce7; color: var(--success); }
+.ic.sys { background: var(--bg-soft); color: var(--ink-500); }
+.flex1 { flex: 1; min-width: 0; }
+.item-title { font-size: 24rpx; font-weight: 600; }

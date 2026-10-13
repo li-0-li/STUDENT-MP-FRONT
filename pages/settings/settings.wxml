@@ -1,0 +1,37 @@
+<!-- 设置 —— 原型：ui-prototype/mp/app-settings.html（账号安全 / 通知 / 通用 / 隐私设置 / 退出） -->
+<view class="page">
+  <view class="section-title">账号与安全</view>
+  <view class="set-row" bindtap="goChangePwd">
+    <text>修改密码</text><text class="chevron">›</text>
+  </view>
+  <view class="set-row" bindtap="goChangePhone">
+    <view>绑定手机号 <text class="small muted">{{phone}}</text></view>
+    <text class="chevron">›</text>
+  </view>
+
+  <view class="section-title">通知</view>
+  <view class="set-row" wx:for="{{notifyRows}}" wx:key="key" bindtap="toggleNotify" data-key="{{item.key}}">
+    <text>{{item.label}}</text>
+    <switch checked="{{item.on}}" color="#0d9488" catchchange="toggleNotify" data-key="{{item.key}}" />
+  </view>
+
+  <view class="section-title">隐私设置</view>
+  <view class="set-row" bindtap="goPrivacy">
+    <text>隐私与数据授权</text><text class="chevron">›</text>
+  </view>
+  <view class="set-row" bindtap="togglePrivacy" data-key="recommend">
+    <text>个性化学习推荐</text>
+    <switch checked="{{privacyRecommend}}" color="#0d9488" catchchange="togglePrivacy" data-key="recommend" />
+  </view>
+
+  <view class="section-title">通用</view>
+  <view class="set-row">
+    <view>清除缓存 <text class="small muted">{{cacheSize}}</text></view>
+    <button class="btn btn-outline btn-sm" size="mini" bindtap="clearCache">清除</button>
+  </view>
+  <view class="set-row">
+    <text>关于平台 <text class="small muted">{{version}}</text></text>
+  </view>
+
+  <button class="btn btn-outline btn-block logout-btn" bindtap="logout">退出登录</button>
+</view>

@@ -1,0 +1,49 @@
+<!-- 我的 —— 原型：ui-prototype/mp/app-profile.html（文档 7.15：我的学情/我的课程/实名认证/设置/客服） -->
+<view class="page">
+  <!-- 个人信息卡片（表 2-14 users/me；头像为空时回落文字首字） -->
+  <view class="card">
+    <view class="row">
+      <image wx:if="{{user.avatarUrl}}" class="avatar avatar-lg" src="{{user.avatarUrl}}" mode="aspectFill" />
+      <view wx:else class="avatar avatar-lg">{{user.name[0]}}</view>
+      <view class="flex1">
+        <text class="name">{{user.name}}</text>
+        <view class="small muted mt4">{{user.subtitle}}</view>
+        <view wx:if="{{user.school}}" class="small muted">{{user.school}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 学习统计 -->
+  <view class="stat-grid">
+    <view class="card stat-cell" wx:for="{{stats}}" wx:key="label">
+      <text class="stat-num">{{item.num}}</text>
+      <view class="small muted">{{item.label}}</view>
+    </view>
+  </view>
+
+  <!-- 学习入口 -->
+  <view class="section-title">学习</view>
+  <view class="set-row" wx:for="{{studyEntries}}" wx:key="key" bindtap="goEntry" data-key="{{item.key}}">
+    <view class="row">
+      <text class="entry-icon">{{item.icon}}</text>
+      <text>{{item.label}}</text>
+    </view>
+    <text class="chevron">›</text>
+  </view>
+
+  <!-- 通用入口（文档 7.15：实名认证 / 设置 / 客服） -->
+  <view class="section-title">通用</view>
+  <view class="set-row" wx:for="{{generalEntries}}" wx:key="key" bindtap="goEntry" data-key="{{item.key}}">
+    <view class="row">
+      <text class="entry-icon">{{item.icon}}</text>
+      <text>{{item.label}}</text>
+    </view>
+    <view class="row">
+      <view wx:if="{{item.badge}}" class="badge badge-error">{{item.badge}}</view>
+      <text class="chevron">›</text>
+    </view>
+  </view>
+
+  <!-- 退出登录 -->
+  <button class="btn btn-outline btn-block logout-btn" bindtap="logout">退出登录</button>
+</view>

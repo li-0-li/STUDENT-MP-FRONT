@@ -1,0 +1,8 @@
+/* 设置页 —— 复用 app.wxss 的 .set-row/.section-title/.btn，仅写本页私有样式 */
+.chevron { color: var(--ink-400); font-size: 30rpx; }
+.logout-btn {
+  margin-top: 32rpx;
+  color: var(--error);
+  border-color: #fca5a5;
+  border-radius: 14rpx;
+}

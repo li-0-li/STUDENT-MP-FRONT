@@ -1,0 +1,107 @@
+<!-- 作业提交 —— 原型：ui-prototype/mp/app-submission.html -->
+<!-- 数据来自表 3-5 作业列表 + 表 3-6 提交 / 表 3-7 申诉接口 -->
+<view class="page" wx:if="{{hw}}">
+
+  <!-- 头部卡片：作业详情 -->
+  <view class="card">
+    <view class="between">
+      <view class="sm-head-main">
+        <view class="sm-title">{{hw.title}}</view>
+        <view class="small muted mt4">{{hw.course}}</view>
+      </view>
+      <view class="badge {{hw.badge}}">{{hw.statusText}}</view>
+    </view>
+    <!-- 有成绩展示成绩，否则展示截止信息 -->
+    <view wx:if="{{hw.score}}" class="small muted mt8">我的成绩：<text class="sm-score">{{hw.score}}</text> 分</view>
+    <view wx:else class="small muted mt8">截止：{{hw.deadline}} · 总分 {{hw.totalScore || '—'}}</view>
+  </view>
+
+  <!-- 提交区（待提交状态） -->
+  <block wx:if="{{editable}}">
+    <view class="card">
+      <view class="field">
+        <text class="label">作答内容</text>
+        <textarea class="input sm-textarea" value="{{answer}}" bindinput="onAnswerInput"
+                  maxlength="2000" placeholder="请输入推导过程……（提交后由 AI 初判，教师复核）"></textarea>
+      </view>
+      <view class="row mt8">
+        <view class="btn btn-outline btn-sm" bindtap="uploadAttachment">📎 上传附件</view>
+      </view>
+    </view>
+
+    <!-- 底部操作条 -->
+    <view class="sm-bar">
+      <text class="sm-progress">{{answer ? '已填写作答' : '尚未作答'}}</text>
+      <view class="row">
+        <view class="btn btn-outline btn-sm" bindtap="saveDraft">暂存</view>
+        <view class="btn btn-primary btn-sm" bindtap="submit">📤 提交作业</view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 已提交 / 已批改只读态：题目作答情况 + AI 建议分 + 教师评语（UI 设计 7.9） -->
+  <block wx:else>
+
+    <!-- AI 批改建议分 / 教师复核分 -->
+    <view wx:if="{{hw.aiScore}}" class="card">
+      <view class="sm-sub-title">批改得分</view>
+      <view class="row mt8" style="gap:24rpx">
+        <view class="sm-score-item">
+          <view class="sm-score-num">{{hw.aiScore}}</view>
+          <view class="small muted">AI 批改建议分</view>
+        </view>
+        <view class="sm-score-item">
+          <view class="sm-score-num sm-score-teacher">{{hw.teacherScore}}</view>
+          <view class="small muted">教师复核分</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 题目作答情况 -->
+    <block wx:if="{{hw.questions}}">
+      <view class="section-title">题目作答情况</view>
+      <view wx:for="{{hw.questions}}" wx:key="q" class="sm-q">
+        <view class="between sm-q-head">
+          <view class="sm-q-title">{{item.q}}</view>
+          <view wx:if="{{item.score}}" class="badge badge-success sm-q-score">{{item.score}}</view>
+        </view>
+        <view class="sm-q-ans"><text class="sm-q-label">我的作答：</text>{{item.a}}</view>
+      </view>
+    </block>
+
+    <!-- 教师 / AI 评语 -->
+    <view wx:if="{{hw.comment}}" class="sm-comment">
+      <view class="sm-comment-title">教师 / AI 评语</view>
+      <view class="mt8">{{hw.comment}}</view>
+    </view>
+
+    <!-- 申诉进度（申诉处理中） -->
+    <view wx:if="{{hw.appealing}}" class="card">
+      <view class="sm-sub-title">申诉进度</view>
+      <view class="sm-timeline">
+        <view class="sm-tl-item done">
+          <view class="sm-tl-t">提交申诉</view>
+          <view class="sm-tl-d">09-05 14:20 · 你发起成绩申诉</view>
+        </view>
+        <view class="sm-tl-item done">
+          <view class="sm-tl-t">教师受理</view>
+          <view class="sm-tl-d">09-05 16:40 · 李老师已受理</view>
+        </view>
+        <view class="sm-tl-item">
+          <view class="sm-tl-t">复核中</view>
+          <view class="sm-tl-d">预计 2 个工作日内反馈</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部「申诉」入口（已批改且未在申诉中） -->
+    <view wx:if="{{hw.appealable}}" class="btn btn-outline btn-block sm-appeal-btn" bindtap="appeal">⚖ 对成绩申诉</view>
+
+  </block>
+
+</view>
+
+<!-- 加载中 / 作业不存在 -->
+<view class="page" wx:elif="{{loading}}">
+  <view class="card"><view class="small muted mt8">加载中…</view></view>
+</view>

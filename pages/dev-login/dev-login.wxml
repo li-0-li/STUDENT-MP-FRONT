@@ -1,0 +1,23 @@
+<!-- 开发期临时登录页 —— 合并前删除（正式登录页 app-login.html 由教师端同学交付，两端共用） -->
+<!-- 背景：M-A 登录接口（表 2-1）尚未实现，M-B 后端提供 dev-only 令牌接口 POST /api/v1/dev/token -->
+<view class="card">
+  <view style="font-weight:600;font-size:32rpx;">开发登录（临时）</view>
+  <view style="color:var(--warning);font-size:24rpx;margin-top:8rpx;">
+    M-B 学生端独立联调用；正式登录页交付后本页与跳转一并删除
+  </view>
+
+  <view class="field mt12">
+    <text class="label">用户 ID（学号对应的 sys_user.user_id）</text>
+    <input class="input" type="number" value="{{userId}}" bindinput="onUserId" placeholder="如 1002" />
+  </view>
+  <view class="field">
+    <text class="label">用户名</text>
+    <input class="input" value="{{username}}" bindinput="onUsername" placeholder="如 lihaoyi" />
+  </view>
+  <view class="field">
+    <text class="label">学校 ID</text>
+    <input class="input" type="number" value="{{schoolId}}" bindinput="onSchoolId" placeholder="如 1" />
+  </view>
+
+  <button class="btn btn-primary btn-block mt12" bindtap="login">签发令牌并进入</button>
+</view>

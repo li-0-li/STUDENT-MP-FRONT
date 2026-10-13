@@ -1,0 +1,50 @@
+<!-- 实验报告 —— 原型：ui-prototype/mp/app-lab.html -->
+<!-- 数据来自 GET /api/v1/experiments（实验任务列表）+ 表 3-17 提交 / 表 3-18 详情接口 -->
+<view class="page">
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="card">
+    <view class="small muted mt8">加载中…</view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{!labs.length}}" class="card">
+    <view class="small muted mt8">暂无实验任务</view>
+  </view>
+
+  <view wx:for="{{labs}}" wx:key="id" class="card">
+    <view class="between">
+      <view class="lab-title">{{item.title}}</view>
+      <view class="badge {{item.badge}}">{{item.statusText}}</view>
+    </view>
+    <view class="small muted mt8">{{item.courseName}} · {{item.meta}}</view>
+
+    <!-- 待提交：上传报告 / 查看实验指导书 -->
+    <view wx:if="{{item.actions}}" class="row mt8 lab-actions">
+      <view class="btn btn-primary btn-sm lab-action" bindtap="uploadReport" data-id="{{item.id}}">⬆ 上传报告</view>
+      <view class="btn btn-outline btn-sm lab-action" bindtap="viewGuide" data-guide="{{item.guide}}">📄 查看实验指导书</view>
+    </view>
+
+    <!-- AI 查重结果（查重率 + 相似来源） -->
+    <view wx:if="{{item.plagiarism}}" class="lab-plag mt8">
+      <view class="between">
+        <view class="lab-plag-title">AI 查重结果</view>
+        <view class="lab-plag-rate">查重率 <text class="lab-plag-num">{{item.plagiarism.rate}}%</text></view>
+      </view>
+      <view class="progress mt8"><view class="progress-fill" style="width: {{item.plagiarism.rate}}%;"></view></view>
+      <view wx:if="{{item.plagiarism.sources.length}}" class="lab-plag-sources mt8">
+        <view class="lab-plag-src-label small muted">相似来源</view>
+        <view wx:for="{{item.plagiarism.sources}}" wx:for-item="src" wx:key="name" class="between lab-plag-src">
+          <view class="small">{{src.name}}</view>
+          <view class="small muted">相似度 {{src.sim}}%</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 教师批阅评语 -->
+    <view wx:if="{{item.comment}}" class="lab-comment mt8">
+      <view class="small muted">{{item.comment}}</view>
+    </view>
+  </view>
+
+</view>

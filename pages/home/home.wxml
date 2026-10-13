@@ -1,0 +1,96 @@
+<!-- 首页 —— 原型：ui-prototype/mp/app-home.html（UI 设计文档 7.3） -->
+<!-- 数据：users/me + schedules + profiles/me + practice/recommend + assignments（真实接口） -->
+<view class="page">
+  <!-- ① 学情概览卡：掌握度雷达小卡 + 关键学习指标 -->
+  <view class="card hero">
+    <view class="between">
+      <text class="hero-title">{{greeting}}，{{name}} 👋</text>
+      <view class="hero-pill">学情概览</view>
+    </view>
+    <view class="row hero-body">
+      <!-- 掌握度雷达小卡 -->
+      <view class="hero-radar">
+        <canvas id="radar" type="2d" class="radar-canvas"></canvas>
+        <view class="small hero-sub radar-label">掌握度</view>
+      </view>
+      <!-- 关键学习指标 -->
+      <view class="hero-stats">
+        <view wx:for="{{learnStats}}" wx:key="key" class="hero-stat">
+          <view class="hero-num">{{item.value}}</view>
+          <view class="small hero-sub">{{item.label}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ② 今日待办（作业 / 实验条目） -->
+  <view class="section-title">今日待办</view>
+  <view
+    wx:for="{{todayTodos}}" wx:key="id"
+    class="card todo-item" bindtap="go" data-url="{{item.url}}">
+    <view class="todo-icon {{item.type === '实验' ? 'todo-lab' : ''}}">{{item.type === '课程' ? '📺' : item.type === '实验' ? '🧪' : '📝'}}</view>
+    <view class="todo-mid">
+      <view class="between">
+        <text class="small strong">{{item.name}}</text>
+        <view class="badge {{item.badge}}">{{item.statusText}}</view>
+      </view>
+      <view class="small muted mt4">{{item.course}} · {{item.deadline}}</view>
+    </view>
+  </view>
+  <view wx:if="{{todayTodos.length === 0}}" class="card center empty">
+    <view class="empty-icon">🎉</view>
+    <view class="small">今天没有待办，劳逸结合</view>
+  </view>
+
+  <!-- ③ 快捷功能宫格：AI 答疑 / 上课入口 / 添加课程 / 消息 -->
+  <view class="section-title">快捷功能</view>
+  <view class="card quick-grid">
+    <view wx:for="{{quicks}}" wx:key="label" class="quick-item" bindtap="go" data-url="{{item.url}}">
+      <view class="icon-box">{{item.icon}}</view>
+      <view class="small mt4 quick-label">{{item.label}}</view>
+    </view>
+  </view>
+
+  <!-- ④ 继续学习（最近学习资源；暂无接口，无数据时整块隐藏） -->
+  <block wx:if="{{continueLearn}}">
+    <view class="section-title">继续学习</view>
+    <view class="card" bindtap="go" data-url="{{continueLearn.url}}">
+    <view class="between">
+      <text class="small strong">{{continueLearn.course}} · {{continueLearn.chapter}}</text>
+      <view class="badge badge-info">{{continueLearn.status}}</view>
+    </view>
+    <view class="progress mt12">
+      <view class="progress-fill" style="width:{{continueLearn.progress}}%"></view>
+    </view>
+    <view class="between mt8">
+      <text class="small muted">进度 {{continueLearn.progress}}%</text>
+      <text class="small link">继续 →</text>
+    </view>
+  </view>
+  </block>
+
+  <!-- ⑤ 待办任务 -->
+  <view class="section-title">待办任务</view>
+  <view
+    wx:for="{{tasks}}" wx:key="id"
+    class="card between" bindtap="go" data-url="{{item.url}}">
+    <view>
+      <view class="small strong">{{item.title}}</view>
+      <view class="small muted mt8">{{item.deadline}}</view>
+    </view>
+    <view class="badge {{item.badge}}">{{item.status}}</view>
+  </view>
+  <view wx:if="{{tasks.length === 0}}" class="card center empty">
+    <view class="small">暂无待办任务</view>
+  </view>
+
+  <!-- ⑥ 为你推荐（AI 学习建议）—— 点击进学情分析看完整建议 -->
+  <view class="section-title">为你推荐</view>
+  <view class="card row" bindtap="go" data-url="/pages/analytics/analytics">
+    <view class="icon-box">🎯</view>
+    <view>
+      <view class="small strong">{{recommend.title}}</view>
+      <view class="small muted mt8">{{recommend.desc}}</view>
+    </view>
+  </view>
+</view>

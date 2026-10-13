@@ -1,0 +1,160 @@
+/* 课堂签到 —— 课堂状态 / 签到方式 / 弹层 / 统计；.card/.btn/.badge/.progress 等见 app.wxss */
+.strong { font-weight: 600; }
+
+/* ① 课堂状态渐变卡 */
+.hero {
+  background: linear-gradient(135deg, var(--brand-600), var(--brand-700));
+  border: none;
+  color: #fff;
+}
+.hero-title { font-size: 30rpx; font-weight: 700; color: #fff; }
+.hero-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+}
+.hero-sub { color: var(--brand-100); }
+.hero-cells { gap: 16rpx; }
+.hero-cell {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 20rpx;
+  padding: 16rpx 20rpx;
+}
+.hero-strong { color: #fff; font-weight: 700; }
+
+/* ③ 签到方式列表（原型 .m-way） */
+.way-tip { margin-bottom: 16rpx; }
+.way {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx 8rpx;
+  border-top: 1rpx solid var(--border);
+}
+.way:first-of-type { border-top: none; }
+.way-off { opacity: 0.5; }
+.way-ic {
+  width: 84rpx;
+  height: 84rpx;
+  flex: none;
+  border-radius: 20rpx;
+  background: #effefb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+}
+.way-mid { flex: 1; min-width: 0; }
+.way-arrow { color: var(--ink-400); font-size: 36rpx; flex: none; }
+
+/* 签到成功卡 */
+.ok-card { display: flex; align-items: center; gap: 24rpx; border-color: var(--brand-100); background: var(--brand-50); }
+.ok-ring {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: var(--success);
+  font-size: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.ok-title { font-size: 32rpx; font-weight: 700; color: var(--brand-700); }
+
+/* 弹层（原型 .mask/.modal） */
+.mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal {
+  width: 86%;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+.modal-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx 12rpx;
+  font-size: 32rpx;
+}
+.modal-x { color: var(--ink-400); font-size: 32rpx; padding: 4rpx 8rpx; }
+.modal-b { padding: 16rpx 32rpx 8rpx; }
+.modal-f {
+  display: flex;
+  gap: 16rpx;
+  padding: 24rpx 32rpx 32rpx;
+}
+.modal-f .btn { flex: 1; }
+
+/* 定位签到：地理围栏占位（原型 .fence） */
+.fence {
+  height: 280rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #e0f2fe, #ecfeff);
+  border: 1rpx solid #bae6fd;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-600);
+}
+.fence-pin {
+  position: absolute;
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: 50% 50% 50% 0;
+  background: var(--error);
+  transform: rotate(-45deg);
+  box-shadow: 0 0 0 12rpx rgba(220, 38, 38, 0.18);
+}
+.fence-tip { position: relative; z-index: 2; }
+
+/* 拍照签到：取景框占位（原型 .cam） */
+.cam {
+  aspect-ratio: 4 / 3;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cbd5e1;
+}
+.cam-ring {
+  position: absolute;
+  width: 62%;
+  height: 78%;
+  border: 4rpx solid rgba(255, 255, 255, 0.45);
+  border-radius: 28rpx;
+}
+.cam-tip { position: relative; z-index: 2; text-align: center; font-size: 26rpx; }
+
+/* 数字口令输入 */
+.code-input {
+  font-family: Menlo, Consolas, monospace;
+  font-size: 40rpx;
+  letter-spacing: 16rpx;
+  text-align: center;
+}
+.mono { font-family: Menlo, Consolas, monospace; font-weight: 700; }
+
+/* 统计色 */
+.stat-ok { color: var(--success); }
+.stat-warn { color: var(--warning); }
+.stat-err { color: var(--error); }

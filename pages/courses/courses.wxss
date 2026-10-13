@@ -1,0 +1,13 @@
+/* 我的课程 —— course-card 等共用样式见 app.wxss */
+.page-courses { padding-top: 24rpx; }
+.head-bar { margin: 0 24rpx 16rpx; }
+.head-title { font-size: 32rpx; font-weight: 700; }
+.card-meta { color: var(--ink-500); font-size: 24rpx; }
+.card-more { margin-left: auto; color: var(--brand-600); font-weight: 600; }
+
+/* 顶部提示条 + 添加课程入口（原型：badge-info 提示与按钮同行） */
+.co-topbar { display: flex; align-items: center; gap: 20rpx; margin: 0 24rpx 24rpx; }
+.co-hint { flex: 1; text-align: center; font-size: 24rpx; }
+
+/* 学习进度条标签行 */
+.co-pro-label { margin-bottom: 6rpx; }

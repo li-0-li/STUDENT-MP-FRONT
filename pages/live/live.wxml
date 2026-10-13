@@ -1,0 +1,133 @@
+<!-- 课堂参与 —— 原型：ui-prototype/mp/app-live.html（UI 设计文档 7.11） -->
+<!-- 数据：表 3-13 enter / 3-14 signin / 3-15 interactions / 3-16 messages（REST 轮询） -->
+<!-- 投屏区与随堂测题面后端暂无对应接口，保留占位 UI（作答走 interactions vote） -->
+<view class="page">
+  <!-- ① 课堂状态卡 -->
+  <view class="card hero">
+    <view class="between">
+      <text class="hero-title">{{current.course}} · {{current.week}}</text>
+      <view class="hero-badge">🔴 上课中</view>
+    </view>
+    <view class="small hero-sub mt8">{{current.teacher}} · {{current.room}} · {{current.section}}</view>
+    <view class="row mt12 hero-cells">
+      <view class="hero-cell"><view class="small hero-sub">当前环节</view><view class="hero-strong">{{current.stage}}</view></view>
+      <view class="hero-cell"><view class="small hero-sub">在线</view><view class="hero-strong">{{current.online}}</view></view>
+    </view>
+  </view>
+
+  <!-- ② 老师实时投屏（投屏观看区） -->
+  <view class="section-title">老师实时投屏</view>
+  <view class="screen-card">
+    <!-- 视频占位画面（16:9 深色底，联调时替换为 live-player / 课件图） -->
+    <view class="screen-view">
+      <view class="screen-tags">
+        <view class="live-tag"><view class="live-dot"></view>LIVE</view>
+        <view class="screen-chip">{{screen.chapter}}</view>
+      </view>
+      <view class="screen-latency">延迟 {{screen.latency}}</view>
+      <view class="screen-center">
+        <block wx:if="{{screen.sharing}}">
+          <view class="screen-icon">🖥</view>
+          <view class="screen-strong">老师正在共享屏幕</view>
+          <view class="small screen-sub">同步演示 · PPT / 白板 / 实操</view>
+        </block>
+        <block wx:else>
+          <view class="screen-icon">📽</view>
+          <view class="screen-strong">老师暂未共享屏幕</view>
+          <view class="small screen-sub">共享开始后自动播放</view>
+        </block>
+      </view>
+    </view>
+    <!-- 投屏控制条 -->
+    <view class="screen-foot">
+      <view class="small screen-viewers">👥 {{screen.viewers}} 人正在观看</view>
+      <view class="btn btn-outline btn-sm" bindtap="screenTodo" data-act="full">⛶ 全屏</view>
+      <view class="btn btn-outline btn-sm" bindtap="screenTodo" data-act="audio">🔊 声音</view>
+    </view>
+  </view>
+
+  <!-- ③ 课堂签到 -->
+  <view class="card between">
+    <view class="row">
+      <view class="icon-box">📍</view>
+      <view>
+        <view class="small strong">课堂签到</view>
+        <view class="small muted mt4">{{signed ? '已签到 · ' + signedTime : '未签到 · 请尽快完成'}}</view>
+      </view>
+    </view>
+    <view wx:if="{{!signed}}" class="btn btn-primary btn-sm" bindtap="doSign">签到</view>
+    <view wx:else class="btn btn-outline btn-sm">已签到</view>
+  </view>
+
+  <!-- ④ 课堂互动 -->
+  <view class="section-title">课堂互动</view>
+  <view class="pilltabs act-tabs">
+    <view
+      wx:for="{{acts}}" wx:key="key"
+      class="pill {{actTab === item.key ? 'active' : ''}}"
+      bindtap="selectAct" data-key="{{item.key}}">{{item.label}}</view>
+  </view>
+
+  <!-- 弹幕 -->
+  <view wx:if="{{actTab === 'danmu'}}" class="mt12">
+    <view class="card danmu-list">
+      <view wx:for="{{danmus}}" wx:key="id" class="small danmu-item"><text class="danmu-name">{{item.name}}：</text>{{item.text}}</view>
+      <view wx:if="{{!loading && danmus.length === 0}}" class="small muted center">暂无弹幕，来抢个沙发～</view>
+    </view>
+    <view class="row danmu-foot">
+      <input class="input" value="{{danmuInput}}" bindinput="onDanmuInput" placeholder="发条弹幕参与讨论…（敏感词自动过滤）" />
+      <view class="btn btn-primary" bindtap="sendDanmu">发送</view>
+    </view>
+  </view>
+
+  <!-- 抢答 -->
+  <view wx:if="{{actTab === 'race'}}" class="card center act-holder">
+    <view class="strong">栈和队列的核心区别是什么？</view>
+    <view class="small muted mt8">老师发起抢答 · 第 1 名 +5 分，前 3 名 +3 分</view>
+    <view class="race-btn {{race.done ? 'race-done' : ''}}" bindtap="doRace">{{race.done ? race.rank : '抢 答'}}</view>
+    <view class="small muted mt8" wx:if="{{!race.done}}">点击按钮参与抢答</view>
+    <view class="small mt8" wx:else>抢答成功！<text class="race-score">+{{race.score}} 分</text>（{{race.rank}}，等待老师点名作答）</view>
+  </view>
+
+  <!-- 提问 -->
+  <view wx:if="{{actTab === 'qa'}}" class="mt12">
+    <view class="card">
+      <view class="field">
+        <text class="label">向老师提问</text>
+        <textarea class="input qa-input" value="{{qaInput}}" bindinput="onQaInput" maxlength="200" placeholder="描述你的问题，老师将在课上或课后解答"></textarea>
+      </view>
+      <view class="btn btn-primary btn-block" bindtap="sendQa">提交问题</view>
+    </view>
+    <view wx:if="{{!loading && qaList.length === 0}}" class="card center">
+      <view class="small muted">还没有提问，大胆说出你的疑惑</view>
+    </view>
+    <view wx:for="{{qaList}}" wx:key="index" class="card">
+      <view class="between">
+        <text class="small strong">{{item.q}}</text>
+        <view class="badge {{item.badge}}">{{item.status}}</view>
+      </view>
+      <view class="small muted mt8">{{item.a}}</view>
+    </view>
+  </view>
+
+  <!-- 课堂测试 -->
+  <view wx:if="{{actTab === 'quiz'}}" class="card">
+    <view class="between">
+      <text class="small strong">随堂测 · 栈与队列</text>
+      <view class="badge badge-warning">⏱ {{quiz.timeLeft}}</view>
+    </view>
+    <view class="divider"></view>
+    <view class="small strong">{{quiz.question}}</view>
+    <view class="quiz-options">
+      <view
+        wx:for="{{quiz.options}}" wx:key="index"
+        class="quiz-opt {{quiz.picked === index ? 'picked' : ''}}"
+        bindtap="pickOption" data-i="{{index}}">
+        <view class="quiz-radio {{quiz.picked === index ? 'on' : ''}}"></view>
+        <text class="small">{{item}}</text>
+      </view>
+    </view>
+    <view wx:if="{{quiz.submitted}}" class="small muted mt8">已提交：{{quiz.options[quiz.picked]}}，等待老师收卷</view>
+    <view wx:else class="btn btn-primary btn-block mt12" bindtap="submitQuiz">提交作答</view>
+  </view>
+</view>

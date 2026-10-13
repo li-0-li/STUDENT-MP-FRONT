@@ -1,0 +1,176 @@
+<!-- 我的学情 —— 原型：ui-prototype/mp/app-analytics.html -->
+<!-- 数据：profiles/me + practice/recommend + alerts + assignments + users/me（真实接口） -->
+<view class="page">
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="card center empty">
+    <view class="small">学情数据加载中…</view>
+  </view>
+
+  <!-- 学习预警（alerts 中本人的记录） -->
+  <block wx:if="{{alerts.length > 0}}">
+    <view class="section-title">学习预警</view>
+    <view class="card" wx:for="{{alerts}}" wx:key="alertId">
+      <view class="between">
+        <view class="badge {{item.badge}}">{{item.levelText}}</view>
+        <text class="small muted">{{item.createdAt}}</text>
+      </view>
+      <view class="small mt8">{{item.reason}}</view>
+    </view>
+  </block>
+
+  <!-- 顶部统计卡（原型 g3：平均分 / 作业完成 / 班级排名） -->
+  <view class="stat-grid">
+    <view class="card" wx:for="{{stats}}" wx:key="label">
+      <view class="stat-num {{item.highlight ? 'hl' : ''}}">{{item.value}}</view>
+      <view class="small muted">{{item.label}}</view>
+    </view>
+  </view>
+
+  <!-- 知识点掌握度雷达图（核心，canvas 2d 绘制） -->
+  <view class="card">
+    <text class="card-title">知识点掌握度</text>
+    <view wx:if="{{mastery.length > 0}}" class="radar-wrap">
+      <canvas id="radar" type="2d" class="radar-canvas"></canvas>
+    </view>
+    <view wx:else class="center empty">
+      <view class="small">暂无学情数据</view>
+    </view>
+    <!-- 雷达图数据标注（弱项高亮） -->
+    <view class="mastery-item" wx:for="{{mastery}}" wx:key="name">
+      <view class="between mb-bar">
+        <text class="mastery-name {{item.weak ? 'weak' : ''}}">{{item.name}}</text>
+        <text class="small muted">{{item.percent}}%</text>
+      </view>
+      <view class="progress">
+        <view class="progress-fill {{item.weak ? 'fill-warn' : ''}}" style="width: {{item.percent}}%;"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 近 6 次作业成绩（原型折线图，canvas 2d 绘制） -->
+  <view class="card">
+    <text class="card-title">近 6 次作业成绩</text>
+    <view wx:if="{{homework.length > 0}}" class="line-wrap">
+      <canvas id="trend" type="2d" class="trend-canvas"></canvas>
+    </view>
+    <view wx:else class="center empty">
+      <view class="small">暂无已批改的作业成绩</view>
+    </view>
+  </view>
+
+  <!-- AI 学习建议 + 自适应推荐练习入口（表 3-19） -->
+  <view class="card advice-card">
+    <view class="row advice-row">
+      <view class="icon-box">✦</view>
+      <view class="small advice-text">
+        <text class="advice-title">AI 学习建议</text>
+        <text>{{adviceText}}</text>
+      </view>
+    </view>
+    <button class="btn btn-primary btn-block mt12 btn-slim" bindtap="startPractice">开始推荐练习</button>
+  </view>
+
+  <!-- 每门课的学习进度 / 掌握度（逐课 profiles/me） -->
+  <block wx:if="{{courses.length > 0}}">
+    <view class="section-title">课程学习进度</view>
+    <view class="card" wx:for="{{courses}}" wx:key="name">
+      <view class="between">
+        <view class="course-name">{{item.name}}</view>
+        <text class="small muted">{{item.mastery}}</text>
+      </view>
+      <view class="progress mt8">
+        <view class="progress-fill" style="width: {{item.progress}}%;"></view>
+      </view>
+      <view class="small muted mt4">{{item.progressText}}</view>
+    </view>
+  </block>
+
+  <!-- 错题本入口 -->
+  <view class="list-item between" bindtap="goWrongBook">
+    <view class="row">
+      <view class="icon-box">✎</view>
+      <view>
+        <view class="wb-title">我的错题本</view>
+        <view class="small muted">按课程归类，支持重做与收藏</view>
+      </view>
+    </view>
+    <text class="list-link">›</text>
+  </view>
+
+</view>
+
+<!-- 错题本弹层（表 3-8 关联：GET /v1/wrong-records，按课程归类） -->
+<view class="wb-mask" wx:if="{{wrongOpen}}" bindtap="closeWrongBook">
+  <view class="wb-sheet" catchtap="noop">
+    <view class="wb-sheet-header">
+      <text class="wb-sheet-title">我的错题本</text>
+      <text class="wb-sheet-close" bindtap="closeWrongBook">✕</text>
+    </view>
+    <view wx:if="{{wrongLoading}}" class="wb-sheet-loading">加载中…</view>
+    <scroll-view wx:else scroll-y class="wb-sheet-body">
+      <view wx:if="{{!wrongGroups.length}}" class="wb-sheet-loading">暂无错题记录，继续保持！</view>
+      <block wx:for="{{wrongGroups}}" wx:key="courseId" wx:for-item="group">
+        <view class="wb-group-title">{{group.courseName}}（{{group.items.length}} 题）</view>
+        <view wx:for="{{group.items}}" wx:key="errorId" wx:for-item="q" class="wb-q-item">
+          <view class="wb-q-head">
+            <text class="wb-q-type {{q.mastered ? 'ok' : ''}}">{{q.mastered ? '已掌握' : '未掌握'}}</text>
+            <text class="wb-q-count">错 {{q.wrongCount}} 次 · {{q.lastWrongTime}}</text>
+          </view>
+          <view class="wb-q-content">{{q.content}}</view>
+          <view wx:if="{{q.analysis}}" class="wb-q-analysis">解析：{{q.analysis}}</view>
+        </view>
+      </block>
+    </scroll-view>
+  </view>
+</view>
+
+<!-- 推荐练习弹层（表 3-19 出题 → 作答 → 表 3-26 提交判分回流学情） -->
+<view class="wb-mask" wx:if="{{practiceOpen}}" bindtap="closePractice">
+  <view class="wb-sheet" catchtap="noop">
+    <view class="wb-sheet-header">
+      <text class="wb-sheet-title">AI 推荐练习</text>
+      <text class="wb-sheet-close" bindtap="closePractice">✕</text>
+    </view>
+    <view wx:if="{{practiceLoading}}" class="wb-sheet-loading">出题中…</view>
+    <scroll-view wx:else scroll-y class="wb-sheet-body">
+      <view wx:if="{{practiceResult}}" class="pr-result">
+        ✓ 本次练习 {{practiceResult.correct}} / {{practiceResult.total}} 题正确，掌握度已更新
+      </view>
+      <block wx:for="{{practiceQuestions}}" wx:key="questionId" wx:for-item="q" wx:for-index="qi">
+        <view class="pr-q-item">
+          <view class="wb-q-head">
+            <text class="wb-q-type">{{q.typeText}}</text>
+            <text class="wb-q-count">第 {{qi + 1}} 题</text>
+          </view>
+          <view class="wb-q-content">{{q.content}}</view>
+          <block wx:if="{{q.qtype !== 'blank'}}">
+            <view
+              wx:for="{{q.options}}"
+              wx:key="key"
+              wx:for-item="opt"
+              class="pr-opt {{q.selected === opt.key || (q.qtype === 'multi' && q.selected.indexOf(opt.key) >= 0) ? 'on' : ''}}"
+              bindtap="pickPractice"
+              data-q="{{qi}}"
+              data-key="{{opt.key}}"
+            >
+              <text class="pr-opt-key">{{opt.key}}</text>
+              <text class="pr-opt-text">{{opt.text}}</text>
+            </view>
+          </block>
+          <input
+            wx:else
+            class="pr-blank"
+            placeholder="输入你的答案"
+            value="{{q.selected}}"
+            bindinput="onBlankAnswer"
+            data-q="{{qi}}"
+            disabled="{{!!practiceResult}}"
+          />
+        </view>
+      </block>
+      <button wx:if="{{!practiceResult}}" class="pr-submit" bindtap="submitPractice">提交答案</button>
+      <button wx:else class="pr-submit" bindtap="closePractice">完成</button>
+    </scroll-view>
+  </view>
+</view>

@@ -1,0 +1,44 @@
+<!-- 添加课程 —— 原型：ui-prototype/mp/app-course-add.html -->
+<!-- 数据：表 3-3 POST /api/v1/courses/{courseId}/enroll（课程码/二维码/公开课三种方式） -->
+<view class="page-course-add">
+
+  <!-- 双模式切换 tab（UI 设计 7.5：课程码输入 / 公开课列表） -->
+  <view class="pilltabs ca-tabs">
+    <view wx:for="{{tabs}}" wx:key="key"
+          class="pill {{item.active ? 'active' : ''}} ca-tab"
+          bindtap="switchMode" data-key="{{item.key}}">{{item.label}}</view>
+  </view>
+
+  <!-- 模式一：课程码加入 -->
+  <block wx:if="{{mode === 'code'}}">
+    <view class="card">
+      <view class="row">
+        <text class="ca-title">课程码加入</text>
+        <view class="btn btn-outline btn-sm" bindtap="scanQr">📷 扫码加入</view>
+      </view>
+      <view class="row mt12" style="gap:16rpx">
+        <input class="input ca-code-input" maxlength="6" placeholder="输入 6 位课程码，如 JSOEKD" value="{{code}}" bindinput="onCodeInput" />
+        <view class="btn btn-primary" style="flex:none" bindtap="joinByCode">加入</view>
+      </view>
+      <view class="small muted mt8">课程码为 6 位大写字母，由任课教师在课程管理中生成并发送给你；也可直接扫描教师出示的课程二维码。</view>
+    </view>
+  </block>
+
+  <!-- 模式二：公开课列表 -->
+  <block wx:else>
+    <view class="section-title">公开课程</view>
+    <view wx:for="{{publicCourses}}" wx:key="name" class="card">
+      <view class="between">
+        <view class="row">
+          <view class="icon-box">📖</view>
+          <view class="pub-brief">
+            <text class="pub-name">{{item.name}}</text>
+            <view class="small muted mt4">{{item.teacher}} · {{item.school}} · {{item.count}} 人在学</view>
+          </view>
+        </view>
+        <view class="btn btn-primary btn-sm" style="flex:none" bindtap="joinPublic" data-index="{{index}}">加入</view>
+      </view>
+    </view>
+  </block>
+
+</view>

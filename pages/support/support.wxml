@@ -1,0 +1,132 @@
+<!-- 客服与帮助 —— 原型：ui-prototype/mp/app-support.html（文档 7.17：FAQ 搜索 + 意见反馈） -->
+<!-- 数据：表 3-20 咨询提交 / 表 3-23 会话列表 / 表 3-24 消息查询 / 表 3-25 发送客服消息 -->
+<view class="page">
+  <!-- 帮助头卡 -->
+  <view class="card row">
+    <view class="icon-box">🎧</view>
+    <view class="support-mid">
+      <view class="strong">需要帮助？</view>
+      <view class="small muted mt4">在线客服 · 电话客服 · 常见问题解答</view>
+    </view>
+    <view class="badge badge-success">在线</view>
+  </view>
+
+  <!-- 联系方式 -->
+  <view class="section-title">联系方式</view>
+  <view class="card between" bindtap="contactStaff">
+    <view class="row">
+      <view class="icon-box">💬</view>
+      <view>
+        <view class="small strong">在线客服</view>
+        <view class="small muted mt4">智能助教先答，必要时转人工</view>
+      </view>
+    </view>
+    <text class="go-arrow">›</text>
+  </view>
+  <view class="card between" bindtap="callPhone">
+    <view class="row">
+      <view class="icon-box">📞</view>
+      <view>
+        <view class="small strong">电话客服</view>
+        <view class="small muted mt4">0851-88886666</view>
+      </view>
+    </view>
+    <text class="go-arrow">›</text>
+  </view>
+  <view class="card between" bindtap="openFeedback">
+    <view class="row">
+      <view class="icon-box">📝</view>
+      <view>
+        <view class="small strong">意见反馈</view>
+        <view class="small muted mt4">问题或建议直达产品团队</view>
+      </view>
+    </view>
+    <text class="go-arrow">›</text>
+  </view>
+
+  <!-- 服务信息 -->
+  <view class="section-title">服务信息</view>
+  <view class="card">
+    <view class="srow"><text class="k">在线时间</text><text>工作日 9:00–18:00</text></view>
+    <view class="srow"><text class="k">电话</text><text>0851-88886666</text></view>
+    <view class="srow"><text class="k">响应时效</text><text>在线客服 30 分钟内</text></view>
+    <view class="srow"><text class="k">当前状态</text><view class="badge badge-success">在线</view></view>
+    <view class="small muted srow-tip">非工作时间提交的问题会保留在会话中，客服上线后按提交顺序回复。</view>
+  </view>
+
+  <!-- 常见问题：顶部搜索 + 手风琴 -->
+  <view class="section-title">常见问题</view>
+  <view class="card">
+    <view class="faq-search">
+      <text class="faq-search-icon">🔍</text>
+      <input class="faq-search-input" placeholder="搜索常见问题，如：添加课程" value="{{keyword}}" bindinput="onSearch" confirm-type="search" bindconfirm="onSearch" />
+      <text wx:if="{{keyword}}" class="faq-search-clear" bindtap="clearSearch">✕</text>
+    </view>
+
+    <view wx:for="{{shownFaqs}}" wx:key="q" class="faq {{item.open ? 'open' : ''}}">
+      <view class="faq-q" bindtap="toggleFaq" data-i="{{index}}">
+        <text class="faq-q-icon">❓</text>
+        <text class="faq-q-text">{{item.q}}</text>
+        <text class="faq-arw {{item.open ? 'on' : ''}}">›</text>
+      </view>
+      <view class="faq-a">{{item.a}}</view>
+    </view>
+
+    <view wx:if="{{shownFaqs.length === 0}}" class="empty">
+      <view class="empty-icon">🔍</view>
+      <view class="small">未找到相关问题，换个关键词或联系在线客服</view>
+    </view>
+  </view>
+
+  <!-- 可咨询范围 -->
+  <view class="section-title">可咨询的问题范围</view>
+  <view class="card">
+    <view class="tag-box">
+      <view wx:for="{{tags}}" wx:key="*this" class="tag {{index === tags.length - 1 ? 'gray' : ''}}">{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 联系人工客服 -->
+  <view class="support-foot">
+    <view class="btn btn-primary btn-block" bindtap="contactStaff">联系人工客服</view>
+  </view>
+</view>
+
+<!-- 意见反馈弹层（问题描述 + 联系方式 + 提交） -->
+<view class="fb-mask" wx:if="{{feedbackOpen}}" bindtap="closeFeedback"></view>
+<view class="fb-panel" wx:if="{{feedbackOpen}}">
+  <view class="between fb-head">
+    <text class="fb-title">意见反馈</text>
+    <text class="fb-close" bindtap="closeFeedback">✕</text>
+  </view>
+  <view class="field">
+    <text class="label">问题描述</text>
+    <textarea class="input fb-textarea" placeholder="请描述遇到的问题或建议（不少于 5 个字）" value="{{fbContent}}" bindinput="onFbContent" maxlength="500" />
+  </view>
+  <view class="field">
+    <text class="label">联系方式（选填）</text>
+    <input class="input" placeholder="手机号 / 邮箱，便于我们回复" value="{{fbContact}}" bindinput="onFbContact" />
+  </view>
+  <button class="btn btn-primary btn-block" bindtap="submitFeedback">提 交</button>
+</view>
+
+<!-- 在线客服会话浮层（表 3-20/3-23~3-25：智能助教先答，必要时转人工） -->
+<view wx:if="{{chatOpen}}" class="chat-page">
+  <view class="chat-head">
+    <view class="chat-back" bindtap="closeChat">‹</view>
+    <view class="chat-head-mid">
+      <view class="chat-head-name">{{chat.name}}</view>
+      <view class="small muted">{{chat.sub}}</view>
+    </view>
+  </view>
+  <scroll-view class="chat-body" scroll-y scroll-top="{{chatScrollTop}}">
+    <view class="chat-bub-sys" wx:if="{{chat.msgs.length === 0}}">描述你遇到的问题，智能助教将为你解答</view>
+    <view wx:for="{{chat.msgs}}" wx:key="index" class="chat-msg {{item.from === 'me' ? 'u' : 'a'}}">
+      <view class="chat-bub">{{item.text}}<view class="chat-tm">{{item.time}}</view></view>
+    </view>
+  </scroll-view>
+  <view class="chat-foot">
+    <input class="input" value="{{chatInput}}" bindinput="onChatInput" placeholder="描述你的问题…" confirm-type="send" bindconfirm="sendChat" />
+    <view class="btn btn-primary btn-sm" bindtap="sendChat">发送</view>
+  </view>
+</view>

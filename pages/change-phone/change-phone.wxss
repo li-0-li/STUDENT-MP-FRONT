@@ -1,0 +1,8 @@
+/* 绑定手机号页 —— 复用 app.wxss 的 .card/.field/.set-row/.badge，仅写本页私有样式 */
+.tip-card { background: var(--brand-50); border-color: var(--brand-100); }
+.tip-title { color: var(--brand-700); font-weight: 600; }
+.phone-num { font-size: 34rpx; font-weight: 700; }
+.flex1 { flex: 1; }
+.code-btn { flex: none; white-space: nowrap; }
+.field-tip { margin-top: 6rpx; }
+.link { color: var(--brand-600); font-weight: 600; }

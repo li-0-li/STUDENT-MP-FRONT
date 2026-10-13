@@ -1,0 +1,117 @@
+<!-- 注册账号 —— 原型：ui-prototype/mp/register.html（分步表单：角色 → 资料 → 密码/院系 → 验证码校验） -->
+<view class="page">
+  <view class="card">
+    <text class="h2">注册账号</text>
+    <view class="small muted mt8">通过分步表单完成注册；管理员账号由系统管理员在后台新增，不开放注册。</view>
+  </view>
+
+  <!-- 步骤条 -->
+  <view class="row step-bar">
+    <view class="badge {{step >= 1 ? 'badge-info' : 'badge-neutral'}}">1 角色</view>
+    <view class="badge {{step >= 2 ? 'badge-info' : 'badge-neutral'}}">2 资料</view>
+    <view class="badge {{step >= 3 ? 'badge-info' : 'badge-neutral'}}">3 密码/院系</view>
+    <view class="badge {{step >= 4 ? 'badge-info' : 'badge-neutral'}}">4 验证</view>
+  </view>
+
+  <!-- 第 1 步：注册身份 -->
+  <view class="card" wx:if="{{step === 1}}">
+    <view class="field">
+      <text class="label">注册身份</text>
+      <view class="m-roles">
+        <view class="m-role {{role === 'teacher' ? 'active' : ''}}" bindtap="pickRole" data-role="teacher">
+          <view class="mr-ic">👨‍🏫</view>
+          <text>教师</text>
+          <text class="rd">审核后开通</text>
+        </view>
+        <view class="m-role {{role === 'student' ? 'active' : ''}}" bindtap="pickRole" data-role="student">
+          <view class="mr-ic">🎓</view>
+          <text>学生</text>
+          <text class="rd">注册即用</text>
+        </view>
+      </view>
+      <view class="note">
+        <text>ℹ️ 管理员账号不开放自助注册，需由系统管理员在「账号管理 → 新增账号」中创建并分配权限。</text>
+      </view>
+    </view>
+    <button class="btn btn-primary btn-block mt12" bindtap="nextStep">下一步</button>
+  </view>
+
+  <!-- 第 2 步：姓名 / 学号 / 手机号 / 邮箱 -->
+  <view class="card" wx:if="{{step === 2}}">
+    <view class="field">
+      <text class="label">{{role === 'teacher' ? '工号' : '学号'}}</text>
+      <input class="input" placeholder="{{role === 'teacher' ? '请输入工号' : '请输入学号'}}" value="{{userNo}}" bindinput="onNo" />
+    </view>
+    <view class="field">
+      <text class="label">姓名</text>
+      <input class="input" placeholder="请输入真实姓名" value="{{name}}" bindinput="onName" />
+    </view>
+    <view class="field">
+      <text class="label">手机号</text>
+      <input class="input" type="number" maxlength="11" placeholder="用于登录与找回密码" value="{{phone}}" bindinput="onPhone" />
+    </view>
+    <view class="field">
+      <text class="label">邮箱（选填，绑定后可用邮箱验证码登录）</text>
+      <input class="input" placeholder="例：name@itap.edu.cn" value="{{mail}}" bindinput="onMail" />
+    </view>
+    <view class="row btn-row">
+      <button class="btn btn-outline btn-block flex1" bindtap="prevStep">上一步</button>
+      <button class="btn btn-primary btn-block flex1" bindtap="nextStep">下一步</button>
+    </view>
+  </view>
+
+  <!-- 第 3 步：密码 / 学校院系 -->
+  <view class="card" wx:if="{{step === 3}}">
+    <view class="field">
+      <text class="label">设置密码</text>
+      <input class="input" password placeholder="8 位以上，含字母与数字" value="{{password}}" bindinput="onPwd" />
+    </view>
+    <view class="field">
+      <text class="label">确认密码</text>
+      <input class="input" password placeholder="再次输入密码" value="{{password2}}" bindinput="onPwd2" />
+    </view>
+    <view class="field">
+      <text class="label">所属院系</text>
+      <picker mode="selector" range="{{departments}}" bindchange="onDept">
+        <view class="input picker-cell">{{dept || '请选择所属院系'}}<text class="chevron">›</text></view>
+      </picker>
+    </view>
+    <view class="field">
+      <text class="label">{{role === 'teacher' ? '职称' : '专业 / 班级'}}</text>
+      <picker mode="selector" range="{{extOptions}}" bindchange="onExt">
+        <view class="input picker-cell">{{ext || ('请选择' + (role === 'teacher' ? '职称' : '专业 / 班级'))}}<text class="chevron">›</text></view>
+      </picker>
+    </view>
+    <view class="row btn-row">
+      <button class="btn btn-outline btn-block flex1" bindtap="prevStep">上一步</button>
+      <button class="btn btn-primary btn-block flex1" bindtap="nextStep">下一步</button>
+    </view>
+  </view>
+
+  <!-- 第 4 步：验证码校验 + 提交 -->
+  <view class="card" wx:if="{{step === 4}}">
+    <view class="field">
+      <text class="label">短信验证码</text>
+      <view class="row">
+        <input class="input code-input" type="number" maxlength="6" placeholder="6 位验证码" value="{{smsCode}}" bindinput="onSmsCode" />
+        <button class="btn btn-outline code-btn" size="mini" bindtap="sendCode" disabled="{{counting}}">
+          {{counting ? countdown + ' 秒后重发' : '获取验证码'}}
+        </button>
+      </view>
+      <view class="small muted field-tip">已向 {{phoneMask}} 发送短信；演示环境验证码固定为 123456</view>
+    </view>
+
+    <view class="row agree-row" bindtap="toggleAgree">
+      <icon type="success" size="16" color="{{agree ? '#0d9488' : '#cbd5e1'}}" />
+      <text class="small muted">我已阅读并同意《平台服务协议》与《隐私政策》</text>
+    </view>
+
+    <view class="row btn-row">
+      <button class="btn btn-outline btn-block flex1" bindtap="prevStep">上一步</button>
+      <button class="btn btn-primary btn-block flex1" bindtap="doRegister">注 册</button>
+    </view>
+    <view class="center mt16">
+      <text class="small link" bindtap="goLogin">已有账号？返回登录</text>
+    </view>
+  </view>
+</view>

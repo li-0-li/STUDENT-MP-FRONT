@@ -1,0 +1,77 @@
+<!-- 消息通知 —— 原型：ui-prototype/mp/app-messages.html（UI 设计文档 7.14） -->
+<!-- 聚合系统通知 + 师生会话；数据：表 2-10/2-11/2-12 会话消息 + 表 2-13 通知 -->
+<view class="page">
+  <!-- 顶部切换：通知 / 会话 -->
+  <view class="pilltabs top-tabs">
+    <view class="pill {{tab === 'notice' ? 'active' : ''}}" bindtap="selectTab" data-key="notice">通知</view>
+    <view class="pill {{tab === 'chat' ? 'active' : ''}}" bindtap="selectTab" data-key="chat">会话</view>
+  </view>
+
+  <!-- ① 系统通知列表 -->
+  <block wx:if="{{tab === 'notice'}}">
+    <view wx:for="{{notices}}" wx:key="id" class="card msg" bindtap="openNotice" bindlongpress="deleteNotice" data-id="{{item.id}}">
+      <view class="msg-av msg-av-sys">📢
+        <view wx:if="{{item.unread}}" class="msg-dot"></view>
+      </view>
+      <view class="msg-mid">
+        <view class="between">
+          <text class="msg-name">{{item.title}}</text>
+          <text class="small muted">{{item.time}}</text>
+        </view>
+        <view class="msg-text2 small">{{item.text}}</view>
+      </view>
+    </view>
+    <view wx:if="{{loading}}" class="center muted small msg-end">加载中…</view>
+    <view wx:if="{{!loading && notices.length === 0}}" class="empty">
+      <view class="empty-icon">📭</view>
+      <view class="small">暂无系统通知</view>
+    </view>
+  </block>
+
+  <!-- ② 师生会话列表 -->
+  <block wx:if="{{tab === 'chat'}}">
+    <view wx:for="{{chats}}" wx:key="id" class="conv" bindtap="openChat" bindlongpress="deleteChat" data-id="{{item.id}}">
+      <view class="msg-av" style="background:{{item.color}}">{{item.initial}}
+        <view wx:if="{{item.unread}}" class="msg-dot msg-dot-num">{{item.unread > 9 ? '9+' : item.unread}}</view>
+      </view>
+      <view class="msg-mid">
+        <view class="between">
+          <text class="msg-name msg-name-ellipsis">{{item.name}}</text>
+          <text class="small muted conv-time">{{item.time}}</text>
+        </view>
+        <view class="conv-last small">{{item.last}}</view>
+      </view>
+    </view>
+    <view wx:if="{{!loading && chats.length === 0}}" class="empty">
+      <view class="empty-icon">💬</view>
+      <view class="small">暂无会话，点右下角 + 发起对话</view>
+    </view>
+  </block>
+
+  <view class="center muted small msg-end">— 以上为最近消息（长按可删除）—</view>
+
+  <!-- 发起新对话（从「我学的课」选任课教师 → 新增会话） -->
+  <view wx:if="{{tab === 'chat' && !chatOpen}}" class="fab" bindtap="askTeacher">＋</view>
+
+  <!-- 聊天详情浮层（表 2-11/2-12 会话消息） -->
+  <view wx:if="{{chatOpen}}" class="chat-page">
+    <view class="chat-head">
+      <view class="chat-back" bindtap="closeChat">‹</view>
+      <view class="chat-head-mid">
+        <view class="chat-head-name">{{chat.name}}</view>
+        <view class="small muted">{{chat.sub}}</view>
+      </view>
+    </view>
+    <scroll-view class="chat-body" scroll-y scroll-into-view="{{chatScrollInto}}">
+      <view class="chat-bub-sys" wx:if="{{chat.msgs.length === 0}}">会话已建立，发送第一条消息吧</view>
+      <view wx:for="{{chat.msgs}}" wx:key="index" class="chat-msg {{item.from === 'me' ? 'u' : 'a'}}">
+        <view class="chat-bub">{{item.text}}<view class="chat-tm">{{item.time}}</view></view>
+      </view>
+      <view id="m-bottom"></view>
+    </scroll-view>
+    <view class="chat-foot">
+      <input class="input" value="{{chatInput}}" bindinput="onChatInput" placeholder="输入消息…" confirm-type="send" bindconfirm="sendChat" />
+      <view class="btn btn-primary btn-sm" bindtap="sendChat">发送</view>
+    </view>
+  </view>
+</view>

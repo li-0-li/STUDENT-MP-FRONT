@@ -1,0 +1,51 @@
+<!-- 修改密码 —— 原型：ui-prototype/mp/app-change-pwd.html（强度提示 + 一致性校验 + 登录设备管理） -->
+<view class="page">
+  <!-- 温馨提示 -->
+  <view class="card tip-card">
+    <text class="small tip-title">温馨提示</text>
+    <view class="small muted mt8">为保障账号安全，请使用 8 位以上、含字母与数字的组合密码，建议不要与其他平台相同。</view>
+  </view>
+
+  <view class="section-title">修改密码</view>
+  <view class="card">
+    <view class="field">
+      <text class="label">原密码</text>
+      <view class="row">
+        <input class="input flex1" password="{{!showOld}}" placeholder="请输入原密码" value="{{oldPwd}}" bindinput="onOld" />
+        <button class="btn btn-outline btn-sm eye-btn" size="mini" bindtap="togOld">{{showOld ? '隐藏' : '显示'}}</button>
+      </view>
+    </view>
+    <view class="field">
+      <text class="label">新密码</text>
+      <view class="row">
+        <input class="input flex1" password="{{!showNew}}" placeholder="8 位以上，含字母与数字" value="{{newPwd}}" bindinput="onNew" />
+        <button class="btn btn-outline btn-sm eye-btn" size="mini" bindtap="togNew">{{showNew ? '隐藏' : '显示'}}</button>
+      </view>
+      <view class="small strength" style="color: {{strength.color}};">{{strength.text}}</view>
+    </view>
+    <view class="field">
+      <text class="label">确认新密码</text>
+      <view class="row">
+        <input class="input flex1" password="{{!showNew2}}" placeholder="再次输入新密码" value="{{newPwd2}}" bindinput="onNew2" />
+        <button class="btn btn-outline btn-sm eye-btn" size="mini" bindtap="togNew2">{{showNew2 ? '隐藏' : '显示'}}</button>
+      </view>
+      <view class="small match-tip {{matchTip.cls}}">{{matchTip.text}}</view>
+    </view>
+
+    <button class="btn btn-primary btn-block mt12" bindtap="save">确认修改</button>
+    <view class="center mt12">
+      <text class="small link" bindtap="goForgot">忘记原密码？通过短信验证重置</text>
+    </view>
+  </view>
+
+  <!-- 登录设备 -->
+  <view class="section-title">登录设备</view>
+  <view class="set-row" wx:for="{{devices}}" wx:key="name">
+    <view class="row">
+      <text class="dev-icon">{{item.icon}}</text>
+      <text>{{item.name}} · {{item.place}} · {{item.time}}</text>
+    </view>
+    <view wx:if="{{item.current}}" class="badge badge-success">本机</view>
+    <button wx:else class="btn btn-outline btn-sm offline-btn" size="mini" bindtap="offline" data-i="{{index}}">下线</button>
+  </view>
+</view>

@@ -1,0 +1,113 @@
+<!-- AI 答疑 —— 原型：ui-prototype/mp/app-ai.html -->
+<!-- 数据：qa/ask + qa/{qaId}/feedback + courses + users/me（真实接口） -->
+<view class="page chat-wrap">
+  <!-- 知识库范围提示 + 课程知识库选择 / 历史会话 / 清空会话 -->
+  <view class="kb-bar">
+    <picker
+      class="kb-picker"
+      mode="selector"
+      range="{{kbNames}}"
+      value="{{kbIndex}}"
+      bindchange="onKbChange"
+    >
+      <view class="kb-chip">
+        <text class="small">📚 {{kbName}}</text>
+        <text class="kb-caret">▾</text>
+      </view>
+    </picker>
+    <view class="kb-actions">
+      <text class="kb-act" bindtap="goHistory">历史会话</text>
+      <text class="kb-act" bindtap="clearSession">清空会话</text>
+    </view>
+  </view>
+  <view class="kb-tip small muted">知识库范围：{{kbName}} · 回答仅基于课程资源生成</view>
+
+  <!-- 消息列表 -->
+  <scroll-view class="chat-scroll" scroll-y scroll-into-view="{{scrollIntoView}}" scroll-with-animation>
+    <view class="chat-list">
+      <view
+        wx:for="{{messages}}"
+        wx:key="index"
+        id="msg-{{index}}"
+        class="chat-msg {{item.role === 'user' ? 'u' : 'a'}}"
+      >
+        <!-- 用户头像 -->
+        <view wx:if="{{item.role === 'user'}}" class="avatar avatar-sm">{{avatarChar}}</view>
+        <!-- AI 头像 -->
+        <view wx:else class="icon-box icon-sm">✦</view>
+
+        <view class="chat-bub">
+          <!-- 思考中占位 -->
+          <block wx:if="{{item.typing}}">
+            <view class="typing">
+              <view class="dot"></view><view class="dot"></view><view class="dot"></view>
+            </view>
+            <text class="small muted">思考中…（AI 回答可能需要一点时间）</text>
+          </block>
+
+          <!-- 请求失败的提示气泡 -->
+          <block wx:elif="{{item.error}}">
+            <text class="small">{{item.text}}</text>
+          </block>
+
+          <!-- 置信度不足的降级回复 -->
+          <block wx:elif="{{item.degrade}}">
+            <text>{{item.text}}</text>
+            <view class="deg">
+              最高匹配度 {{item.scorePercent}}%，低于可信阈值 60%。平台约定 AI 不做无依据生成，建议换种说法再问，或在「客服」提交给任课教师。
+            </view>
+          </block>
+
+          <!-- 正常回复 + 引用来源 -->
+          <block wx:else>
+            <text>{{item.text}}</text>
+            <view wx:if="{{item.refs}}" class="chat-ref">
+              <text class="ref-title">引用来源</text>
+              <text>{{item.refs}}</text>
+            </view>
+          </block>
+        </view>
+
+        <!-- 对 AI 回答的反馈（点赞 / 点踩，表 3-10） -->
+        <view wx:if="{{item.role === 'ai' && item.qaId}}" class="fb-row">
+          <text
+            class="fb-btn {{item.feedback === 'useful' ? 'on' : ''}}"
+            data-idx="{{index}}" data-type="useful" catchtap="onFeedback"
+          >👍 有用</text>
+          <text
+            class="fb-btn {{item.feedback === 'useless' ? 'on' : ''}}"
+            data-idx="{{index}}" data-type="useless" catchtap="onFeedback"
+          >👎 没用</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 底部输入区（固定） -->
+  <view class="chat-foot">
+    <input
+      class="input input-round"
+      value="{{inputValue}}"
+      placeholder="基于课程知识库提问…"
+      confirm-type="send"
+      bindinput="onInput"
+      bindconfirm="onConfirm"
+    />
+    <button class="btn btn-primary btn-round" bindtap="onSend">发送</button>
+  </view>
+
+  <!-- 快捷问题 -->
+  <view class="quick-wrap">
+    <scroll-view class="quick-scroll" scroll-x>
+      <view class="quick-row">
+        <view
+          wx:for="{{quick}}"
+          wx:key="*this"
+          class="quick-item"
+          data-q="{{item}}"
+          bindtap="onTapQuick"
+        >{{item}}</view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

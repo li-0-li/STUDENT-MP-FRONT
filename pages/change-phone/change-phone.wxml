@@ -1,0 +1,51 @@
+<!-- 绑定手机号 —— 原型：ui-prototype/mp/app-change-phone.html -->
+<view class="page">
+  <!-- 当前绑定 -->
+  <view class="card tip-card">
+    <text class="small tip-title">当前绑定</text>
+    <view class="between mt8">
+      <text class="phone-num">📱 {{currentPhone}}</text>
+      <view class="badge badge-success">已验证</view>
+    </view>
+    <view class="small muted mt4">用于登录、找回密码、接收作业 / 课堂通知。</view>
+  </view>
+
+  <view class="section-title">更换绑定手机号</view>
+  <view class="card">
+    <view class="field">
+      <text class="label">原手机号</text>
+      <view class="row">
+        <input class="input flex1" value="{{currentPhoneMask}}" disabled />
+        <button class="btn btn-outline btn-sm code-btn" size="mini" bindtap="sendOld" disabled="{{countingOld}}">
+          {{countingOld ? countdownOld + 's 后重发' : '发送验证码'}}
+        </button>
+      </view>
+      <view class="small muted field-tip">向当前绑定的手机号发送短信验证码</view>
+    </view>
+    <view class="field">
+      <text class="label">原手机号验证码</text>
+      <input class="input" type="number" maxlength="6" placeholder="6 位短信验证码" value="{{oldCode}}" bindinput="onOldCode" />
+    </view>
+    <view class="field">
+      <text class="label">新手机号</text>
+      <input class="input" type="number" maxlength="11" placeholder="请输入新的 11 位手机号" value="{{newPhone}}" bindinput="onNewPhone" />
+    </view>
+    <view class="field">
+      <text class="label">新手机号验证码</text>
+      <view class="row">
+        <input class="input flex1" type="number" maxlength="6" placeholder="6 位短信验证码" value="{{newCode}}" bindinput="onNewCode" />
+        <button class="btn btn-outline btn-sm code-btn" size="mini" bindtap="sendNew" disabled="{{countingNew}}">
+          {{countingNew ? countdownNew + 's 后重发' : '发送验证码'}}
+        </button>
+      </view>
+    </view>
+
+    <button class="btn btn-primary btn-block mt12" bindtap="save">确认更换</button>
+  </view>
+
+  <view class="section-title">遇到问题</view>
+  <view class="set-row">
+    <text class="small">❓ 原手机号已无法使用？</text>
+    <text class="small link" bindtap="goSupport">联系客服申诉</text>
+  </view>
+</view>

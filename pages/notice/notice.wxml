@@ -1,0 +1,29 @@
+<!-- 系统通知 —— 原型：ui-prototype/mp/app-notice.html -->
+<view class="page">
+  <!-- 分类标签 -->
+  <view class="systab">
+    <view
+      wx:for="{{tabs}}" wx:key="key"
+      class="syspill {{activeTab === item.key ? 'active' : ''}}"
+      bindtap="switchTab" data-key="{{item.key}}"
+    >{{item.label}}</view>
+  </view>
+
+  <!-- 通知列表（点击标记已读） -->
+  <view wx:if="{{loading}}" class="center muted small" style="padding:48rpx 0">加载中…</view>
+  <view wx:for="{{notices}}" wx:key="id" class="sys-item {{item.unread ? 'unread' : ''}}" bindtap="openNotice" data-id="{{item.id}}">
+    <view class="ic {{item.iconCls}}">{{item.icon}}</view>
+    <view class="flex1">
+      <view class="between">
+        <text class="item-title">{{item.title}}</text>
+        <text class="small muted">{{item.time}}</text>
+      </view>
+      <view class="small muted mt8">{{item.content}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{!loading && notices.length === 0}}" class="empty">
+    <view class="empty-icon">🔔</view>
+    <view class="small">暂无相关通知</view>
+  </view>
+</view>

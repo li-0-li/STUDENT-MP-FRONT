@@ -1,0 +1,34 @@
+<!-- 我的课程 —— 原型：ui-prototype/mp/app-courses.html -->
+<!-- 数据：表 3-1 GET /api/v1/courses（学生「我学的课」），点击卡片进章节作业页 -->
+<view class="page-courses">
+
+  <!-- 顶部提示条 + 添加课程入口（原型：badge-info 提示 + 按钮） -->
+  <view class="co-topbar">
+    <view class="badge badge-info co-hint">点击课程卡片查看课程详情</view>
+    <view class="btn btn-primary btn-sm" bindtap="goAddCourse">＋ 添加课程</view>
+  </view>
+
+  <view wx:for="{{courses}}" wx:key="courseId" class="course-card" bindtap="goDetail" data-id="{{item.courseId}}">
+    <view class="between">
+      <text class="title">{{item.name}}</text>
+      <view class="badge {{item.statusBadge}}">{{item.statusText}}</view>
+    </view>
+    <view class="small muted mt8">{{item.teacher}} · {{item.hours}} 学时{{item.semester ? ' · ' + item.semester : ''}}</view>
+    <!-- 章节数 / 作业数 / 详情入口 -->
+    <view class="row mt8 card-meta">
+      <view class="row" style="gap:8rpx"><text>📖</text><text>{{item.chapterCount}} 章节</text></view>
+      <view class="row" style="gap:8rpx"><text>📋</text><text>{{item.homeworkCount}} 作业</text></view>
+      <text class="card-more">详情 ›</text>
+    </view>
+    <!-- 学习进度条 -->
+    <view class="between small muted mt8 co-pro-label">
+      <text>章节进度</text><text>{{item.progress}}%</text>
+    </view>
+    <view class="progress"><view class="progress-fill" style="width: {{item.progress}}%;"></view></view>
+  </view>
+
+  <view wx:if="{{!loading && courses.length === 0}}" class="empty">
+    <view class="empty-icon">📚</view>
+    <view class="small">暂无课程，点击「添加课程」输入课程码加入</view>
+  </view>
+</view>

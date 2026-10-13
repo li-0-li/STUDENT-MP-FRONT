@@ -1,0 +1,10 @@
+/* 添加课程 —— card / section-title 等共用样式见 app.wxss */
+.page-course-add { padding-top: 24rpx; }
+.ca-title { flex: 1; font-size: 30rpx; font-weight: 700; }
+.ca-code-input { flex: 1; letter-spacing: 6rpx; text-transform: uppercase; }
+.pub-brief { display: flex; flex-direction: column; gap: 8rpx; }
+.pub-name { font-size: 26rpx; font-weight: 600; }
+
+/* 双模式切换 tab（课程码 / 公开课） */
+.ca-tabs { margin: 0 24rpx 24rpx; }
+.ca-tab { flex: 1; text-align: center; white-space: nowrap; }

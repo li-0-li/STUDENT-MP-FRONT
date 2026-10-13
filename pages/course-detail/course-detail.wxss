@@ -1,0 +1,27 @@
+/* 章节作业 —— 复用 app.wxss 的 .card/.btn/.badge/.sec 等 */
+
+.cd-title { font-size: 30rpx; font-weight: 700; }
+
+/* 课程码 */
+.cd-code {
+  font-family: monospace;
+  letter-spacing: 2rpx;
+  color: var(--brand-700);
+  font-weight: 600;
+}
+
+/* 章节卡片 */
+.cd-chapter-title { font-size: 26rpx; font-weight: 600; min-width: 0; }
+
+/* 章节 / 作业入口按钮行 */
+.cd-actions { gap: 16rpx; margin-top: 16rpx; }
+.cd-action { flex: 1; }
+
+/* 挂载在章节下的作业任务（原型：章节卡内嵌作业条目） */
+.cd-hw {
+  margin-top: 16rpx;
+  border: 1rpx solid var(--border);
+  border-radius: 16rpx;
+  padding: 20rpx;
+  background: var(--bg-subtle);
+}

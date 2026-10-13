@@ -1,0 +1,26 @@
+/* 资源查看 —— 复用 app.wxss 的 .card/.set-row/.badge/.btn 等 */
+.page-resource-view { padding-top: 8rpx; padding-bottom: calc(env(safe-area-inset-bottom) + 24rpx); }
+
+/* 周次筹码 */
+.rv-week-scroll { width: 100%; }
+.rv-week-row { display: flex; white-space: nowrap; padding: 16rpx 24rpx; }
+.rv-week-chip {
+  display: inline-block; padding: 10rpx 24rpx; margin-right: 14rpx;
+  border-radius: 999rpx; border: 1rpx solid var(--border); background: #fff;
+  font-size: 24rpx; color: var(--ink-500);
+}
+.rv-week-chip.active { background: var(--brand-600); border-color: var(--brand-600); color: #fff; font-weight: 600; }
+
+/* 资源列表行 */
+.rv-res-main { display: flex; flex-direction: column; gap: 4rpx; min-width: 0; }
+.rv-res-main text:first-child { font-size: 26rpx; }
+
+/* 资源标题卡 */
+.rv-brief { display: flex; flex-direction: column; gap: 4rpx; min-width: 0; }
+.rv-title { font-size: 28rpx; font-weight: 600; word-break: break-all; }
+
+/* 真实查看器 */
+.rv-video-card { padding: 0; overflow: hidden; border-radius: 24rpx; }
+.rv-video-real { width: 100%; height: 420rpx; display: block; }
+.rv-img-real { width: 100%; border-radius: 12rpx; }
+.rv-doc-hint { flex-direction: column; gap: 8rpx; padding: 48rpx 24rpx; }

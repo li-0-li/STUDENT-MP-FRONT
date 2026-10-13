@@ -1,0 +1,74 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/register/register",
+    "pages/forgot-password/forgot-password",
+    "pages/home/home",
+    "pages/courses/courses",
+    "pages/course-add/course-add",
+    "pages/schedule/schedule",
+    "pages/course-detail/course-detail",
+    "pages/homework/homework",
+    "pages/submission/submission",
+    "pages/analytics/analytics",
+    "pages/live/live",
+    "pages/attendance/attendance",
+    "pages/ai/ai",
+    "pages/lab/lab",
+    "pages/messages/messages",
+    "pages/notice/notice",
+    "pages/profile/profile",
+    "pages/settings/settings",
+    "pages/support/support",
+    "pages/resource-view/resource-view",
+    "pages/change-phone/change-phone",
+    "pages/change-pwd/change-pwd",
+    "pages/dev-login/dev-login"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#0d9488",
+    "navigationBarTitleText": "学生端",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f1f5f6"
+  },
+  "tabBar": {
+    "color": "#94a3b8",
+    "selectedColor": "#0d9488",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "assets/tabbar/home.png",
+        "selectedIconPath": "assets/tabbar/home-on.png"
+      },
+      {
+        "pagePath": "pages/courses/courses",
+        "text": "我的课程",
+        "iconPath": "assets/tabbar/course.png",
+        "selectedIconPath": "assets/tabbar/course-on.png"
+      },
+      {
+        "pagePath": "pages/schedule/schedule",
+        "text": "我的课表",
+        "iconPath": "assets/tabbar/schedule.png",
+        "selectedIconPath": "assets/tabbar/schedule-on.png"
+      },
+      {
+        "pagePath": "pages/messages/messages",
+        "text": "消息通知",
+        "iconPath": "assets/tabbar/message.png",
+        "selectedIconPath": "assets/tabbar/message-on.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/tabbar/profile.png",
+        "selectedIconPath": "assets/tabbar/profile-on.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

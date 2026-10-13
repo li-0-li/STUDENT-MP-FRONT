@@ -1,0 +1,50 @@
+<!-- 我的课表 —— 原型：ui-prototype/mp/app-schedule.html（UI 设计文档 7.6） -->
+<!-- 顶部「周次 + 星期 + 日期」选择条；数据：表 3-12 GET /api/v1/schedules（按周在前端过滤） -->
+<view class="page">
+  <!-- 周次切换：上一周 / 周次徽标（点按返回本周）/ 下一周 -->
+  <view class="week-bar">
+    <view class="week-arrow" bindtap="shiftWeek" data-act="prev">‹</view>
+    <view class="badge badge-info week-badge" bindtap="shiftWeek" data-act="back">{{weekBadge}}</view>
+    <view class="week-arrow" bindtap="shiftWeek" data-act="next">›</view>
+  </view>
+  <view wx:if="{{!isThisWeek}}" class="center small link back-today" bindtap="shiftWeek" data-act="back">返回本周</view>
+
+  <!-- 周一~周日 + 日期切换 tab -->
+  <scroll-view class="dayrow" scroll-x>
+    <view
+      wx:for="{{days}}" wx:key="name"
+      class="daypill {{current === index ? 'active' : ''}}"
+      bindtap="selectDay" data-i="{{index}}">
+      <text>{{item.name}}</text>
+      <text class="td">{{item.date}}{{isThisWeek && index === today ? ' · 今天' : ''}}</text>
+    </view>
+  </scroll-view>
+
+  <!-- 日期标题 + 周次 -->
+  <view class="between day-head">
+    <text class="day-title">{{dayTitle}}</text>
+    <view class="badge badge-info">{{weekBadge}}</view>
+  </view>
+
+  <!-- 课程时间块列表 -->
+  <view wx:for="{{list}}" wx:key="index" class="card cls-card" style="border-left:8rpx solid {{item.color}}">
+    <view class="cls-time">
+      <view class="small strong">{{item.s}}</view>
+      <view class="small muted cls-time-t">{{item.t}}</view>
+    </view>
+    <view class="cls-body">
+      <view class="between">
+        <text class="cls-name">{{item.c}}</text>
+        <view wx:if="{{item.ongoing && isThisWeek && current === today}}" class="badge badge-success">进行中</view>
+      </view>
+      <view class="small muted mt8">📍 {{item.loc}} · {{item.tc}}</view>
+      <view wx:if="{{item.ongoing && isThisWeek && current === today}}" class="btn btn-primary btn-sm mt8" bindtap="goLive">📺 进入课堂</view>
+    </view>
+  </view>
+
+  <!-- 空状态（加载完成后仍无课） -->
+  <view wx:if="{{!loading && list.length === 0}}" class="card center empty">
+    <view class="empty-icon">☕</view>
+    <view class="small">今天没有课，好好休息</view>
+  </view>
+</view>

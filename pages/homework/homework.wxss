@@ -1,0 +1,20 @@
+/* 我的作业 —— 复用 app.wxss 的 .card/.badge/.pilltabs/.pill 等 */
+
+/* 状态页签（待提交 / 已批改 / 申诉，整宽） */
+.hw-tabs-wrap { display: flex; justify-content: center; margin-bottom: 20rpx; }
+.hw-tabs { width: calc(100% - 48rpx); display: flex; overflow-x: auto; }
+.hw-tab { flex: 1; text-align: center; white-space: nowrap; }
+
+/* 作业标题 */
+.hw-title { font-size: 29rpx; font-weight: 600; min-width: 0; }
+
+/* 剩余时间提醒（原型 warning 色） */
+.hw-extra-warn { color: var(--warning); }
+
+/* 已批改作业得分行 */
+.hw-score-line { color: var(--ink-500); }
+.hw-score { font-size: 32rpx; color: var(--success); font-weight: 700; }
+
+/* 空状态 */
+.hw-empty { text-align: center; padding: 56rpx 24rpx; }
+.hw-empty-icon { font-size: 72rpx; }

@@ -1,0 +1,143 @@
+<!-- 课堂签到 —— 原型：ui-prototype/mp/app-attendance.html -->
+<!-- 数据：表 3-13 enter / 表 3-14 signin·signinState（签到方式开关与倒计时来自 signinTask） -->
+<!-- 出勤统计/签到记录后端暂无汇总接口，保留静态演示值 -->
+<view class="page">
+  <!-- ① 课堂状态卡 -->
+  <view class="card hero">
+    <view class="between">
+      <text class="hero-title">{{lesson.course}} · {{lesson.week}}</text>
+      <view class="hero-badge">🔴 上课中</view>
+    </view>
+    <view class="small hero-sub mt8">{{lesson.teacher}} · {{lesson.room}} · {{lesson.section}}</view>
+    <view class="row mt12 hero-cells">
+      <view class="hero-cell"><view class="small hero-sub">签到剩余</view><view class="hero-strong">{{lesson.countdown}}</view></view>
+      <view class="hero-cell"><view class="small hero-sub">已签 / 应到</view><view class="hero-strong">{{lesson.rate}}</view></view>
+    </view>
+  </view>
+
+  <!-- ② 签到状态卡 -->
+  <view wx:if="{{!signed}}" class="card between">
+    <view>
+      <view class="strong">尚未签到</view>
+      <view class="small muted mt4">请选择下方一种方式完成签到</view>
+    </view>
+    <view class="badge badge-warning">未签</view>
+  </view>
+  <view wx:else class="card ok-card">
+    <view class="ok-ring">✓</view>
+    <view>
+      <view class="ok-title">签到成功</view>
+      <view class="small muted mt4">方式：{{signedWay}} · {{signedTime}}</view>
+    </view>
+  </view>
+
+  <!-- ③ 选择签到方式 -->
+  <view class="section-title">选择签到方式</view>
+  <view class="card">
+    <view class="small muted way-tip">教师本次开启：{{openWays || '暂未开启'}}</view>
+    <view
+      wx:for="{{ways}}" wx:key="key"
+      class="way {{(!item.open && !signed) ? 'way-off' : ''}}"
+      bindtap="openWay" data-key="{{item.key}}">
+      <view class="way-ic">{{item.icon}}</view>
+      <view class="way-mid">
+        <view class="small strong">{{item.nm}}</view>
+        <view class="small muted mt4">{{item.ds}}{{item.open ? '' : ' · 本次未开启'}}</view>
+      </view>
+      <view class="way-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- ④ 我的出勤统计 -->
+  <view class="section-title">我的出勤统计</view>
+  <view class="stat-grid">
+    <view wx:for="{{stats}}" wx:key="key" class="card">
+      <view class="stat-num {{item.cls}}">{{item.num}}</view>
+      <view class="small muted">{{item.label}}</view>
+    </view>
+  </view>
+  <view class="card">
+    <view class="between mb8">
+      <text class="small strong">总出勤率</text>
+      <text class="small muted">{{rate}}%</text>
+    </view>
+    <view class="progress"><view class="progress-fill" style="width:{{rate}}%"></view></view>
+  </view>
+
+  <!-- ⑤ 最近签到记录 -->
+  <view class="section-title">最近签到记录</view>
+  <view wx:for="{{records}}" wx:key="index" class="card between">
+    <view>
+      <view class="small strong">{{item.course}}</view>
+      <view class="small muted mt4">{{item.date}}</view>
+    </view>
+    <view class="badge {{item.badge}}">{{item.result}}</view>
+  </view>
+</view>
+
+<!-- 定位签到弹层 -->
+<view wx:if="{{modal === 'location'}}" class="mask" bindtap="closeModal">
+  <view class="modal" catchtap="">
+    <view class="modal-h"><text class="strong">定位签到</text><text class="modal-x" bindtap="closeModal">✕</text></view>
+    <view class="modal-b">
+      <view class="fence">
+        <view class="fence-pin"></view>
+        <view class="small fence-tip">明德楼 302 · 半径 50m 内有效</view>
+      </view>
+      <view class="small muted mt12">点击获取当前位置，系统校验是否在教室地理围栏内。</view>
+    </view>
+    <view class="modal-f">
+      <view class="btn btn-outline" bindtap="closeModal">取消</view>
+      <view class="btn btn-primary" bindtap="locate">📍 获取定位</view>
+    </view>
+  </view>
+</view>
+
+<!-- 拍照签到弹层 -->
+<view wx:if="{{modal === 'photo'}}" class="mask" bindtap="closeModal">
+  <view class="modal" catchtap="">
+    <view class="modal-h"><text class="strong">拍照签到</text><text class="modal-x" bindtap="closeModal">✕</text></view>
+    <view class="modal-b">
+      <view class="cam">
+        <view class="cam-ring"></view>
+        <view class="cam-tip">将面部置于框内，系统自动活体核验</view>
+      </view>
+    </view>
+    <view class="modal-f">
+      <view class="btn btn-outline" bindtap="closeModal">取消</view>
+      <view class="btn btn-primary" bindtap="photoSign">📷 拍照并签到</view>
+    </view>
+  </view>
+</view>
+
+<!-- 数字口令弹层 -->
+<view wx:if="{{modal === 'numeric'}}" class="mask" bindtap="closeModal">
+  <view class="modal" catchtap="">
+    <view class="modal-h"><text class="strong">数字口令签到</text><text class="modal-x" bindtap="closeModal">✕</text></view>
+    <view class="modal-b">
+      <view class="field">
+        <text class="label">输入教师公布的 6 位口令</text>
+        <input class="input code-input" value="{{code}}" bindinput="onCodeInput" type="number" maxlength="6" placeholder="------" />
+      </view>
+      <view class="small muted mt12">口令由教师在课堂大屏公布，仅开启数字口令方式后可用</view>
+    </view>
+    <view class="modal-f">
+      <view class="btn btn-outline" bindtap="closeModal">取消</view>
+      <view class="btn btn-primary" bindtap="submitCode">提交</view>
+    </view>
+  </view>
+</view>
+
+<!-- 手动点名弹层 -->
+<view wx:if="{{modal === 'manual'}}" class="mask" bindtap="closeModal">
+  <view class="modal" catchtap="">
+    <view class="modal-h"><text class="strong">手动点名</text><text class="modal-x" bindtap="closeModal">✕</text></view>
+    <view class="modal-b">
+      <view class="small muted">教师将在花名册中为你标记到课。点击「我已到课」通知老师。</view>
+    </view>
+    <view class="modal-f">
+      <view class="btn btn-outline" bindtap="closeModal">取消</view>
+      <view class="btn btn-primary" bindtap="manualSign">我已到课</view>
+    </view>
+  </view>
+</view>

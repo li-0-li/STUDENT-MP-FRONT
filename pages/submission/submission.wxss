@@ -1,0 +1,103 @@
+/* 作业提交 —— 复用 app.wxss 的 .card/.badge/.btn/.field/.input 等 */
+
+.sm-head-main { display: flex; flex-direction: column; gap: 4rpx; min-width: 0; }
+.sm-title { font-size: 30rpx; font-weight: 700; }
+
+/* 成绩数字（原型 success 色大号） */
+.sm-score { font-size: 36rpx; color: var(--success); font-weight: 700; }
+
+/* 作答文本框 */
+.sm-textarea {
+  height: 240rpx;
+  padding: 16rpx;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+/* 底部操作条 */
+.sm-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+  background: #fff;
+  border-top: 1rpx solid var(--border);
+  border-radius: 24rpx;
+  padding: 20rpx 32rpx;
+  margin: 0 24rpx;
+}
+.sm-progress { font-size: 24rpx; color: var(--ink-500); }
+
+/* ===== 只读态（已批改 / 申诉中） ===== */
+.sm-sub-title { font-size: 28rpx; font-weight: 600; margin: 0 0 12rpx; }
+
+/* AI 建议分 / 教师复核分 */
+.sm-score-item { display: flex; flex-direction: column; align-items: center; gap: 4rpx; }
+.sm-score-num { font-size: 44rpx; font-weight: 700; color: var(--warning); line-height: 1.1; }
+.sm-score-teacher { color: var(--success); }
+
+/* 题目作答情况 */
+.sm-q {
+  border: 1rpx solid var(--border);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin: 0 24rpx 20rpx;
+  background: #fff;
+}
+.sm-q-head { align-items: flex-start; gap: 16rpx; }
+.sm-q-title { font-size: 27rpx; font-weight: 600; min-width: 0; }
+.sm-q-score { flex: none; }
+.sm-q-ans {
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  color: var(--ink-600);
+  background: var(--bg-subtle);
+  border-radius: 16rpx;
+  padding: 18rpx;
+  line-height: 1.6;
+}
+.sm-q-label { color: var(--ink-500); font-weight: 600; }
+
+/* 教师 / AI 评语（原型 brand 色提示卡） */
+.sm-comment {
+  background: var(--brand-50);
+  border: 1rpx solid var(--brand-100);
+  border-radius: 24rpx;
+  margin: 0 24rpx;
+  padding: 24rpx;
+  font-size: 26rpx;
+  color: var(--brand-700);
+  line-height: 1.7;
+}
+.sm-comment-title { font-weight: 600; color: var(--brand-700); }
+
+/* 申诉进度时间线 */
+.sm-timeline { position: relative; padding-left: 30rpx; }
+.sm-timeline::before {
+  content: '';
+  position: absolute;
+  left: 8rpx;
+  top: 8rpx;
+  bottom: 8rpx;
+  width: 4rpx;
+  background: var(--border);
+}
+.sm-tl-item { position: relative; padding: 0 0 28rpx 8rpx; }
+.sm-tl-item:last-child { padding-bottom: 4rpx; }
+.sm-tl-item::before {
+  content: '';
+  position: absolute;
+  left: -27rpx;
+  top: 8rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: var(--brand-600);
+  box-shadow: 0 0 0 6rpx var(--brand-100);
+}
+.sm-tl-item.done::before { background: var(--success); }
+.sm-tl-t { font-size: 26rpx; font-weight: 600; }
+.sm-tl-d { font-size: 24rpx; color: var(--ink-400); margin-top: 4rpx; }
+
+/* 底部申诉入口 */
+.sm-appeal-btn { margin: 24rpx; color: var(--error); border-color: #fca5a5; }

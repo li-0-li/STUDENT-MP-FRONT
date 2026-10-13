@@ -1,0 +1,16 @@
+/* 修改密码页 —— 复用 app.wxss 的 .card/.field/.set-row/.badge，仅写本页私有样式 */
+.tip-card { background: var(--brand-50); border-color: var(--brand-100); }
+.tip-title { color: var(--brand-700); font-weight: 600; }
+.flex1 { flex: 1; }
+.eye-btn { flex: none; }
+.link { color: var(--brand-600); font-weight: 600; }
+
+/* 密码强度 / 一致性提示 */
+.strength { margin-top: 6rpx; }
+.match-tip { margin-top: 6rpx; min-height: 30rpx; }
+.match-tip.ok { color: var(--success); }
+.match-tip.bad { color: var(--error); }
+
+/* 登录设备 */
+.dev-icon { font-size: 30rpx; margin-right: 4rpx; }
+.offline-btn { color: var(--error); border-color: #fca5a5; flex: none; }

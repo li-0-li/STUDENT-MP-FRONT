@@ -1,0 +1,64 @@
+/* 我的课表 —— 周切换 / 课程时间块；.card/.badge/.btn 等见 app.wxss */
+
+/* 周次切换条（上一周 / 周次徽标 / 下一周） */
+.week-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28rpx;
+  padding: 24rpx 24rpx 8rpx;
+}
+.week-arrow {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  color: var(--ink-600);
+  font-size: 34rpx;
+  line-height: 52rpx;
+  text-align: center;
+}
+.week-badge { min-width: 140rpx; text-align: center; }
+.back-today { padding-bottom: 8rpx; color: var(--brand-600); }
+.link { color: var(--brand-600); font-weight: 600; }
+
+/* 周一~周日横向切换 */
+.dayrow {
+  white-space: nowrap;
+  padding: 24rpx 24rpx 8rpx;
+}
+.daypill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12rpx 22rpx;
+  margin-right: 12rpx;
+  border-radius: 999rpx;
+  background: var(--bg-soft);
+  border: 3rpx solid transparent;
+  color: var(--ink-600);
+  font-size: 26rpx;
+  font-weight: 600;
+}
+.daypill.active {
+  background: var(--brand-600);
+  color: #fff;
+}
+.daypill .td {
+  font-size: 18rpx;
+  font-weight: 500;
+  color: var(--brand-600);
+}
+.daypill.active .td { color: rgba(255, 255, 255, 0.9); }
+
+/* 日期标题行 */
+.day-head { margin: 16rpx 24rpx 12rpx; }
+.day-title { font-size: 30rpx; font-weight: 700; }
+
+/* 课程时间块卡片 */
+.cls-card { display: flex; gap: 24rpx; }
+.cls-time { flex: none; min-width: 128rpx; text-align: left; }
+.strong { font-weight: 600; }
+.cls-time-t { font-size: 20rpx; }
+.cls-body { flex: 1; min-width: 0; }
+.cls-name { font-size: 30rpx; font-weight: 700; }

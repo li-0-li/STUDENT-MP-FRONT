@@ -1,0 +1,104 @@
+/* 登录页 —— 1:1 还原 ui-prototype/mp/app-login.html（含 theme.css 对应变量值，px→rpx×2）
+   复用 app.wxss 的 .auth-page/.auth-box/.btn/.field/.pilltabs；图标为 lucide 1.46.0
+   SVG data-URI（小程序不支持 <svg> 标签，颜色已烘焙进 URI，选中态切换用灰/白两版）。 */
+/* ===== lucide 图标（data-URI） ===== */
+.ic-gradgray{background-image:url("data:image/svg+xml,<svg%0A%20%20xmlns=%22http%3A//www.w3.org/2000/svg%22%0A%20%20width=%2224%22%0A%20%20height=%2224%22%0A%20%20viewBox=%220%200%2024%2024%22%0A%20%20fill=%22none%22%0A%20%20stroke=%22%2364748b%22%0A%20%20stroke-width=%222%22%0A%20%20stroke-linecap=%22round%22%0A%20%20stroke-linejoin=%22round%22%0A><path%20d=%22M21.42%2010.922a1%201%200%200%200-.019-1.838L12.83%205.18a2%202%200%200%200-1.66%200L2.6%209.08a1%201%200%200%200%200%201.832l8.57%203.908a2%202%200%200%200%201.66%200z%22%20/><path%20d=%22M22%2010v6%22%20/><path%20d=%22M6%2012.5V16a6%203%200%200%200%2012%200v-3.5%22%20/></svg>");}
+.ic-gradwhite{background-image:url("data:image/svg+xml,<svg%0A%20%20xmlns=%22http%3A//www.w3.org/2000/svg%22%0A%20%20width=%2224%22%0A%20%20height=%2224%22%0A%20%20viewBox=%220%200%2024%2024%22%0A%20%20fill=%22none%22%0A%20%20stroke=%22%23ffffff%22%0A%20%20stroke-width=%222%22%0A%20%20stroke-linecap=%22round%22%0A%20%20stroke-linejoin=%22round%22%0A><path%20d=%22M21.42%2010.922a1%201%200%200%200-.019-1.838L12.83%205.18a2%202%200%200%200-1.66%200L2.6%209.08a1%201%200%200%200%200%201.832l8.57%203.908a2%202%200%200%200%201.66%200z%22%20/><path%20d=%22M22%2010v6%22%20/><path%20d=%22M6%2012.5V16a6%203%200%200%200%2012%200v-3.5%22%20/></svg>");}
+.ic-presgray{background-image:url("data:image/svg+xml,<svg%0A%20%20xmlns=%22http%3A//www.w3.org/2000/svg%22%0A%20%20width=%2224%22%0A%20%20height=%2224%22%0A%20%20viewBox=%220%200%2024%2024%22%0A%20%20fill=%22none%22%0A%20%20stroke=%22%2364748b%22%0A%20%20stroke-width=%222%22%0A%20%20stroke-linecap=%22round%22%0A%20%20stroke-linejoin=%22round%22%0A><path%20d=%22M2%203h20%22%20/><path%20d=%22M21%203v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V3%22%20/><path%20d=%22m7%2021%205-5%205%205%22%20/></svg>");}
+.ic-preswhite{background-image:url("data:image/svg+xml,<svg%0A%20%20xmlns=%22http%3A//www.w3.org/2000/svg%22%0A%20%20width=%2224%22%0A%20%20height=%2224%22%0A%20%20viewBox=%220%200%2024%2024%22%0A%20%20fill=%22none%22%0A%20%20stroke=%22%23ffffff%22%0A%20%20stroke-width=%222%22%0A%20%20stroke-linecap=%22round%22%0A%20%20stroke-linejoin=%22round%22%0A><path%20d=%22M2%203h20%22%20/><path%20d=%22M21%203v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V3%22%20/><path%20d=%22m7%2021%205-5%205%205%22%20/></svg>");}
+.ic-gradlogo{background-image:url("data:image/svg+xml,<svg%0A%20%20xmlns=%22http%3A//www.w3.org/2000/svg%22%0A%20%20width=%2224%22%0A%20%20height=%2224%22%0A%20%20viewBox=%220%200%2024%2024%22%0A%20%20fill=%22none%22%0A%20%20stroke=%22%23ffffff%22%0A%20%20stroke-width=%222%22%0A%20%20stroke-linecap=%22round%22%0A%20%20stroke-linejoin=%22round%22%0A><path%20d=%22M21.42%2010.922a1%201%200%200%200-.019-1.838L12.83%205.18a2%202%200%200%200-1.66%200L2.6%209.08a1%201%200%200%200%200%201.832l8.57%203.908a2%202%200%200%200%201.66%200z%22%20/><path%20d=%22M22%2010v6%22%20/><path%20d=%22M6%2012.5V16a6%203%200%200%200%2012%200v-3.5%22%20/></svg>");}
+.ic-monitor{background-image:url("data:image/svg+xml,<svg%0A%20%20xmlns=%22http%3A//www.w3.org/2000/svg%22%0A%20%20width=%2224%22%0A%20%20height=%2224%22%0A%20%20viewBox=%220%200%2024%2024%22%0A%20%20fill=%22none%22%0A%20%20stroke=%22%230f766e%22%0A%20%20stroke-width=%222%22%0A%20%20stroke-linecap=%22round%22%0A%20%20stroke-linejoin=%22round%22%0A><rect%20width=%2220%22%20height=%2214%22%20x=%222%22%20y=%223%22%20rx=%222%22%20/><line%20x1=%228%22%20x2=%2216%22%20y1=%2221%22%20y2=%2221%22%20/><line%20x1=%2212%22%20x2=%2212%22%20y1=%2217%22%20y2=%2221%22%20/></svg>");}
+.ic-mail{background-image:url("data:image/svg+xml,<svg%0A%20%20xmlns=%22http%3A//www.w3.org/2000/svg%22%0A%20%20width=%2224%22%0A%20%20height=%2224%22%0A%20%20viewBox=%220%200%2024%2024%22%0A%20%20fill=%22none%22%0A%20%20stroke=%22%230d9488%22%0A%20%20stroke-width=%222%22%0A%20%20stroke-linecap=%22round%22%0A%20%20stroke-linejoin=%22round%22%0A><path%20d=%22m22%207-8.991%205.727a2%202%200%200%201-2.009%200L2%207%22%20/><rect%20x=%222%22%20y=%224%22%20width=%2220%22%20height=%2216%22%20rx=%222%22%20/></svg>");}
+.ic-phone{background-image:url("data:image/svg+xml,<svg%0A%20%20xmlns=%22http%3A//www.w3.org/2000/svg%22%0A%20%20width=%2224%22%0A%20%20height=%2224%22%0A%20%20viewBox=%220%200%2024%2024%22%0A%20%20fill=%22none%22%0A%20%20stroke=%22%230d9488%22%0A%20%20stroke-width=%222%22%0A%20%20stroke-linecap=%22round%22%0A%20%20stroke-linejoin=%22round%22%0A><rect%20width=%2214%22%20height=%2220%22%20x=%225%22%20y=%222%22%20rx=%222%22%20ry=%222%22%20/><path%20d=%22M12%2018h.01%22%20/></svg>");}
+.ic-headphones{background-image:url("data:image/svg+xml,<svg%0A%20%20xmlns=%22http%3A//www.w3.org/2000/svg%22%0A%20%20width=%2224%22%0A%20%20height=%2224%22%0A%20%20viewBox=%220%200%2024%2024%22%0A%20%20fill=%22none%22%0A%20%20stroke=%22%230d9488%22%0A%20%20stroke-width=%222%22%0A%20%20stroke-linecap=%22round%22%0A%20%20stroke-linejoin=%22round%22%0A><path%20d=%22M3%2014h3a2%202%200%200%201%202%202v3a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-7a9%209%200%200%201%2018%200v7a2%202%200%200%201-2%202h-1a2%202%200%200%201-2-2v-3a2%202%200%200%201%202-2h3%22%20/></svg>");}
+
+/* ===== 通用图标挂载 ===== */
+.ic { background-repeat: no-repeat; background-position: center; background-size: 100% 100%; flex: none; }
+.ic-role { width: 36rpx; height: 36rpx; }        /* 角色卡图标 18px */
+.ic-logo { width: 68rpx; height: 68rpx; }         /* logo 学士帽 34px */
+.ic-tip { width: 28rpx; height: 28rpx; }          /* 提示条 monitor 14px */
+.ic-note { width: 28rpx; height: 28rpx; margin-top: 4rpx; } /* bind-note 图标 14px */
+.ic-svc { width: 32rpx; height: 32rpx; }          /* 联系客服 headphones 16px */
+
+.auth-form { margin-top: 32rpx; }
+
+/* ===== logo（原型 .m-auth .logo：64px 盒/圆角16/品牌绿底/白图标；带 .auth-box 前缀压过 app.wxss 同名规则） ===== */
+.auth-box .logo {
+  width: 128rpx; height: 128rpx; border-radius: 32rpx;
+  background: var(--brand-600);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 36rpx;
+  font-size: 0;
+}
+.logo-ic { width: 68rpx; height: 68rpx; }
+.auth-box .h2 { display: block; text-align: center; font-size: 36rpx; font-weight: 700; color: var(--ink-900); }
+.auth-box .sub { text-align: center; color: var(--ink-500); font-size: 26rpx; margin: 12rpx 0 44rpx; }
+
+/* ===== 身份选择（老师 / 学生；管理员仅电脑端，不展示） ===== */
+.m-roles { display: flex; gap: 16rpx; margin: 28rpx 0 24rpx; }
+.m-role {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 10rpx;
+  padding: 20rpx 8rpx;
+  border: 3rpx solid var(--border); border-radius: 28rpx;
+  background: #fff;
+  color: var(--ink-600); font-size: 25rpx; font-weight: 600;
+  transition: all .15s ease;
+  user-select: none;
+}
+.m-role .mr-ic {
+  width: 64rpx; height: 64rpx; border-radius: 20rpx;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-soft); color: var(--ink-500);
+}
+.m-role.active { border-color: var(--brand-600); background: #effefb; color: var(--brand-700); }
+.m-role.active .mr-ic { background: var(--brand-600); color: #fff; }
+
+/* ===== 身份提示条（选中老师时显示；原型 showTip 非警告态：brand-700/brand-50） ===== */
+.m-tip {
+  display: none;
+  align-items: center; gap: 12rpx;
+  font-size: 24rpx; color: var(--brand-700);
+  background: #effefb;
+  border-radius: 20rpx;
+  padding: 16rpx 24rpx;
+  margin-bottom: 24rpx;
+  line-height: 1.5;
+}
+.m-tip.show { display: flex; }
+
+/* ===== 登录方式切换 ===== */
+.mtab { display: flex; justify-content: center; margin-bottom: 24rpx; }
+
+/* ===== 验证码方式提示（bind-note） ===== */
+.bind-note {
+  display: flex; gap: 14rpx; align-items: flex-start;
+  font-size: 24rpx; color: var(--ink-500);
+  background: var(--bg-subtle);
+  border: 1rpx dashed var(--border);
+  border-radius: 20rpx;
+  padding: 18rpx 22rpx;
+  margin-bottom: 24rpx;
+  line-height: 1.6;
+}
+.bind-note .ic-note { color: var(--brand-600); }
+
+/* ===== 输入框（原型内联样式：圆角 12px、内边距 12px 14px） ===== */
+.auth-input { height: 88rpx; padding: 0 28rpx; border-radius: 24rpx; }
+.code-row { gap: 12rpx; }
+.code-input { flex: 1; letter-spacing: 6rpx; }
+.code-btn { flex: none; white-space: nowrap; }
+.links { font-size: 26rpx; margin: -12rpx 0 36rpx; }
+.link { color: var(--brand-600); font-weight: 600; }
+/* 登录按钮：外层 flex 容器强制整行居中；重置原生 button 默认内边距 / ::after 边框 */
+.btn-row { display: flex; justify-content: center; }
+.auth-btn {
+  flex: 1; height: 88rpx; line-height: 88rpx;
+  border-radius: 24rpx; font-size: 28rpx;
+  padding: 0; margin: 0;
+}
+.auth-btn::after { border: none; }
+.svc-link {
+  display: flex; align-items: center; justify-content: center; gap: 10rpx;
+  color: var(--brand-600); margin-top: 32rpx; font-size: 24rpx;
+}
