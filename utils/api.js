@@ -29,6 +29,8 @@ const courseApi = {
   detail: (courseId) => request.get('/v1/courses/' + courseId),
   /** 表 3-3 学生加课：POST /api/v1/courses/{courseId}/enroll（课程码场景 courseId 传 0） */
   enroll: (courseId, data) => request.post('/v1/courses/' + courseId + '/enroll', data),
+  /** 加课前课程搜索：GET /api/v1/courses/search（courseCode 精确 / keyword 模糊，学生专用） */
+  search: (params) => request.get('/v1/courses/search', params),
   /** 表 3-4 资源列表：GET /api/v1/courses/{courseId}/resources（weekNum/resourceType 筛选） */
   listResources: (courseId, params) => request.get('/v1/courses/' + courseId + '/resources', params)
 }
@@ -37,12 +39,16 @@ const courseApi = {
 const homeworkApi = {
   /** 表 3-5 作业列表：GET /api/v1/assignments（courseId/status/keyword/page/pageSize） */
   list: (params) => request.get('/v1/assignments', params),
+  /** 作业试卷题目（作答视图，不含答案/解析）：GET /api/v1/assignments/{assignmentId}/questions */
+  questions: (assignmentId) => request.get('/v1/assignments/' + assignmentId + '/questions'),
   /** 表 3-6 提交作业：POST /api/v1/assignments/{assignmentId}/submissions */
   submit: (assignmentId, data) => request.post('/v1/assignments/' + assignmentId + '/submissions', data),
   /** 表 3-7 作业申诉：POST /api/v1/submissions/{submissionId}/appeal */
   appeal: (submissionId, data) => request.post('/v1/submissions/' + submissionId + '/appeal', data),
   /** 表 3-21 退回重交：POST /api/v1/submissions/{submissionId}/resubmit */
   resubmit: (submissionId, data) => request.post('/v1/submissions/' + submissionId + '/resubmit', data),
+  /** 提交详情（作答回看）：GET /api/v1/submissions/{submissionId}（逐题作答/答案/对错/评语） */
+  detail: (submissionId) => request.get('/v1/submissions/' + submissionId),
   /** 错题本（表 3-8 关联）：GET /api/v1/wrong-records */
   wrongRecords: (params) => request.get('/v1/wrong-records', params)
 }

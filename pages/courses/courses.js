@@ -7,32 +7,29 @@ const api = require('../../utils/api')
 const STATUS_TEXT = { creating: '创建中', certifying: '认证中', active: '进行中', archived: '已归档' }
 const STATUS_BADGE = { creating: 'badge-info', certifying: 'badge-warning', active: 'badge-success', archived: 'badge-neutral' }
 
-// TODO 联调：学时 / 章节数 / 作业数 / 学习进度暂无 M-B 接口（进度统计由 M-D 学情模块、
-//   作业数由 M-C 作业模块提供），以下为静态演示值（按原型取值），接口就绪后替换
-const DEMO_STATS = [
-  { hours: 64, chapterCount: 8, homeworkCount: 6, progress: 67 },
-  { hours: 64, chapterCount: 10, homeworkCount: 8, progress: 80 },
-  { hours: 48, chapterCount: 5, homeworkCount: 4, progress: 50 },
-  { hours: 56, chapterCount: 0, homeworkCount: 0, progress: 0 }
-]
-
-function mapCourse(it, idx) {
-  return Object.assign({
+// 学习进度已接入表 3-1 真实字段 progress（后端读 student_profile.learning_progress，无记录为 0）
+//   章节数/作业数同为真实字段（chapterCount/homeworkCount，后端实时计数）
+function mapCourse(it) {
+  return {
     courseId: it.courseId,
     name: it.courseName || '未命名课程',
     teacher: it.teacherName || '',
     semester: it.semester || '',
     studentCount: it.studentCount || 0,
+    chapterCount: it.chapterCount || 0,
+    homeworkCount: it.homeworkCount || 0,
+    progress: it.progress != null ? it.progress : 0,
     status: it.status || '',
     statusText: STATUS_TEXT[it.status] || it.status || '',
     statusBadge: STATUS_BADGE[it.status] || 'badge-info'
-  }, DEMO_STATS[idx % DEMO_STATS.length])
+  }
 }
 
 Page({
   data: { courses: [], loading: true },
 
-  onLoad() { this.loadCourses() },
+  // onShow 而非 onLoad：切回本页签时自动刷新（教师增删章节/作业后，数字即时更新）
+  onShow() { this.loadCourses() },
   onPullDownRefresh() { this.loadCourses().finally(() => wx.stopPullDownRefresh()) },
 
   async loadCourses() {

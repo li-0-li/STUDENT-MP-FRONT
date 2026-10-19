@@ -16,9 +16,35 @@
     <view wx:else class="small muted mt8">截止：{{hw.deadline}} · 总分 {{hw.totalScore || '—'}}</view>
   </view>
 
-  <!-- 提交区（待提交状态） -->
+  <!-- 提交区（待提交状态）：题目作答（题面 + 选项，不含答案） -->
   <block wx:if="{{editable}}">
-    <view class="card">
+
+    <!-- 有题目：逐题作答 -->
+    <block wx:if="{{eq.length}}">
+      <view class="section-title">题目作答（{{answered}}/{{total}}）</view>
+      <view wx:for="{{eq}}" wx:key="questionId" class="sm-q">
+        <view class="between sm-q-head">
+          <view class="sm-q-title">{{index + 1}}. [{{item.typeText}}] {{item.content}}</view>
+          <view class="badge sm-q-score">{{item.maxScore}} 分</view>
+        </view>
+        <!-- 选项题：点选作答（单选/判断互斥，多选可多选） -->
+        <view wx:if="{{item.options.length}}" class="sm-q-opts">
+          <view wx:for="{{item.options}}" wx:for-item="opt" wx:for-index="oi" wx:key="key"
+                class="sm-opt {{opt.sel ? 'sm-opt-on' : ''}}"
+                data-index="{{index}}" data-key="{{opt.key}}" bindtap="onOptionTap">
+            <text>{{opt.key}}. {{opt.text}}</text>
+            <text wx:if="{{opt.sel}}" class="sm-opt-check">✓</text>
+          </view>
+        </view>
+        <!-- 文本题（填空/简答/论述/编程） -->
+        <textarea wx:else class="input sm-textarea" value="{{item.ans}}"
+                  data-index="{{index}}" bindinput="onQInput" maxlength="2000"
+                  placeholder="请输入作答内容……（提交后由 AI 初判，教师复核）"></textarea>
+      </view>
+    </block>
+
+    <!-- 无题目作业：兜底整段文本作答（旧口径） -->
+    <view wx:else class="card">
       <view class="field">
         <text class="label">作答内容</text>
         <textarea class="input sm-textarea" value="{{answer}}" bindinput="onAnswerInput"
@@ -31,7 +57,7 @@
 
     <!-- 底部操作条 -->
     <view class="sm-bar">
-      <text class="sm-progress">{{answer ? '已填写作答' : '尚未作答'}}</text>
+      <text class="sm-progress">{{eq.length ? '已作答 ' + answered + '/' + total + ' 题' : (answer ? '已填写作答' : '尚未作答')}}</text>
       <view class="row">
         <view class="btn btn-outline btn-sm" bindtap="saveDraft">暂存</view>
         <view class="btn btn-primary btn-sm" bindtap="submit">📤 提交作业</view>
@@ -43,7 +69,7 @@
   <block wx:else>
 
     <!-- AI 批改建议分 / 教师复核分 -->
-    <view wx:if="{{hw.aiScore}}" class="card">
+    <view wx:if="{{hw.aiScore || hw.teacherScore}}" class="card">
       <view class="sm-sub-title">批改得分</view>
       <view class="row mt8" style="gap:24rpx">
         <view class="sm-score-item">
@@ -57,15 +83,21 @@
       </view>
     </view>
 
-    <!-- 题目作答情况 -->
+    <!-- 题目作答情况：题面 + 选项 + 我的作答 + 对错/正确答案/解析（批改中只看得到作答） -->
     <block wx:if="{{hw.questions}}">
       <view class="section-title">题目作答情况</view>
       <view wx:for="{{hw.questions}}" wx:key="q" class="sm-q">
         <view class="between sm-q-head">
           <view class="sm-q-title">{{item.q}}</view>
-          <view wx:if="{{item.score}}" class="badge badge-success sm-q-score">{{item.score}}</view>
+          <view wx:if="{{item.correct === true}}" class="badge badge-success sm-q-score">✓ {{item.gotScore}}/{{item.maxScore}}</view>
+          <view wx:elif="{{item.correct === false}}" class="badge badge-error sm-q-score">✗ {{item.gotScore}}/{{item.maxScore}}</view>
         </view>
-        <view class="sm-q-ans"><text class="sm-q-label">我的作答：</text>{{item.a}}</view>
+        <view wx:if="{{item.options.length}}" class="sm-q-ans">
+          <view wx:for="{{item.options}}" wx:for-item="opt" wx:key="*this" class="small muted" style="line-height:1.8;">{{opt}}</view>
+        </view>
+        <view class="sm-q-ans"><text class="sm-q-label">我的作答：</text>{{item.myAnswer}}</view>
+        <view wx:if="{{item.standardAnswer}}" class="sm-q-ans"><text class="sm-q-label">正确答案：</text>{{item.standardAnswer}}</view>
+        <view wx:if="{{item.analysis}}" class="sm-q-ans small muted"><text class="sm-q-label">解析：</text>{{item.analysis}}</view>
       </view>
     </block>
 

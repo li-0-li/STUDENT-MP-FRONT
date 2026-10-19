@@ -9,19 +9,40 @@
           bindtap="switchMode" data-key="{{item.key}}">{{item.label}}</view>
   </view>
 
-  <!-- 模式一：课程码加入 -->
+  <!-- 模式一：课程码搜索加入 -->
   <block wx:if="{{mode === 'code'}}">
     <view class="card">
       <view class="row">
-        <text class="ca-title">课程码加入</text>
+        <text class="ca-title">课程码搜索</text>
         <view class="btn btn-outline btn-sm" bindtap="scanQr">📷 扫码加入</view>
       </view>
       <view class="row mt12" style="gap:16rpx">
-        <input class="input ca-code-input" maxlength="6" placeholder="输入 6 位课程码，如 JSOEKD" value="{{code}}" bindinput="onCodeInput" />
-        <view class="btn btn-primary" style="flex:none" bindtap="joinByCode">加入</view>
+        <input class="input ca-code-input" maxlength="6" placeholder="输入 6 位课程码，如 NK463D" value="{{code}}" bindinput="onCodeInput" />
+        <view class="btn btn-primary" style="flex:none" bindtap="searchByCode">搜索</view>
       </view>
-      <view class="small muted mt8">课程码为 6 位大写字母，由任课教师在课程管理中生成并发送给你；也可直接扫描教师出示的课程二维码。</view>
+      <view class="small muted mt8">课程码为 6 位大写字母或数字，由任课教师在课程管理中生成并发送给你；搜索到课程后点击「加入」，审核通过的课即可进入学习。</view>
     </view>
+
+    <!-- 搜索结果：课程卡片（名称 / 教师 / 已加入人数 / 课程码 / 加入） -->
+    <block wx:if="{{searched}}">
+      <view class="section-title">搜索结果</view>
+      <view wx:for="{{results}}" wx:key="courseId" class="card">
+        <view class="between">
+          <view class="row">
+            <view class="icon-box">📖</view>
+            <view class="pub-brief">
+              <text class="pub-name">{{item.name}}</text>
+              <view class="small muted mt4">教师：{{item.teacher || '—'}}</view>
+              <view class="small muted mt4">课程码：{{item.code}} · 已有 {{item.count}} 人加入</view>
+            </view>
+          </view>
+          <view class="btn btn-primary btn-sm" style="flex:none" bindtap="joinCourse" data-index="{{index}}">加入</view>
+        </view>
+      </view>
+      <view wx:if="{{!results.length}}" class="card">
+        <view class="small muted mt8">未找到该课程码对应的课程，请核对后重试</view>
+      </view>
+    </block>
   </block>
 
   <!-- 模式二：公开课列表 -->

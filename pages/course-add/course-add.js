@@ -23,6 +23,8 @@ Page({
     mode: 'code', // 当前模式：code / public
     tabs: MODE_TABS.map(t => ({ key: t.key, label: t.label, active: t.key === 'code' })),
     code: '',
+    results: [],   // 课程码搜索结果（卡片列表）
+    searched: false,
     publicCourses: PUBLIC_COURSES
   },
 
@@ -55,12 +57,35 @@ Page({
     }
   },
 
-  joinByCode() {
+  /** 按课程码搜索课程（结果在下方列表展示，逐卡加入） */
+  async searchByCode() {
     const v = this.data.code.trim()
-    if (!/^[A-Z]{6}$/.test(v)) {
-      return wx.showToast({ title: '课程码格式不正确：应为 6 位大写字母（如 JSOEKD）', icon: 'none' })
+    if (!/^[A-Z0-9]{6}$/.test(v)) {
+      return wx.showToast({ title: '课程码格式不正确：应为 6 位大写字母或数字（如 NK463D）', icon: 'none' })
     }
-    this.submitEnroll({ enrollType: 'code', courseCode: v })
+    try {
+      const list = (await api.course.search({ courseCode: v })) || []
+      this.setData({
+        searched: true,
+        results: list.map((c) => ({
+          courseId: c.courseId,
+          name: c.courseName,
+          teacher: c.teacherName,
+          count: c.studentCount != null ? c.studentCount : 0,
+          code: c.courseCode
+        }))
+      })
+      if (!list.length) wx.showToast({ title: '未找到该课程码对应的课程', icon: 'none' })
+    } catch (e) {
+      // request 层已 toast
+    }
+  },
+
+  /** 搜索结果卡片的「加入」：走表 3-3 加课（审核中的课由后端拦截提示） */
+  joinCourse(e) {
+    const item = this.data.results[Number(e.currentTarget.dataset.index)]
+    if (!item) return
+    this.submitEnroll({ enrollType: 'code', courseCode: item.code })
   },
 
   /** 加入公开课（表 3-3 enrollType=public；演示数据暂以课程码占位） */
@@ -73,9 +98,9 @@ Page({
   scanQr() {
     wx.scanCode({
       success: (res) => {
-        // 二维码内容即课程码（与教师端二维码格式对齐：6 位大写字母）
+        // 二维码内容即课程码（与教师端二维码格式对齐：6 位大写字母或数字）
         const code = String(res.result || '').trim().toUpperCase()
-        if (!/^[A-Z]{6}$/.test(code)) {
+        if (!/^[A-Z0-9]{6}$/.test(code)) {
           return wx.showToast({ title: '二维码内容不是有效课程码', icon: 'none' })
         }
         this.submitEnroll({ enrollType: 'qrcode', courseCode: code })

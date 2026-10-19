@@ -22,7 +22,7 @@
     </view>
     <!-- 学习进度条 -->
     <view class="between small muted mt8 co-pro-label">
-      <text>章节进度</text><text>{{item.progress}}%</text>
+      <text>学习进度</text><text>{{item.progress}}%</text>
     </view>
     <view class="progress"><view class="progress-fill" style="width: {{item.progress}}%;"></view></view>
   </view>

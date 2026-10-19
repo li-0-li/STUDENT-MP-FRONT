@@ -101,3 +101,27 @@
 
 /* 底部申诉入口 */
 .sm-appeal-btn { margin: 24rpx; color: var(--error); border-color: #fca5a5; }
+
+/* 待提交态：选项作答 */
+.sm-q-opts { margin-top: 16rpx; }
+.sm-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  font-size: 26rpx;
+  color: var(--ink-600);
+  border: 2rpx solid var(--border);
+  border-radius: 16rpx;
+  padding: 18rpx 20rpx;
+  margin-bottom: 12rpx;
+  background: #fff;
+  transition: all 0.15s ease;
+}
+.sm-opt-on {
+  color: var(--brand-700);
+  border-color: var(--brand-600);
+  background: var(--brand-50);
+  font-weight: 600;
+}
+.sm-opt-check { flex: none; color: var(--brand-600); font-weight: 700; }
