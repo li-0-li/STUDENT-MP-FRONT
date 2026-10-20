@@ -25,3 +25,40 @@
   padding: 20rpx;
   background: var(--bg-subtle);
 }
+
+/* 上课安排条目 */
+.sch-item {
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  border: 1rpx solid var(--border);
+  border-radius: 14rpx;
+  background: var(--bg-subtle);
+}
+.sch-item + .sch-item { margin-top: 12rpx; }
+.sch-time { font-size: 26rpx; font-weight: 600; }
+
+/* 查看全部排课链接 */
+.view-all {
+  margin-top: 16rpx;
+  padding: 16rpx 0;
+  text-align: center;
+  font-size: 25rpx;
+  color: var(--brand-700);
+  border-top: 1rpx solid var(--border);
+}
+
+/* 退出课程按钮区域 */
+.withdraw-section {
+  margin-top: 60rpx;
+  margin-bottom: 40rpx;
+  padding: 0 40rpx;
+}
+.withdraw-btn {
+  width: 100%;
+  color: #dc2626 !important;
+  border-color: #dc2626 !important;
+  background: #fef2f2 !important;
+}
+.withdraw-btn:active {
+  background: #fee2e2 !important;
+}

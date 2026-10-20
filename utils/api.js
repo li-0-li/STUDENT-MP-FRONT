@@ -29,6 +29,10 @@ const courseApi = {
   detail: (courseId) => request.get('/v1/courses/' + courseId),
   /** 表 3-3 学生加课：POST /api/v1/courses/{courseId}/enroll（课程码场景 courseId 传 0） */
   enroll: (courseId, data) => request.post('/v1/courses/' + courseId + '/enroll', data),
+  /** 学生退出课程：DELETE /api/v1/courses/{courseId}/enroll */
+  withdraw: (courseId) => request.del('/v1/courses/' + courseId + '/enroll'),
+  /** 课程上课安排：GET /api/v1/courses/{courseId}/schedules */
+  schedules: (courseId) => request.get('/v1/courses/' + courseId + '/schedules'),
   /** 加课前课程搜索：GET /api/v1/courses/search（courseCode 精确 / keyword 模糊，学生专用） */
   search: (params) => request.get('/v1/courses/search', params),
   /** 表 3-4 资源列表：GET /api/v1/courses/{courseId}/resources（weekNum/resourceType 筛选） */
@@ -53,10 +57,10 @@ const homeworkApi = {
   wrongRecords: (params) => request.get('/v1/wrong-records', params)
 }
 
-/* ===== M-D 课表（表 3-12） ===== */
+/* ===== 课表（表 3-12，学生专用，走课程模块） ===== */
 const scheduleApi = {
-  /** GET /api/v1/schedules（当前学生本周课表） */
-  mine: () => request.get('/v1/schedules')
+  /** GET /api/v1/courses/my-schedule：当前周次信息 + 全量排课 */
+  mine: () => request.get('/v1/courses/my-schedule')
 }
 
 /* ===== M-D 实验报告（表 3-17/3-18/3-22） ===== */

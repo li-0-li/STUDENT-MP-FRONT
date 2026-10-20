@@ -1,0 +1,7 @@
+/* 全部排课页 —— 复用 app.wxss */
+
+.cs-name { font-size: 32rpx; font-weight: 700; }
+
+/* 排课条目卡片 */
+.sch-item { margin-bottom: 16rpx; }
+.sch-time { font-size: 27rpx; font-weight: 600; }

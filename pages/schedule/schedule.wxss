@@ -18,38 +18,58 @@
   line-height: 52rpx;
   text-align: center;
 }
-.week-badge { min-width: 140rpx; text-align: center; }
+.week-badge {
+  min-width: 140rpx;
+  padding: 4rpx 12rpx;
+  background: transparent;
+  color: var(--ink-700);
+  font-size: 26rpx;
+  justify-content: center;
+  text-align: center;
+}
 .back-today { padding-bottom: 8rpx; color: var(--brand-600); }
 .link { color: var(--brand-600); font-weight: 600; }
 
-/* 周一~周日横向切换 */
+/* 周一~周日：7 个等宽，平均占满整行 */
 .dayrow {
-  white-space: nowrap;
-  padding: 24rpx 24rpx 8rpx;
+  display: flex;
+  align-items: stretch;
+  padding: 24rpx 16rpx 8rpx;
 }
 .daypill {
-  display: inline-flex;
+  flex: 1;
+  min-width: 0;
+  display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12rpx 22rpx;
-  margin-right: 12rpx;
-  border-radius: 999rpx;
+  justify-content: center;
+  padding: 10rpx 0;
+  margin: 0 4rpx;
+  border-radius: 12rpx;
   background: var(--bg-soft);
   border: 3rpx solid transparent;
   color: var(--ink-600);
-  font-size: 26rpx;
-  font-weight: 600;
+  box-sizing: border-box;
+  overflow: hidden;
 }
-.daypill.active {
-  background: var(--brand-600);
-  color: #fff;
+.daypill .dn {
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 1.2;
 }
 .daypill .td {
   font-size: 18rpx;
   font-weight: 500;
+  line-height: 1.3;
   color: var(--brand-600);
 }
+.daypill .today-mark { color: #e11d48; }
+.daypill.active {
+  background: var(--brand-600);
+  color: #fff;
+}
 .daypill.active .td { color: rgba(255, 255, 255, 0.9); }
+.daypill.active .today-mark { color: #fff; }
 
 /* 日期标题行 */
 .day-head { margin: 16rpx 24rpx 12rpx; }

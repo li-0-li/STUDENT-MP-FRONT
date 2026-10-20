@@ -4,26 +4,27 @@
   <!-- 周次切换：上一周 / 周次徽标（点按返回本周）/ 下一周 -->
   <view class="week-bar">
     <view class="week-arrow" bindtap="shiftWeek" data-act="prev">‹</view>
-    <view class="badge badge-info week-badge" bindtap="shiftWeek" data-act="back">{{weekBadge}}</view>
+    <view class="badge week-badge" bindtap="shiftWeek" data-act="back">{{weekBadge}}</view>
     <view class="week-arrow" bindtap="shiftWeek" data-act="next">›</view>
   </view>
   <view wx:if="{{!isThisWeek}}" class="center small link back-today" bindtap="shiftWeek" data-act="back">返回本周</view>
 
-  <!-- 周一~周日 + 日期切换 tab -->
-  <scroll-view class="dayrow" scroll-x>
+  <!-- 周一~周日 + 日期切换 tab：7 个等宽，平均占满整行 -->
+  <view class="dayrow">
     <view
       wx:for="{{days}}" wx:key="name"
       class="daypill {{current === index ? 'active' : ''}}"
       bindtap="selectDay" data-i="{{index}}">
-      <text>{{item.name}}</text>
-      <text class="td">{{item.date}}{{isThisWeek && index === today ? ' · 今天' : ''}}</text>
+      <text class="dn">{{item.name}}</text>
+      <text class="td">{{item.date}}</text>
+      <text wx:if="{{isThisWeek && index === today}}" class="td today-mark">今天</text>
     </view>
-  </scroll-view>
+  </view>
 
   <!-- 日期标题 + 周次 -->
   <view class="between day-head">
     <text class="day-title">{{dayTitle}}</text>
-    <view class="badge badge-info">{{weekBadge}}</view>
+    <view class="badge week-badge">{{weekBadge}}</view>
   </view>
 
   <!-- 课程时间块列表 -->

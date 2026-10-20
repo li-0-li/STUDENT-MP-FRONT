@@ -11,6 +11,32 @@ function fmtDate(iso) {
   return iso ? String(iso).replace('T', ' ').slice(0, 10) : '—'
 }
 
+/** 上课时间 → 「MM-DD HH:mm」 */
+function fmtClassTime(iso) {
+  if (!iso) return ''
+  return String(iso).replace('T', ' ').slice(5, 16)
+}
+
+/** 排课条目 → 上课安排卡片 */
+function mapSchedule(it) {
+  const statusMap = {
+    normal: '正常',
+    ongoing: '进行中',
+    canceled: '已取消'
+  }
+  return {
+    scheduleId: it.scheduleId,
+    weekdayText: it.weekdayText || '',
+    periodNo: it.periodNo || '',
+    classTimeText: fmtClassTime(it.classTime),
+    durationMin: it.durationMin,
+    classroomName: it.classroomName,
+    classroomLocation: it.classroomLocation,
+    status: it.status,
+    statusText: statusMap[it.status] || '正常'
+  }
+}
+
 /** 表 3-5 作业条目 → 章节下作业卡片（状态口径与「我的作业」页一致） */
 function mapHomework(it) {
   const ms = it.myStatus
@@ -55,6 +81,8 @@ Page({
     course: null,   // 表 3-2 课程信息
     intro: null,    // 课程导学 · 说课视频（三重认证 approved；null 时隐藏导学卡片）
     weeks: [],      // 表 3-2 教学周目录（每项含挂载的作业任务）
+    schedules: [],  // 上课安排（全部排课）
+    schedulePreview: [], // 详情页仅展示前 2 条
     loading: true
   },
 
@@ -72,13 +100,17 @@ Page({
   async load() {
     this.setData({ loading: true })
     try {
-      const [detail, hwRes] = await Promise.all([
+      const [detail, hwRes, scheduleRes] = await Promise.all([
         api.course.detail(this.courseId),
-        api.homework.list({ courseId: this.courseId, page: 1, pageSize: 100 }).catch(() => null)
+        api.homework.list({ courseId: this.courseId, page: 1, pageSize: 100 }).catch(() => null),
+        api.course.schedules(this.courseId).catch(() => [])
       ])
       const course = detail.course || {}
       const weeks = detail.weeks || []
       const homeworks = ((hwRes && hwRes.list) || []).map(mapHomework)
+      const schedules = (scheduleRes || []).map(mapSchedule)
+      // 详情页卡片只展示前 2 条，其余进入「全部排课」页
+      const schedulePreview = schedules.slice(0, 2)
 
       // 课程导学：说课视频（approved 才返回；绝对地址直用，相对路径拼 FILE_BASE_URL）
       const iv = detail.introVideo
@@ -121,6 +153,8 @@ Page({
         },
         // UI 设计 7.7：按章节列出学习资源，并在对应章节下挂载作业任务（截止时间与状态）
         weeks: weekCards,
+        schedules,
+        schedulePreview,
         loading: false
       })
       wx.setNavigationBarTitle({ title: course.courseName || '章节作业' })
@@ -137,11 +171,57 @@ Page({
     })
   },
 
+  /** 查看全部排课 → 全部排课页 */
+  goAllSchedules() {
+    const name = (this.data.course && this.data.course.courseName) || ''
+    wx.navigateTo({
+      url: '/pages/course-schedules/course-schedules?courseId=' + this.courseId
+        + '&courseName=' + encodeURIComponent(name)
+    })
+  },
+
   /** 作业条目 → 作业提交页 */
   goSubmission(e) {
     const id = e.currentTarget.dataset.id
     wx.navigateTo({
       url: '/pages/submission/submission?id=' + id
     })
+  },
+
+  /** 退出课程确认 */
+  confirmWithdraw() {
+    wx.showModal({
+      title: '确认退出课程？',
+      content: '退出后将无法查看本课程内容，且需重新加课才能恢复。',
+      confirmText: '确认退出',
+      confirmColor: '#dc2626',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          this.doWithdraw()
+        }
+      }
+    })
+  },
+
+  /** 执行退出课程 */
+  async doWithdraw() {
+    wx.showLoading({ title: '退出中...', mask: true })
+    let success = false
+    try {
+      await api.course.withdraw(this.courseId)
+      success = true
+    } catch (e) {
+      // request 层已 toast 错误信息
+    } finally {
+      wx.hideLoading()
+    }
+    if (success) {
+      wx.showToast({ title: '已退出课程', icon: 'success' })
+      // 延迟返回课程列表页
+      setTimeout(() => {
+        wx.navigateBack()
+      }, 1500)
+    }
   }
 })

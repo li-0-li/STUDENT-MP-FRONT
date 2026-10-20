@@ -8,6 +8,7 @@
     "pages/course-add/course-add",
     "pages/schedule/schedule",
     "pages/course-detail/course-detail",
+    "pages/course-schedules/course-schedules",
     "pages/homework/homework",
     "pages/submission/submission",
     "pages/analytics/analytics",

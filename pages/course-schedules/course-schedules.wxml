@@ -1,0 +1,31 @@
+<!-- 全部排课（按上课日期排序） -->
+<view class="page">
+
+  <!-- 概要 -->
+  <view class="card">
+    <view class="cs-name">{{courseName}}</view>
+    <view class="small muted mt4">共 {{schedules.length}} 次排课</view>
+  </view>
+
+  <!-- 排课列表 -->
+  <view wx:if="{{schedules.length}}">
+    <view wx:for="{{schedules}}" wx:key="scheduleId" class="card sch-item">
+      <view class="between">
+        <view class="sch-time">{{item.weekdayText}} {{item.periodNo}}节</view>
+        <view class="badge {{item.status === 'ongoing' ? 'badge-info' : ''}}">{{item.statusText}}</view>
+      </view>
+      <view class="small muted mt4">🕐 {{item.classTimeFullText}}<text wx:if="{{item.durationMin}}">（{{item.durationMin}}分钟）</text></view>
+      <view wx:if="{{item.classroomName}}" class="small muted mt4">📍 {{item.classroomName}}<text wx:if="{{item.classroomLocation}}"> · {{item.classroomLocation}}</text></view>
+      <view wx:if="{{item.weekRef}}" class="small muted mt4">📚 第 {{item.weekRef}} 教学周</view>
+    </view>
+  </view>
+
+  <!-- 无排课 -->
+  <view wx:elif="{{!loading}}" class="empty">
+    <view class="small">教师暂未安排上课时间</view>
+  </view>
+  <view wx:if="{{loading}}" class="empty">
+    <view class="small">加载中…</view>
+  </view>
+
+</view>

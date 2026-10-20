@@ -20,6 +20,12 @@ function fmtDate(d) {
   return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2)
 }
 
+// 完整时间 → 「HH:mm」
+function fmtTime(iso) {
+  if (!iso) return ''
+  return String(iso).replace('T', ' ').slice(11, 16)
+}
+
 Page({
   data: {
     days: [],        // 周一~周日 tab（含日期）
@@ -52,19 +58,31 @@ Page({
   async loadSchedules() {
     this.setData({ loading: true })
     try {
-      const list = await api.schedule.mine()
-      this.all = (list || []).map((it) => ({
-        date: (it.classTime || '').slice(0, 10),                       // yyyy-mm-dd
-        weekday: (it.weekday || 1) - 1,                                // 0=周一
-        s: it.periodName || ((it.periodNo || '') + '节'),
-        t: (it.startTime || '') + '-' + (it.endTime || ''),
-        c: it.courseName || '未命名课程',
-        loc: it.classroomName || '教室待定',
-        tc: it.teacherName || '',
-        weekRef: it.weekRef || 0,
-        ongoing: it.status === 'ongoing'
-      }))
-      this.weekBase = (this.itemsInWeek(0)[0] || {}).weekRef || 0
+      const res = await api.schedule.mine()
+      const list = (res && res.list) || []
+      this.all = list.map((it) => {
+        const dateStr = (it.classTime || '').slice(0, 10)              // yyyy-mm-dd
+        // 优先用上课日期反推星期（0=周一），保证与顶部自然周一致；weekday 字段仅兜底
+        let weekday = (it.weekday || 1) - 1
+        if (dateStr) {
+          const dt = new Date(dateStr.replace(/-/g, '/'))
+          const wd = (dt.getDay() + 6) % 7
+          if (!isNaN(wd)) weekday = wd
+        }
+        return {
+          date: dateStr,
+          weekday: weekday,
+          s: it.periodName || ((it.periodNo || '') + '节'),
+          t: fmtTime(it.startTime) + '-' + fmtTime(it.endTime),
+          c: it.courseName || '未命名课程',
+          loc: it.classroomName || '教室待定',
+          tc: it.teacherName || '',
+          weekRef: it.weekRef || 0,
+          ongoing: it.status === 'ongoing'
+        }
+      })
+      // 相对周次（开学当周=1，可能为 0/负数/大于20）；无学期信息时为 null
+      this.weekBase = (res && res.currentWeek != null) ? res.currentWeek : null
       this.setData({ loading: false })
       this.renderDays()
       this.renderList()
@@ -95,12 +113,15 @@ Page({
     })
   },
 
-  // 周徽标：优先取该周课程的 weekRef，否则按本周 weekRef 推算
+  // 周徽标：教学周固定为 第1周~第20周（第1周从开学日期所在自然周起）
+  // 落在范围内显示「第 N 周」，开学前或第20周之后显示「-」
   weekBadgeFor(offset) {
-    const items = this.itemsInWeek(offset)
-    if (items.length && items[0].weekRef) return '第 ' + items[0].weekRef + ' 周'
-    if (this.weekBase) return '第 ' + (this.weekBase + offset) + ' 周'
-    return ''
+    if (this.weekBase !== null && this.weekBase !== undefined) {
+      const w = this.weekBase + offset
+      if (w >= 1 && w <= 20) return '第 ' + w + ' 周'
+      return '-'
+    }
+    return '-'
   },
 
   // 周一~周日 + 日期（按 weekOffset 平移一周）
@@ -109,7 +130,7 @@ Page({
     const days = DAYS.map(function (name, i) {
       const d = new Date(monday)
       d.setDate(monday.getDate() + i)
-      return { name: name, date: (d.getMonth() + 1) + '月' + d.getDate() + '日' }
+      return { name: name, date: (d.getMonth() + 1) + '/' + d.getDate() }
     })
     this.setData({
       days: days,

@@ -20,6 +20,26 @@
     <view class="small">加载中…</view>
   </view>
 
+  <!-- 上课安排（表 3-2 补充：排课信息，仅展示前 2 条） -->
+  <view wx:if="{{course && !loading}}" class="card">
+    <view class="cd-title" style="font-size:28rpx;">上课安排</view>
+    <view wx:if="{{schedules.length}}">
+      <view wx:for="{{schedulePreview}}" wx:key="scheduleId" class="sch-item">
+        <view class="between">
+          <view class="sch-time">{{item.weekdayText}} {{item.periodNo}}节</view>
+          <view class="badge {{item.status === 'ongoing' ? 'badge-info' : ''}}">{{item.statusText}}</view>
+        </view>
+        <view class="small muted mt4">🕐 {{item.classTimeText}}<text wx:if="{{item.durationMin}}">（{{item.durationMin}}分钟）</text></view>
+        <view wx:if="{{item.classroomName}}" class="small muted mt4">📍 {{item.classroomName}}<text wx:if="{{item.classroomLocation}}"> · {{item.classroomLocation}}</text></view>
+      </view>
+      <!-- 还有更多排课 → 查看全部 -->
+      <view wx:if="{{schedules.length > 2}}" class="view-all" bindtap="goAllSchedules">
+        查看全部 {{schedules.length}} 次排课 ›
+      </view>
+    </view>
+    <view wx:else class="small muted mt8" style="padding:8rpx 0;">教师暂未安排上课时间</view>
+  </view>
+
   <!-- 课程导学：说课视频（三重认证 approved 才展示，原型 pc/student-course-detail.html） -->
   <view wx:if="{{intro}}" class="card">
     <view class="cd-title" style="font-size:30rpx;">课程导学</view>
@@ -53,6 +73,14 @@
   </view>
   <view wx:elif="{{!loading}}" class="empty">
     <view class="small">课程尚未发布章节目录</view>
+  </view>
+
+  <!-- 退出课程按钮 -->
+  <view wx:if="{{course && !loading}}" class="withdraw-section">
+    <button class="btn btn-outline btn-danger withdraw-btn" bindtap="confirmWithdraw">
+      退出课程
+    </button>
+    <view class="small muted mt8" style="text-align:center;">退出后将无法查看本课程内容，且需重新加课才能恢复</view>
   </view>
 
 </view>
