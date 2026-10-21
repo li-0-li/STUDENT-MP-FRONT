@@ -1,16 +1,10 @@
 // 添加课程 —— 原型：ui-prototype/mp/app-course-add.html
 // 接入：api.course.enroll —— POST /api/v1/courses/{courseId}/enroll（表 3-3）
 //   课程码/扫码场景 courseId 传 0、以 courseCode 为准（后端按加课码解析课程）；
+//   公开课场景传真实 courseId、enrollType=public；
 //   返回 {enrollmentId, status: enrolled/pending}；重复加课 409 由 request 层 toast。
+//   api.course.publicCourses —— GET /api/v1/courses/public（is_public=1 且已发布，带 enrolled 标记）
 const api = require('../../utils/api')
-
-// TODO 联调：公开课列表接口不在 M-B 的 13 接口内，enroll 公开课方式已支持（表 3-3 enrollType=public），
-//   以下为静态演示数据，公开课列表接口就绪后替换
-const PUBLIC_COURSES = [
-  { courseId: 0, name: '离散数学', teacher: '刘老师', school: '数学与统计学院', count: 186 },
-  { courseId: 0, name: '操作系统', teacher: '赵老师', school: '计算机学院', count: 232 },
-  { courseId: 0, name: '大学物理（上）', teacher: '孙老师', school: '物理学院', count: 420 }
-]
 
 // 双模式切换 tab（UI 设计 7.5：课程码输入 / 公开课列表）
 const MODE_TABS = [
@@ -25,10 +19,14 @@ Page({
     code: '',
     results: [],   // 课程码搜索结果（卡片列表）
     searched: false,
-    publicCourses: PUBLIC_COURSES
+    publicCourses: [],
+    publicLoaded: false,  // 公开课列表是否已拉到（未到时显示 loading，失败也置 true 以显示空态）
+    publicEmpty: false
   },
 
-  onLoad() {},
+  onLoad() {
+    this.loadPublic()
+  },
   onCodeInput(e) { this.setData({ code: e.detail.value.toUpperCase() }) },
 
   /** 双模式切换 */
@@ -41,10 +39,11 @@ Page({
     })
   },
 
-  /** 表 3-3 提交加课；status=enrolled 直接加入，pending 需教师确认 */
-  async submitEnroll(body, okTitle) {
+  /** 表 3-3 提交加课；status=enrolled 直接加入，pending 需教师确认
+   *  courseId：公开课传真实课程 ID，课程码/扫码场景传 0（后端按 courseCode 解析） */
+  async submitEnroll(courseId, body) {
     try {
-      const data = await api.course.enroll(0, body)
+      const data = await api.course.enroll(courseId || 0, body)
       const status = data && data.status
       wx.showToast({
         title: status === 'enrolled' ? '已加入课程' : '已提交申请，教师确认后生效',
@@ -85,14 +84,39 @@ Page({
   joinCourse(e) {
     const item = this.data.results[Number(e.currentTarget.dataset.index)]
     if (!item) return
-    this.submitEnroll({ enrollType: 'code', courseCode: item.code })
+    this.submitEnroll(0, { enrollType: 'code', courseCode: item.code })
   },
 
-  /** 加入公开课（表 3-3 enrollType=public；演示数据暂以课程码占位） */
+  /** 公开课列表：GET /api/v1/courses/public（is_public=1 且已发布，带 enrolled 标记） */
+  async loadPublic() {
+    try {
+      const list = (await api.course.publicCourses()) || []
+      this.setData({
+        publicLoaded: true,
+        publicEmpty: !list.length,
+        publicCourses: list.map((c) => {
+          const count = c.studentCount != null ? c.studentCount : 0
+          return {
+            courseId: c.courseId,
+            name: c.courseName || '未命名课程',
+            // 学校名可能为空，拼好再交给模板，避免模板里出现空的分隔符
+            meta: [c.teacherName || '—', c.schoolName, count + ' 人在学']
+              .filter(function (s) { return s }).join(' · '),
+            enrolled: !!c.enrolled
+          }
+        })
+      })
+    } catch (e) {
+      // request 层已 toast；置 loaded 以免一直停在加载态
+      this.setData({ publicLoaded: true, publicEmpty: true })
+    }
+  },
+
+  /** 加入公开课（表 3-3 enrollType=public，按真实 courseId 加入；已加入的不再重复提交） */
   joinPublic(e) {
-    const c = this.data.publicCourses[e.currentTarget.dataset.index]
-    wx.showToast({ title: '已提交加入申请：' + c.name, icon: 'none' })
-    setTimeout(() => wx.navigateBack(), 900)
+    const c = this.data.publicCourses[Number(e.currentTarget.dataset.index)]
+    if (!c || c.enrolled) return
+    this.submitEnroll(c.courseId, { enrollType: 'public' })
   },
 
   scanQr() {

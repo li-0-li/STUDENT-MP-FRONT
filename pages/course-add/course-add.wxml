@@ -45,20 +45,24 @@
     </block>
   </block>
 
-  <!-- 模式二：公开课列表 -->
+  <!-- 模式二：公开课列表（GET /api/v1/courses/public，带 enrolled 标记） -->
   <block wx:else>
     <view class="section-title">公开课程</view>
-    <view wx:for="{{publicCourses}}" wx:key="name" class="card">
+    <view wx:for="{{publicCourses}}" wx:key="courseId" class="card">
       <view class="between">
         <view class="row">
           <view class="icon-box">📖</view>
           <view class="pub-brief">
             <text class="pub-name">{{item.name}}</text>
-            <view class="small muted mt4">{{item.teacher}} · {{item.school}} · {{item.count}} 人在学</view>
+            <view class="small muted mt4">{{item.meta}}</view>
           </view>
         </view>
-        <view class="btn btn-primary btn-sm" style="flex:none" bindtap="joinPublic" data-index="{{index}}">加入</view>
+        <view wx:if="{{item.enrolled}}" class="badge badge-success" style="flex:none">已加入</view>
+        <view wx:else class="btn btn-primary btn-sm" style="flex:none" bindtap="joinPublic" data-index="{{index}}">加入</view>
       </view>
+    </view>
+    <view wx:if="{{publicLoaded && publicEmpty}}" class="card">
+      <view class="small muted">暂无可加入的公开课</view>
     </view>
   </block>
 

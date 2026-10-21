@@ -35,6 +35,8 @@ const courseApi = {
   schedules: (courseId) => request.get('/v1/courses/' + courseId + '/schedules'),
   /** 加课前课程搜索：GET /api/v1/courses/search（courseCode 精确 / keyword 模糊，学生专用） */
   search: (params) => request.get('/v1/courses/search', params),
+  /** 公开课列表（学生）：GET /api/v1/courses/public（is_public=1 且已发布，带 enrolled 标记） */
+  publicCourses: (params) => request.get('/v1/courses/public', params),
   /** 表 3-4 资源列表：GET /api/v1/courses/{courseId}/resources（weekNum/resourceType 筛选） */
   listResources: (courseId, params) => request.get('/v1/courses/' + courseId + '/resources', params)
 }
