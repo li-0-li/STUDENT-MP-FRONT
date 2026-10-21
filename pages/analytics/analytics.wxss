@@ -67,6 +67,16 @@
 .wb-q-analysis { font-size: 24rpx; color: #67c23a; margin-top: 10rpx; line-height: 1.5; }
 .wb-q-type.ok { background: #67c23a; }
 
+/* 错题本筛选栏：学科 / 错误类型 / 掌握状态 / 时间范围 */
+.wb-filter { display: flex; flex-wrap: wrap; gap: 12rpx; padding: 0 32rpx 12rpx; }
+.wb-filter-item { font-size: 24rpx; color: #0d9488; background: #f0fdfa; border-radius: 999rpx; padding: 8rpx 20rpx; }
+.wb-filter-date { align-items: center; padding-bottom: 16rpx; }
+.wb-filter-sep { font-size: 24rpx; color: #999; }
+.wb-filter-reset { font-size: 24rpx; color: #999; margin-left: auto; padding: 8rpx 12rpx; }
+/* 题型徽标（qTypeName 由后端返回） */
+.wb-q-badge { font-size: 22rpx; color: #0d9488; border: 1rpx solid #0d9488; border-radius: 8rpx; padding: 1rpx 10rpx; margin-left: 8rpx; }
+.wb-sheet-more { text-align: center; font-size: 24rpx; color: #999; padding: 28rpx 0; }
+
 /* 推荐练习弹层 */
 .pr-q-item { background: #f7f8fa; border-radius: 16rpx; padding: 20rpx; margin-bottom: 16rpx; }
 .pr-opt { display: flex; align-items: center; background: #fff; border: 2rpx solid #e4e7ed; border-radius: 12rpx; padding: 16rpx 20rpx; margin-top: 12rpx; }

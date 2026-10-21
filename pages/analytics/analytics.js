@@ -34,7 +34,41 @@ Page({
     adviceText: '正在生成 AI 学习建议…',
 
     // 学习预警（alerts 中 studentId 为本人的记录，按 reason 去重）
-    alerts: []
+    alerts: [],
+
+    /* ---- 错题本（GET /api/v1/wrong-records）----
+       支持学科(课程) / 错误类型(题型) / 掌握状态 / 时间范围 筛选 + 分页加载，
+       后端只返回当前登录用户自己的错题，前端不传 studentId。 */
+    wrongOpen: false,
+    wrongLoading: false,
+    wrongLoaded: false,   // 是否拉过第一页（避免每次开弹层都重拉）
+    wrongError: '',
+    wrongItems: [],       // 累积的错题行（分页追加）
+    wrongGroups: [],      // 按课程归类后的展示结构
+    wrongTotal: 0,
+    wrongPage: 1,
+    wrongHasMore: false,
+    // 筛选项（首项均为「全部」）
+    wrongCourseOptions: [],   // [{courseId, courseName}]，courseId=null 表示全部课程
+    wrongCourseIndex: 0,
+    wrongTypeOptions: [
+      { label: '全部类型', value: '' },
+      { label: '单选题', value: 'single' },
+      { label: '多选题', value: 'multi' },
+      { label: '判断题', value: 'judge' },
+      { label: '填空题', value: 'blank' },
+      { label: '简答题', value: 'short' },
+      { label: '编程题', value: 'program' }
+    ],
+    wrongTypeIndex: 0,
+    wrongMasteredOptions: [
+      { label: '全部状态', value: '' },
+      { label: '未掌握', value: 'false' },
+      { label: '已掌握', value: 'true' }
+    ],
+    wrongMasteredIndex: 0,
+    wrongStart: '',       // yyyy-MM-dd，空表示不限
+    wrongEnd: ''
   },
 
   onLoad() {
@@ -450,35 +484,138 @@ Page({
     this.setData({ practiceOpen: false })
   },
 
-  // 错题本入口：拉取真实错题记录（表 3-8 关联），按课程归类弹层展示
+  /* ===================== 错题本 ===================== */
+
+  // 入口：打开弹层 → 首次补齐学科下拉 → 拉第一页
   async goWrongBook() {
-    if (this.data.wrongLoading) return
-    this.setData({ wrongOpen: true, wrongLoading: true })
+    this.setData({ wrongOpen: true })
+    if (!this.data.wrongCourseOptions.length) {
+      await this.loadWrongCourseOptions()
+    }
+    if (!this.data.wrongLoaded) {
+      this.loadWrong(true)
+    }
+  },
+
+  // 学科下拉取「我学的课」，取不到也不阻塞错题查询（只是少了学科筛选项）
+  async loadWrongCourseOptions() {
     try {
-      const res = await api.homework.wrongRecords()
+      const res = await api.course.listMine({ page: 1, pageSize: 50 })
       const list = (res && res.list) || []
-      // 按课程归类
-      const map = {}
-      const groups = []
-      list.forEach(function (r) {
-        const key = r.courseId
-        if (!map[key]) {
-          map[key] = { courseId: key, courseName: r.courseName || '未知课程', items: [] }
-          groups.push(map[key])
-        }
-        map[key].items.push({
-          errorId: r.errorId,
-          content: r.content || '',
-          analysis: r.analysis || '',
-          wrongCount: r.wrongCount || 1,
-          mastered: !!r.mastered,
-          lastWrongTime: (r.lastWrongTime || '').slice(0, 10)
-        })
+      this.setData({
+        wrongCourseOptions: [{ courseId: null, courseName: '全部课程' }].concat(
+          list.map(function (c) {
+            return { courseId: c.courseId, courseName: c.courseName || ('课程' + c.courseId) }
+          })
+        )
       })
-      this.setData({ wrongGroups: groups, wrongLoading: false })
     } catch (e) {
-      this.setData({ wrongOpen: false, wrongLoading: false })
-      // request 层已 toast
+      this.setData({ wrongCourseOptions: [{ courseId: null, courseName: '全部课程' }] })
+    }
+  },
+
+  /**
+   * 拉取错题。reset=true 表示筛选条件变更、从第一页重来；false 为追加下一页。
+   * 只传后端支持的 courseId / qType / mastered / startTime / endTime / page / pageSize。
+   */
+  async loadWrong(reset) {
+    if (this.data.wrongLoading) return
+    const page = reset ? 1 : this.data.wrongPage + 1
+    this.setData({ wrongLoading: true, wrongError: '' })
+
+    const course = this.data.wrongCourseOptions[this.data.wrongCourseIndex]
+    const type = this.data.wrongTypeOptions[this.data.wrongTypeIndex]
+    const mastered = this.data.wrongMasteredOptions[this.data.wrongMasteredIndex]
+
+    const params = { page: page, pageSize: 20 }
+    if (course && course.courseId != null) params.courseId = course.courseId
+    if (type && type.value) params.qType = type.value
+    if (mastered && mastered.value) params.mastered = mastered.value
+    if (this.data.wrongStart) params.startTime = this.data.wrongStart
+    if (this.data.wrongEnd) params.endTime = this.data.wrongEnd
+
+    try {
+      const res = await api.homework.wrongRecords(params)
+      const list = (res && res.list) || []
+      const total = (res && res.total) || 0
+      const items = reset ? list : this.data.wrongItems.concat(list)
+      this.setData({
+        wrongItems: items,
+        wrongGroups: this.groupWrong(items),
+        wrongPage: page,
+        wrongTotal: total,
+        wrongHasMore: items.length < total,
+        wrongLoaded: true,
+        wrongLoading: false
+      })
+    } catch (e) {
+      // request 层已 toast；这里只显示重试提示并保留已加载数据，不直接关掉弹层
+      this.setData({ wrongLoading: false, wrongError: '加载失败，请重试' })
+    }
+  },
+
+  // 按课程归类（课程名为空时归到「未分类」），qTypeName 由后端返回，前端不做题型映射
+  groupWrong(items) {
+    const map = {}
+    const groups = []
+    items.forEach(function (r) {
+      const key = r.courseId != null ? String(r.courseId) : '0'
+      if (!map[key]) {
+        map[key] = { courseId: key, courseName: r.courseName || '未分类', items: [] }
+        groups.push(map[key])
+      }
+      map[key].items.push({
+        errorId: r.errorId,
+        content: r.content || '',
+        analysis: r.analysis || '',
+        wrongCount: r.wrongCount || 1,
+        mastered: !!r.mastered,
+        qTypeName: r.qTypeName || '',
+        lastWrongTime: (r.lastWrongTime || '').slice(0, 10)
+      })
+    })
+    return groups
+  },
+
+  onWrongCourseChange(e) {
+    this.setData({ wrongCourseIndex: Number(e.detail.value) })
+    this.loadWrong(true)
+  },
+
+  onWrongTypeChange(e) {
+    this.setData({ wrongTypeIndex: Number(e.detail.value) })
+    this.loadWrong(true)
+  },
+
+  onWrongMasteredChange(e) {
+    this.setData({ wrongMasteredIndex: Number(e.detail.value) })
+    this.loadWrong(true)
+  },
+
+  onWrongStartChange(e) {
+    this.setData({ wrongStart: e.detail.value })
+    this.loadWrong(true)
+  },
+
+  onWrongEndChange(e) {
+    this.setData({ wrongEnd: e.detail.value })
+    this.loadWrong(true)
+  },
+
+  resetWrongFilter() {
+    this.setData({
+      wrongCourseIndex: 0,
+      wrongTypeIndex: 0,
+      wrongMasteredIndex: 0,
+      wrongStart: '',
+      wrongEnd: ''
+    })
+    this.loadWrong(true)
+  },
+
+  loadMoreWrong() {
+    if (this.data.wrongHasMore && !this.data.wrongLoading) {
+      this.loadWrong(false)
     }
   },
 

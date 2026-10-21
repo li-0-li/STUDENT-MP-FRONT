@@ -100,26 +100,65 @@
 
 </view>
 
-<!-- 错题本弹层（表 3-8 关联：GET /v1/wrong-records，按课程归类） -->
+<!-- 错题本弹层（GET /v1/wrong-records：学科 / 错误类型 / 掌握状态 / 时间范围 筛选 + 分页） -->
 <view class="wb-mask" wx:if="{{wrongOpen}}" bindtap="closeWrongBook">
   <view class="wb-sheet" catchtap="noop">
     <view class="wb-sheet-header">
       <text class="wb-sheet-title">我的错题本</text>
       <text class="wb-sheet-close" bindtap="closeWrongBook">✕</text>
     </view>
-    <view wx:if="{{wrongLoading}}" class="wb-sheet-loading">加载中…</view>
-    <scroll-view wx:else scroll-y class="wb-sheet-body">
-      <view wx:if="{{!wrongGroups.length}}" class="wb-sheet-loading">暂无错题记录，继续保持！</view>
-      <block wx:for="{{wrongGroups}}" wx:key="courseId" wx:for-item="group">
-        <view class="wb-group-title">{{group.courseName}}（{{group.items.length}} 题）</view>
-        <view wx:for="{{group.items}}" wx:key="errorId" wx:for-item="q" class="wb-q-item">
-          <view class="wb-q-head">
-            <text class="wb-q-type {{q.mastered ? 'ok' : ''}}">{{q.mastered ? '已掌握' : '未掌握'}}</text>
-            <text class="wb-q-count">错 {{q.wrongCount}} 次 · {{q.lastWrongTime}}</text>
+
+    <!-- 筛选行一：学科 / 错误类型（题型） / 掌握状态 -->
+    <view class="wb-filter">
+      <picker mode="selector" range="{{wrongCourseOptions}}" range-key="courseName"
+              value="{{wrongCourseIndex}}" bindchange="onWrongCourseChange">
+        <view class="wb-filter-item">{{wrongCourseOptions[wrongCourseIndex].courseName}} ▾</view>
+      </picker>
+      <picker mode="selector" range="{{wrongTypeOptions}}" range-key="label"
+              value="{{wrongTypeIndex}}" bindchange="onWrongTypeChange">
+        <view class="wb-filter-item">{{wrongTypeOptions[wrongTypeIndex].label}} ▾</view>
+      </picker>
+      <picker mode="selector" range="{{wrongMasteredOptions}}" range-key="label"
+              value="{{wrongMasteredIndex}}" bindchange="onWrongMasteredChange">
+        <view class="wb-filter-item">{{wrongMasteredOptions[wrongMasteredIndex].label}} ▾</view>
+      </picker>
+    </view>
+
+    <!-- 筛选行二：答错时间范围 + 重置 -->
+    <view class="wb-filter wb-filter-date">
+      <picker mode="date" value="{{wrongStart}}" bindchange="onWrongStartChange">
+        <view class="wb-filter-item">{{wrongStart || '开始日期'}}</view>
+      </picker>
+      <text class="wb-filter-sep">至</text>
+      <picker mode="date" value="{{wrongEnd}}" bindchange="onWrongEndChange">
+        <view class="wb-filter-item">{{wrongEnd || '结束日期'}}</view>
+      </picker>
+      <view class="wb-filter-reset" catchtap="resetWrongFilter">重置</view>
+    </view>
+
+    <scroll-view scroll-y class="wb-sheet-body" bindscrolltolower="loadMoreWrong">
+      <!-- 加载中 / 错误 / 空数据 三态，互斥展示 -->
+      <view wx:if="{{wrongLoading && !wrongItems.length}}" class="wb-sheet-loading">加载中…</view>
+      <view wx:elif="{{wrongError && !wrongItems.length}}" class="wb-sheet-loading">{{wrongError}}</view>
+      <view wx:elif="{{!wrongItems.length}}" class="wb-sheet-loading">暂无符合条件的错题，换个筛选条件试试</view>
+
+      <block wx:else>
+        <block wx:for="{{wrongGroups}}" wx:key="courseId" wx:for-item="group">
+          <view class="wb-group-title">{{group.courseName}}（{{group.items.length}} 题）</view>
+          <view wx:for="{{group.items}}" wx:key="errorId" wx:for-item="q" class="wb-q-item">
+            <view class="wb-q-head">
+              <text class="wb-q-type {{q.mastered ? 'ok' : ''}}">{{q.mastered ? '已掌握' : '未掌握'}}</text>
+              <text wx:if="{{q.qTypeName}}" class="wb-q-badge">{{q.qTypeName}}</text>
+              <text class="wb-q-count">错 {{q.wrongCount}} 次 · {{q.lastWrongTime}}</text>
+            </view>
+            <view class="wb-q-content">{{q.content}}</view>
+            <view wx:if="{{q.analysis}}" class="wb-q-analysis">解析：{{q.analysis}}</view>
           </view>
-          <view class="wb-q-content">{{q.content}}</view>
-          <view wx:if="{{q.analysis}}" class="wb-q-analysis">解析：{{q.analysis}}</view>
+        </block>
+        <view wx:if="{{wrongHasMore}}" class="wb-sheet-more" bindtap="loadMoreWrong">
+          {{wrongLoading ? '加载中…' : '加载更多'}}
         </view>
+        <view wx:else class="wb-sheet-more">共 {{wrongTotal}} 条，已全部加载</view>
       </block>
     </scroll-view>
   </view>
