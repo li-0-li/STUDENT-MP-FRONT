@@ -486,9 +486,19 @@ Page({
 
   /* ===================== 错题本 ===================== */
 
-  // 入口：打开弹层 → 首次补齐学科下拉 → 拉第一页
+  // 入口：打开弹层 → 先补漏记的错题 → 首次补齐学科下拉 → 拉第一页
   async goWrongBook() {
     this.setData({ wrongOpen: true })
+    // 打开错题本时先同步一次：把已批改作业中答错、但因写入链路被绕过而漏记的题补进来。
+    // 后端只补缺失行，重复调用不会把错次越加越大；同步失败也不阻塞展示。
+    if (!this.data.wrongSynced) {
+      this.setData({ wrongSynced: true })
+      try {
+        await api.homework.syncWrongRecords()
+      } catch (e) {
+        // 静默兜底：仍按已有错题渲染，下次打开重试
+      }
+    }
     if (!this.data.wrongCourseOptions.length) {
       await this.loadWrongCourseOptions()
     }

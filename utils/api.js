@@ -56,7 +56,13 @@ const homeworkApi = {
   /** 提交详情（作答回看）：GET /api/v1/submissions/{submissionId}（逐题作答/答案/对错/评语） */
   detail: (submissionId) => request.get('/v1/submissions/' + submissionId),
   /** 错题本（表 3-8 关联）：GET /api/v1/wrong-records */
-  wrongRecords: (params) => request.get('/v1/wrong-records', params)
+  wrongRecords: (params) => request.get('/v1/wrong-records', params),
+  /**
+   * 错题本同步：POST /api/v1/wrong-records/sync
+   * 把当前学生「已批改提交中答错、但漏记」的客观题补进错题本。
+   * 只补缺失、不改已存在的行，可重复调用（幂等）。
+   */
+  syncWrongRecords: () => request.post('/v1/wrong-records/sync')
 }
 
 /* ===== 课表（表 3-12，学生专用，走课程模块） ===== */
