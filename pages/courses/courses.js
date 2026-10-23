@@ -7,7 +7,7 @@ const api = require('../../utils/api')
 const STATUS_TEXT = { creating: '创建中', certifying: '认证中', active: '进行中', archived: '已归档' }
 const STATUS_BADGE = { creating: 'badge-info', certifying: 'badge-warning', active: 'badge-success', archived: 'badge-neutral' }
 
-// 学习进度已接入表 3-1 真实字段 progress（后端读 student_profile.learning_progress，无记录为 0）
+// 课程进度已接入表 3-1 字段 progress（时间口径：首节课 0% → 末节课下课 100%，无排课为 0）
 //   章节数/作业数同为真实字段（chapterCount/homeworkCount，后端实时计数）
 function mapCourse(it) {
   return {

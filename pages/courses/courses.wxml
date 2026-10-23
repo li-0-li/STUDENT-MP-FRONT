@@ -20,9 +20,9 @@
       <view class="row" style="gap:8rpx"><text>📋</text><text>{{item.homeworkCount}} 作业</text></view>
       <text class="card-more">详情 ›</text>
     </view>
-    <!-- 学习进度条 -->
+    <!-- 课程进度条（时间口径：首节课 0% → 末节课下课 100%） -->
     <view class="between small muted mt8 co-pro-label">
-      <text>学习进度</text><text>{{item.progress}}%</text>
+      <text>课程进度</text><text>{{item.progress}}%</text>
     </view>
     <view class="progress"><view class="progress-fill" style="width: {{item.progress}}%;"></view></view>
   </view>

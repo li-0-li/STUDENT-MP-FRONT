@@ -62,7 +62,12 @@ const homeworkApi = {
    * 把当前学生「已批改提交中答错、但漏记」的客观题补进错题本。
    * 只补缺失、不改已存在的行，可重复调用（幂等）。
    */
-  syncWrongRecords: () => request.post('/v1/wrong-records/sync')
+  syncWrongRecords: () => request.post('/v1/wrong-records/sync'),
+  /** 删除一道错题（逻辑删除，后端置 deleted=1） */
+  deleteWrongRecord: (errorId) => request.del('/v1/wrong-records/' + errorId),
+  /** 重做一道错题：提交作答，后端判分并写回错题记录，返回判分结果 */
+  redoWrongRecord: (errorId, answer) =>
+    request.post('/v1/wrong-records/' + errorId + '/redo', { answer: answer })
 }
 
 /* ===== 课表（表 3-12，学生专用，走课程模块） ===== */
@@ -207,6 +212,11 @@ const aiApi = {
   feedback: (qaId, data) => request.post('/v1/qa/' + qaId + '/feedback', data),
   /** 表 3-11 学情画像（雷达图数据）：GET /api/v1/profiles/me?courseId= */
   profile: (courseId) => request.get('/v1/profiles/me', { courseId }),
+  /**
+   * 我的课程学习进度：GET /api/v1/profiles/me/courses
+   * 返回每门课的 未开始 / 进行中 / 已完成 三态、作业完成率、掌握度，以及三态汇总。
+   */
+  myCourseProgress: () => request.get('/v1/profiles/me/courses'),
   /** 表 3-19 薄弱点练习推荐：GET /api/v1/practice/recommend?courseId= */
   recommend: (courseId) => request.get('/v1/practice/recommend', { courseId }),
   /** 拉取练习题目内容（推荐返回的题号，不含答案）：GET /api/v1/practice/questions?ids=1,2,3 */

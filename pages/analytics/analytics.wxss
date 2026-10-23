@@ -76,14 +76,110 @@
 /* 题型徽标（qTypeName 由后端返回） */
 .wb-q-badge { font-size: 22rpx; color: #0d9488; border: 1rpx solid #0d9488; border-radius: 8rpx; padding: 1rpx 10rpx; margin-left: 8rpx; }
 .wb-sheet-more { text-align: center; font-size: 24rpx; color: #999; padding: 28rpx 0; }
+.wb-sheet-error { color: #e64340; }
+.wb-retry { display: inline-block; margin-top: 20rpx; padding: 12rpx 40rpx; font-size: 26rpx; color: #0d9488; border: 1rpx solid #0d9488; border-radius: 999rpx; }
+
+/* ---- 错题卡片：重做 / 删除 两项操作 ---- */
+.wb-q-ops { display: flex; gap: 16rpx; margin-top: 16rpx; padding-top: 14rpx; border-top: 1rpx solid #eceef2; }
+.wb-op { flex: 1; text-align: center; font-size: 24rpx; color: #666; background: #fff; border: 1rpx solid #e2e5eb; border-radius: 999rpx; padding: 10rpx 0; }
+.wb-op-primary { color: #0d9488; border-color: #0d9488; background: #f0fdfa; }
+.wb-op-danger { color: #e64340; border-color: #f5c6c2; background: #fff6f5; }
+
+/* ---- 错题重做弹层 ---- */
+.wb-redo-meta { display: flex; align-items: center; gap: 12rpx; margin-bottom: 12rpx; }
+.wb-redo-content { font-size: 30rpx; line-height: 1.6; margin-bottom: 24rpx; }
+.wb-redo-opt { display: flex; align-items: center; padding: 18rpx 20rpx; margin-bottom: 14rpx; background: #f7f8fa; border: 1rpx solid #e9ecf1; border-radius: 14rpx; }
+.wb-redo-opt.checked { background: #f0fdfa; border-color: #0d9488; }
+.wb-redo-opt-key { width: 44rpx; height: 44rpx; line-height: 44rpx; text-align: center; font-size: 24rpx; color: #0d9488; background: #fff; border-radius: 50%; margin-right: 16rpx; }
+.wb-redo-opt-text { font-size: 28rpx; flex: 1; }
+.wb-redo-input { border: 1rpx solid #e2e5eb; border-radius: 14rpx; padding: 20rpx; font-size: 28rpx; margin-bottom: 20rpx; }
+.wb-redo-result { border-radius: 16rpx; padding: 20rpx; margin-top: 8rpx; }
+.wb-redo-result.ok { background: #f0f9eb; }
+.wb-redo-result.bad { background: #fef0f0; }
+.wb-redo-verdict { font-size: 28rpx; font-weight: 600; margin-bottom: 10rpx; }
+.wb-redo-result.ok .wb-redo-verdict { color: #67c23a; }
+.wb-redo-result.bad .wb-redo-verdict { color: #e64340; }
+.wb-redo-line { font-size: 25rpx; color: #555; line-height: 1.6; }
+.wb-redo-actions { display: flex; gap: 20rpx; margin-top: 28rpx; }
+.wb-redo-btn { flex: 1; text-align: center; font-size: 28rpx; padding: 20rpx 0; border-radius: 999rpx; background: #f2f3f5; color: #555; }
+.wb-redo-btn.primary { background: #0d9488; color: #fff; }
+.wb-redo-btn.disabled { opacity: 0.6; }
+
+/* ==================== 班级排名 ==================== */
+.rank-card { padding: 28rpx 24rpx; }
+.rank-main { text-align: center; margin-bottom: 20rpx; }
+.rank-num-row { display: flex; align-items: baseline; justify-content: center; }
+.rank-num { font-size: 68rpx; font-weight: 700; color: var(--brand-600); line-height: 1; }
+.rank-unit { font-size: 26rpx; color: var(--ink-600); margin-left: 6rpx; }
+.rank-of { font-size: 24rpx; color: var(--ink-400); margin-left: 12rpx; }
+.rank-text { display: block; font-size: 24rpx; color: var(--ink-500); margin-top: 10rpx; }
+.rank-grid { display: flex; padding-top: 20rpx; border-top: 1rpx solid var(--border); }
+.rank-cell { flex: 1; text-align: center; }
+.rank-cell + .rank-cell { border-left: 1rpx solid var(--border); }
+.rank-cell-num { display: block; font-size: 30rpx; font-weight: 600; color: var(--ink-900); margin-bottom: 4rpx; }
+.rank-basis { display: block; margin-top: 18rpx; line-height: 1.6; }
+
+/* ==================== 知识点掌握度：评估依据 ==================== */
+.mastery-basis { line-height: 1.6; }
+
+/* ==================== 课程学习进度：三态 ==================== */
+.progress-summary { display: flex; }
+.ps-cell { flex: 1; text-align: center; }
+.ps-num { display: block; font-size: 38rpx; font-weight: 700; color: var(--ink-900); margin-bottom: 4rpx; }
+.ps-unit { font-size: 24rpx; font-weight: 500; color: var(--ink-400); }
+
+/* 课程选择器 */
+.course-picker { padding: 20rpx 24rpx; }
+.picker-value { font-size: 28rpx; font-weight: 600; color: var(--brand-600, #0d9488); }
+
+/* 排名范围说明 */
+.rank-scope { display: block; margin-top: 8rpx; }
+
+/* 练习作答后的判定与答案解析 */
+.pr-verdict-wrap { margin-top: 16rpx; padding: 16rpx; border-radius: 12rpx; background: var(--ink-50, #f8fafc); }
+.pr-verdict { font-size: 26rpx; font-weight: 600; margin-bottom: 8rpx; color: #64748b; }
+.pr-verdict.ok { color: #0d9488; }
+.pr-verdict.bad { color: #dc2626; }
+.pr-answer-line { font-size: 26rpx; color: #475569; margin-top: 4rpx; }
+.pr-answer-line.strong { color: #0f172a; font-weight: 600; }
+.pr-analysis { font-size: 25rpx; color: #64748b; margin-top: 10rpx; line-height: 1.6; }
+.ps-cell.done .ps-num { color: var(--success); }
+.ps-cell.doing .ps-num { color: var(--brand-600); }
+.ps-cell.todo .ps-num { color: var(--ink-400); }
+.progress-basis {
+  display: block;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--border);
+  line-height: 1.6;
+}
+.tag {
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid transparent;
+}
+.tag.st-completed { color: var(--success); background: #f0fdf4; border-color: #bbf7d0; }
+.tag.st-progress { color: var(--brand-600); background: var(--brand-50); border-color: var(--brand-100); }
+.tag.st-not-started { color: var(--ink-500); background: var(--bg-subtle); border-color: var(--border); }
+.progress-fill.fill-ok { background: var(--success); }
 
 /* 推荐练习弹层 */
 .pr-q-item { background: #f7f8fa; border-radius: 16rpx; padding: 20rpx; margin-bottom: 16rpx; }
 .pr-opt { display: flex; align-items: center; background: #fff; border: 2rpx solid #e4e7ed; border-radius: 12rpx; padding: 16rpx 20rpx; margin-top: 12rpx; }
-.pr-opt.on { border-color: #4080ff; background: #ecf3ff; }
-.pr-opt-key { font-size: 26rpx; font-weight: 600; color: #4080ff; margin-right: 16rpx; }
-.pr-opt.on .pr-opt-key { color: #4080ff; }
+/* 选中态要足够显眼：加粗边框 + 底色 + 键名反白，扫一眼就知道选了哪几项 */
+.pr-opt.on { border: 3rpx solid #4080ff; background: #eaf2ff; }
+.pr-opt-key { font-size: 26rpx; font-weight: 600; color: #4080ff; margin-right: 16rpx; min-width: 40rpx; padding: 0 10rpx; height: 40rpx; line-height: 40rpx; text-align: center; border-radius: 8rpx; }
+.pr-opt.on .pr-opt-key { color: #fff; background: #4080ff; }
 .pr-opt-text { font-size: 26rpx; flex: 1; }
+.pr-opt.on .pr-opt-text { font-weight: 600; color: #1d4ed8; }
+.pr-opt-mark { font-size: 22rpx; color: #4080ff; margin-left: 12rpx; }
+.pr-opt-mark.right { color: #0d9488; }
+/* 交卷后：正确选项描绿，一眼看出该选什么 */
+.pr-opt.right { border-color: #0d9488; background: #effcf8; }
+.pr-opt-hint { font-size: 22rpx; color: #94a3b8; margin-top: 8rpx; }
 .pr-blank { background: #fff; border: 2rpx solid #e4e7ed; border-radius: 12rpx; padding: 16rpx 20rpx; margin-top: 12rpx; font-size: 26rpx; }
+/* 简答 / 编程：多行作答区 */
+.pr-textarea { width: 100%; min-height: 180rpx; box-sizing: border-box; background: #fff; border: 2rpx solid #e4e7ed; border-radius: 12rpx; padding: 16rpx 20rpx; margin-top: 12rpx; font-size: 26rpx; line-height: 1.6; }
 .pr-submit { margin: 24rpx 0 8rpx; background: #4080ff; color: #fff; font-size: 28rpx; border-radius: 44rpx; }
 .pr-result { background: #f0f9eb; color: #67c23a; border-radius: 12rpx; padding: 20rpx; font-size: 26rpx; margin-bottom: 16rpx; }

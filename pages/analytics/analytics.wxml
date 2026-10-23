@@ -7,6 +7,16 @@
     <view class="small">学情数据加载中…</view>
   </view>
 
+  <!-- 课程选择：掌握度 / 近六次作业成绩 / AI 建议 全部跟随所选课程 -->
+  <view wx:if="{{!loading && courseNames.length > 0}}" class="card course-picker">
+    <view class="between">
+      <text class="small muted">当前课程</text>
+      <picker mode="selector" range="{{courseNames}}" value="{{courseIndex}}" bindchange="onCourseChange">
+        <view class="picker-value">{{courseNames[courseIndex] || '请选择课程'}} ▾</view>
+      </picker>
+    </view>
+  </view>
+
   <!-- 学习预警（alerts 中本人的记录） -->
   <block wx:if="{{alerts.length > 0}}">
     <view class="section-title">学习预警</view>
@@ -27,6 +37,44 @@
     </view>
   </view>
 
+  <!-- 班级排名：名次 / 班级人数 / 超越百分比 / 均分对比，全部来自 profiles/me.rank -->
+  <block wx:if="{{!loading}}">
+    <view class="section-title">班级排名</view>
+    <view class="card rank-card">
+      <block wx:if="{{rank && rank.rank}}">
+        <view class="rank-main">
+          <view class="rank-num-row">
+            <text class="rank-num">{{rank.rank}}</text>
+            <text class="rank-unit">名</text>
+            <text class="rank-of">/ 共 {{rank.rankedStudentCount || rank.totalStudents || 0}} 人有成绩</text>
+          </view>
+          <text class="rank-text">{{rank.text}}</text>
+          <!-- 排名范围必须写清楚：同班 or 全课程，人数从哪来 -->
+          <text class="small muted rank-scope">排名范围：{{rank.scope === 'clazz' ? (rank.scopeText || '本行政班') : '同一门课的选课同学'}}（共 {{rank.totalStudents || 0}} 人）</text>
+        </view>
+        <view class="rank-grid">
+          <view class="rank-cell">
+            <text class="rank-cell-num">{{rank.beatPercent || 0}}%</text>
+            <text class="small muted">超越同学</text>
+          </view>
+          <view class="rank-cell">
+            <text class="rank-cell-num">{{rank.myAvgScore || '—'}}</text>
+            <text class="small muted">我的作业均分</text>
+          </view>
+          <view class="rank-cell">
+            <text class="rank-cell-num">{{rank.classAvgScore || '—'}}</text>
+            <text class="small muted">班级作业均分</text>
+          </view>
+        </view>
+        <view class="small muted rank-basis">统计口径：{{rank.basis}}</view>
+      </block>
+      <view wx:else class="center empty">
+        <view class="small">暂无排名数据</view>
+        <view class="small muted">需要有已批改的作业成绩后，才会生成班级排名</view>
+      </view>
+    </view>
+  </block>
+
   <!-- 知识点掌握度雷达图（核心，canvas 2d 绘制） -->
   <view class="card">
     <text class="card-title">知识点掌握度</text>
@@ -34,7 +82,8 @@
       <canvas id="radar" type="2d" class="radar-canvas"></canvas>
     </view>
     <view wx:else class="center empty">
-      <view class="small">暂无学情数据</view>
+      <view class="small">暂无知识点掌握数据</view>
+      <view class="small muted">完成一次推荐练习或作业作答后，这里会生成各知识点的掌握度与评估依据</view>
     </view>
     <!-- 雷达图数据标注（弱项高亮） -->
     <view class="mastery-item" wx:for="{{mastery}}" wx:key="name">
@@ -45,6 +94,8 @@
       <view class="progress">
         <view class="progress-fill {{item.weak ? 'fill-warn' : ''}}" style="width: {{item.percent}}%;"></view>
       </view>
+      <!-- 评估依据：这个百分比是依据多少作答记录算出来的 -->
+      <view class="small muted mt4 mastery-basis">{{item.basisText}}</view>
     </view>
   </view>
 
@@ -68,23 +119,52 @@
         <text>{{adviceText}}</text>
       </view>
     </view>
-    <button class="btn btn-primary btn-block mt12 btn-slim" bindtap="startPractice">开始推荐练习</button>
+    <button class="btn btn-primary btn-block mt12 btn-slim" bindtap="startPractice" loading="{{practiceStarting}}">
+      {{practiceStarting ? '正在准备练习…' : '开始推荐练习'}}
+    </button>
   </view>
 
-  <!-- 每门课的学习进度 / 掌握度（逐课 profiles/me） -->
-  <block wx:if="{{courses.length > 0}}">
-    <view class="section-title">课程学习进度</view>
-    <view class="card" wx:for="{{courses}}" wx:key="name">
+  <!-- 课程学习进度（GET /v1/profiles/me/courses：已完成 / 进行中 / 未开始） -->
+  <view class="section-title">课程作业完成进度</view>
+  <block wx:if="{{courseProgressList.length > 0}}">
+    <view class="card">
+      <view class="progress-summary">
+        <view class="ps-cell done">
+          <text class="ps-num">{{courseStat.completedAssignment}}<text class="ps-unit">/{{courseStat.totalAssignment}}</text></text>
+          <text class="small muted">已完成作业（全部课程）</text>
+        </view>
+        <view class="ps-cell doing">
+          <text class="ps-num">{{courseStat.inProgress}}</text>
+          <text class="small muted">进行中</text>
+        </view>
+        <view class="ps-cell todo">
+          <text class="ps-num">{{courseStat.notStarted}}</text>
+          <text class="small muted">未开始</text>
+        </view>
+        <view class="ps-cell">
+          <text class="ps-num">{{courseStat.avgProgress}}%</text>
+          <text class="small muted">平均完成</text>
+        </view>
+      </view>
+      <view class="small muted progress-basis">进度口径：按课程作业完成情况统计（草稿不计入）</view>
+    </view>
+    <view class="card" wx:for="{{courseProgressList}}" wx:key="courseId">
       <view class="between">
         <view class="course-name">{{item.name}}</view>
-        <text class="small muted">{{item.mastery}}</text>
+        <text class="tag {{item.statusClass}}">{{item.statusText}}</text>
       </view>
       <view class="progress mt8">
-        <view class="progress-fill" style="width: {{item.progress}}%;"></view>
+        <view class="progress-fill {{item.status === 'completed' ? 'fill-ok' : ''}}" style="width: {{item.progress}}%;"></view>
       </view>
-      <view class="small muted mt4">{{item.progressText}}</view>
+      <view class="mt4">
+        <text class="small muted">{{item.text}}</text>
+      </view>
     </view>
   </block>
+  <view wx:elif="{{!loading}}" class="card center empty">
+    <view class="small">暂无课程进度数据</view>
+    <view class="small muted">加入课程并提交作业后，这里会显示各课的完成情况</view>
+  </view>
 
   <!-- 错题本入口 -->
   <view class="list-item between" bindtap="goWrongBook">
@@ -137,9 +217,12 @@
     </view>
 
     <scroll-view scroll-y class="wb-sheet-body" bindscrolltolower="loadMoreWrong">
-      <!-- 加载中 / 错误 / 空数据 三态，互斥展示 -->
+      <!-- 加载中 / 错误 / 空数据 三态，互斥展示；错误态给出具体原因与重试入口 -->
       <view wx:if="{{wrongLoading && !wrongItems.length}}" class="wb-sheet-loading">加载中…</view>
-      <view wx:elif="{{wrongError && !wrongItems.length}}" class="wb-sheet-loading">{{wrongError}}</view>
+      <view wx:elif="{{wrongError && !wrongItems.length}}" class="wb-sheet-loading">
+        <view>{{wrongError}}</view>
+        <view class="wb-retry" catchtap="retryWrong">点击重试</view>
+      </view>
       <view wx:elif="{{!wrongItems.length}}" class="wb-sheet-loading">暂无符合条件的错题，换个筛选条件试试</view>
 
       <block wx:else>
@@ -153,13 +236,68 @@
             </view>
             <view class="wb-q-content">{{q.content}}</view>
             <view wx:if="{{q.analysis}}" class="wb-q-analysis">解析：{{q.analysis}}</view>
+            <!-- 两项操作：重做 / 删除（删除需二次确认） -->
+            <view class="wb-q-ops">
+              <view class="wb-op wb-op-primary" catchtap="onRedo" data-id="{{q.errorId}}">重做</view>
+              <view class="wb-op wb-op-danger" catchtap="onDeleteWrong" data-id="{{q.errorId}}">删除</view>
+            </view>
           </view>
         </block>
-        <view wx:if="{{wrongHasMore}}" class="wb-sheet-more" bindtap="loadMoreWrong">
+        <!-- 已有数据但后续加载失败时，也要能看到原因并重试 -->
+        <view wx:if="{{wrongError && wrongItems.length}}" class="wb-sheet-more wb-sheet-error" bindtap="retryWrong">
+          {{wrongError}}，点击重试
+        </view>
+        <view wx:elif="{{wrongHasMore}}" class="wb-sheet-more" bindtap="loadMoreWrong">
           {{wrongLoading ? '加载中…' : '加载更多'}}
         </view>
         <view wx:else class="wb-sheet-more">共 {{wrongTotal}} 条，已全部加载</view>
       </block>
+    </scroll-view>
+  </view>
+</view>
+
+<!-- 错题重做弹层（POST /v1/wrong-records/{id}/redo：作答 → 判分 → 写回掌握状态与错次） -->
+<view class="wb-mask" wx:if="{{redoOpen}}" bindtap="closeRedo">
+  <view class="wb-sheet" catchtap="noop">
+    <view class="wb-sheet-header">
+      <text class="wb-sheet-title">重做错题</text>
+      <text class="wb-sheet-close" bindtap="closeRedo">✕</text>
+    </view>
+    <scroll-view scroll-y class="wb-sheet-body">
+      <view class="wb-redo-meta">
+        <text class="wb-q-badge">{{redoItem.qTypeName}}</text>
+        <text class="wb-q-count">已错 {{redoItem.wrongCount}} 次</text>
+      </view>
+      <view class="wb-redo-content">{{redoItem.content}}</view>
+
+      <!-- 选择型：单选 / 多选 / 判断 -->
+      <block wx:if="{{redoOptions.length}}">
+        <view wx:for="{{redoOptions}}" wx:key="key" wx:for-item="opt"
+              class="wb-redo-opt {{opt.checked ? 'checked' : ''}}"
+              catchtap="onRedoTapOption" data-key="{{opt.key}}">
+          <text class="wb-redo-opt-key">{{opt.key}}</text>
+          <text class="wb-redo-opt-text">{{opt.text}}</text>
+        </view>
+      </block>
+
+      <!-- 填空 -->
+      <block wx:elif="{{redoItem.qType === 'blank'}}">
+        <input class="wb-redo-input" value="{{redoAnswer}}" placeholder="请输入答案" bindinput="onRedoInput" />
+      </block>
+
+      <!-- 判分结果 -->
+      <view wx:if="{{redoResult}}" class="wb-redo-result {{redoResult.correct ? 'ok' : 'bad'}}">
+        <view class="wb-redo-verdict">{{redoResult.correct ? '✓ 答对了，已标记为掌握' : '✗ 仍然答错，错次 +1'}}</view>
+        <view class="wb-redo-line">正确答案：{{redoResult.correctAnswer}}</view>
+        <view wx:if="{{redoResult.analysis}}" class="wb-redo-line">解析：{{redoResult.analysis}}</view>
+      </view>
+
+      <view class="wb-redo-actions">
+        <view class="wb-redo-btn" catchtap="closeRedo">关闭</view>
+        <view class="wb-redo-btn primary {{redoSubmitting ? 'disabled' : ''}}" catchtap="submitRedo">
+          {{redoSubmitting ? '判分中…' : (redoResult ? '再试一次' : '提交答案')}}
+        </view>
+      </view>
     </scroll-view>
   </view>
 </view>
@@ -174,7 +312,7 @@
     <view wx:if="{{practiceLoading}}" class="wb-sheet-loading">出题中…</view>
     <scroll-view wx:else scroll-y class="wb-sheet-body">
       <view wx:if="{{practiceResult}}" class="pr-result">
-        ✓ 本次练习 {{practiceResult.correct}} / {{practiceResult.total}} 题正确，掌握度已更新
+        ✓ 本次练习 {{practiceResult.correct}} / {{practiceResult.total}} 题正确{{practiceResult.pending ? '（另有 ' + practiceResult.pending + ' 题简答/编程待批改）' : ''}}，掌握度已更新
       </view>
       <block wx:for="{{practiceQuestions}}" wx:key="questionId" wx:for-item="q" wx:for-index="qi">
         <view class="pr-q-item">
@@ -183,29 +321,59 @@
             <text class="wb-q-count">第 {{qi + 1}} 题</text>
           </view>
           <view class="wb-q-content">{{q.content}}</view>
-          <block wx:if="{{q.qtype !== 'blank'}}">
+          <!-- 选择题：单选 / 多选 / 判断。选中态读 opt.checked —— WXML 不支持 .indexOf()，
+               写在模板里会恒为 undefined，点了毫无反馈 -->
+          <block wx:if="{{q.isChoice}}">
             <view
               wx:for="{{q.options}}"
               wx:key="key"
               wx:for-item="opt"
-              class="pr-opt {{q.selected === opt.key || (q.qtype === 'multi' && q.selected.indexOf(opt.key) >= 0) ? 'on' : ''}}"
+              class="pr-opt {{opt.checked ? 'on' : ''}} {{q.judged && opt.right ? 'right' : ''}}"
               bindtap="pickPractice"
               data-q="{{qi}}"
               data-key="{{opt.key}}"
             >
               <text class="pr-opt-key">{{opt.key}}</text>
               <text class="pr-opt-text">{{opt.text}}</text>
+              <text wx:if="{{opt.checked}}" class="pr-opt-mark">已选</text>
+              <text wx:elif="{{q.judged && opt.right}}" class="pr-opt-mark right">正确答案</text>
             </view>
+            <view wx:if="{{q.isMulti}}" class="pr-opt-hint">多选题，可多选；已选 {{q.selected.length}} 项</view>
           </block>
+
+          <!-- 填空：单行 -->
           <input
-            wx:else
+            wx:elif="{{q.qtype === 'blank'}}"
             class="pr-blank"
-            placeholder="输入你的答案"
+            placeholder="请输入答案"
             value="{{q.selected}}"
-            bindinput="onBlankAnswer"
+            bindinput="onTextAnswer"
             data-q="{{qi}}"
-            disabled="{{!!practiceResult}}"
+            disabled="{{q.judged}}"
           />
+
+          <!-- 简答 / 编程：多行输入（这两类题以前没有任何作答入口） -->
+          <textarea
+            wx:else
+            class="pr-textarea"
+            placeholder="{{q.isProgram ? '在此编写代码或作答' : '在此作答'}}"
+            value="{{q.selected}}"
+            auto-height
+            maxlength="-1"
+            bindinput="onTextAnswer"
+            data-q="{{qi}}"
+            disabled="{{q.judged}}"
+          />
+
+          <!-- 提交后当场对答案：对错 / 我的答案 / 标准答案 / 解析 -->
+          <view wx:if="{{q.judged}}" class="pr-verdict-wrap">
+            <view class="pr-verdict {{q.correct ? 'ok' : (q.wrong ? 'bad' : '')}}">
+              {{q.correct ? '✓ 答对' : (q.wrong ? '✕ 答错' : '· 待人工批改')}}
+            </view>
+            <view class="pr-answer-line">我的答案：{{q.myAnswer || '未作答'}}</view>
+            <view class="pr-answer-line strong">正确答案：{{q.standardAnswer || '—'}}</view>
+            <view wx:if="{{q.analysis}}" class="pr-analysis">解析：{{q.analysis}}</view>
+          </view>
         </view>
       </block>
       <button wx:if="{{!practiceResult}}" class="pr-submit" bindtap="submitPractice">提交答案</button>

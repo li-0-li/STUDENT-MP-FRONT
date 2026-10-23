@@ -11,24 +11,81 @@ const api = require('../../utils/api')
 const LEVEL_TEXT = { HIGH: '高风险', MEDIUM: '中风险', LOW: '低风险' }
 const LEVEL_BADGE = { HIGH: 'badge-error', MEDIUM: 'badge-warning', LOW: 'badge-neutral' }
 
+// 课程学习进度三态 → 标签样式类
+const STATUS_CLASS = {
+  completed: 'st-completed',
+  in_progress: 'st-progress',
+  not_started: 'st-not-started'
+}
+
+// 薄弱判定线，与后端 KpMastery.weak() 一致：<50
+const WEAK_LINE = 50
+
+/** 本周学习时长（秒）→ 可读文案 */
+function formatStudyTime(profile) {
+  const sec = profile ? Number(profile.learningTimeSec || 0) : 0
+  if (!sec) return '—'
+  const h = Math.floor(sec / 3600)
+  const m = Math.round((sec % 3600) / 60)
+  return h > 0 ? h + ' 小时 ' + m + ' 分' : m + ' 分钟'
+}
+
+/**
+ * 知识点掌握度 → 雷达条目 + 评估依据。
+ *
+ * 后端返回的 percent 不是凭空给的分，而是「作答记录里的历史正确率」。
+ * 这里把算它的原始样本（作答次数、答对次数、最近练习日期）一并展示，
+ * 让雷达图上每个数字都能回答「凭什么是这个值」。
+ */
+function buildMastery(profile) {
+  const list = (profile && profile.kpList) || []
+  return list.map(function (k) {
+    const percent = Math.round(Number(k.percent) || 0)
+    const total = Number(k.exerciseCount || 0)
+    const correct = Number(k.correctCount || 0)
+    return {
+      name: k.kpName,
+      percent: percent,
+      weak: percent < WEAK_LINE,
+      exerciseCount: total,
+      correctCount: correct,
+      wrongCount: Math.max(0, total - correct),
+      lastPracticedAt: k.lastPracticedAt || '',
+      basisText: total > 0
+        ? '已作答 ' + total + ' 次 · 答对 ' + correct + ' 次'
+          + (k.lastPracticedAt ? ' · 最近练习 ' + k.lastPracticedAt : '')
+        : '暂无作答数据'
+    }
+  })
+}
+
 Page({
   data: {
     loading: true,
-    // 顶部统计卡（原型 g3 三卡）
+    // 顶部统计卡（作业维度概览）
     stats: [
       { label: '平均分', value: '—' },
       { label: '作业完成', value: '—' },
-      { label: '班级排名', value: '—', highlight: true }
+      { label: '本周学习', value: '—' }
     ],
 
-    // 知识点掌握度（ai.profile.kpList，weak 判定线 50，与后端一致）
+    // 班级排名（profiles/me.rank：名次 / 班级人数 / 超越百分比 / 均分对比 / 口径）
+    rank: null,
+
+    // 知识点掌握度（kpList + 评估依据：作答数 / 答对数 / 最近练习日期）
     mastery: [],
 
     // 近 6 次作业成绩（已批改作业按截止时间排序取后 6 次）
     homework: [],
 
-    // 每门课的学习进度 / 掌握度（逐课调用 ai.profile）
-    courses: [],
+    // 课程选择：掌握度 / 作业成绩 / AI 建议都按所选课程展示
+    // （这三样本来就是按课程算的，混在一起展示拼出来的是一份假画像）
+    courseNames: [],
+    courseIndex: 0,
+
+    // 课程学习进度（GET /v1/profiles/me/courses：三态 + 作业完成率 + 掌握度）
+    courseProgressList: [],
+    courseStat: null,       // {total, completed, inProgress, notStarted, avgProgress}
 
     // AI 学习建议文案（ai.recommend，失败回退到画像薄弱点）
     adviceText: '正在生成 AI 学习建议…',
@@ -68,7 +125,19 @@ Page({
     ],
     wrongMasteredIndex: 0,
     wrongStart: '',       // yyyy-MM-dd，空表示不限
-    wrongEnd: ''
+    wrongEnd: '',
+    wrongSynced: false,   // 本次进入页面是否已自动同步过漏记错题
+
+    /* ---- 错题重做弹层 ---- */
+    redoOpen: false,
+    redoItem: null,        // 当前重做的错题（含题干 / 题型 / 标准答案）
+    redoOptions: [],       // 选择题 / 判断题的选项 [{key, text, checked}]
+    redoAnswer: '',        // 当前作答（多选为 "A,C"）
+    redoResult: null,      // 判分结果 {correct, correctAnswer, analysis, wrongCount, mastered}
+    redoSubmitting: false,
+
+    // 推荐练习是否正在准备（拉推荐 + 取题目），用于按钮 loading 与防连点
+    practiceStarting: false
   },
 
   onLoad() {
@@ -87,75 +156,109 @@ Page({
         .slice()
         .sort((a, b) => String(a.deadline || '').localeCompare(String(b.deadline || '')))
 
-      // 逐课画像（雷达 / 进度数据源），取知识点数据最全的一门作为主课程
+      // 逐课画像：掌握度 / 班级排名 / 本周学习 / 作业均分都从这里取。
+      // 一次全拉，切换课程时不再发请求。
       const profiles = await Promise.all(
         courseList.map((c) => api.ai.profile(c.courseId).catch(() => null))
       )
-      let mainIdx = -1
+
+      this._courseList = courseList
+      this._profiles = profiles
+      this._hwList = hwList
+
+      // 默认选中「知识点最全」的那门课（都没有知识点就选第一门）
+      let mainIdx = 0
+      let bestKp = -1
       profiles.forEach((p, i) => {
         const n = p && p.kpList ? p.kpList.length : 0
-        if (n > 0 && (mainIdx < 0 || n > profiles[mainIdx].kpList.length)) mainIdx = i
+        if (n > bestKp) {
+          bestKp = n
+          mainIdx = i
+        }
       })
-      const mainProfile = mainIdx >= 0 ? profiles[mainIdx] : null
-      const mainCourseId = mainIdx >= 0 ? courseList[mainIdx].courseId : null
-
-      // 统计卡：平均分取已批改作业均分（画像 homeworkAvg 暂缺时兜底），完成率取已提交/总数
-      const graded = hwList.filter((it) => it.myScore != null)
-      const done = hwList.filter((it) => it.myStatus).length
-      const avgScore = graded.length
-        ? Math.round(graded.reduce((s, it) => s + it.myScore, 0) / graded.length)
-        : mainProfile && mainProfile.homeworkAvg != null
-          ? Math.round(Number(mainProfile.homeworkAvg))
-          : null
+      // 学生手动切过课程就保持他的选择，别在练习提交后的刷新里把他踢回默认课
+      const keep = this.data.courseIndex
+      const idx = keep >= 0 && keep < courseList.length ? keep : mainIdx
 
       this.setData({
-        stats: [
-          { label: '平均分', value: avgScore != null ? String(avgScore) : '—' },
-          { label: '作业完成', value: hwList.length ? done + '/' + hwList.length : '—' },
-          { label: '班级排名', value: (mainProfile && mainProfile.rankText) || '—', highlight: true }
-        ],
-        // 雷达维度（kpName + percent；weak 与后端判定线一致：<50）
-        mastery: mainProfile
-          ? mainProfile.kpList.map((k) => ({
-              name: k.kpName,
-              percent: Math.round(Number(k.percent) || 0),
-              weak: Number(k.percent) < 50
-            }))
-          : [],
-        // 近次作业成绩（最多 6 次，横轴标签沿用「作业N」）
-        homework: graded.slice(-6).map((it, i) => ({ label: '作业' + (i + 1), score: it.myScore })),
-        // 各课进度：learningProgress 暂缺时以掌握度示意，progressText 说明口径
-        courses: courseList.map((c, i) => {
-          const p = profiles[i]
-          const masteryAvg = p && p.masteryAvg != null ? Math.round(Number(p.masteryAvg)) : null
-          const progress = p && p.learningProgress != null ? p.learningProgress : (masteryAvg != null ? masteryAvg : 0)
-          return {
-            name: c.courseName,
-            progress,
-            mastery: masteryAvg != null ? '掌握度 ' + masteryAvg + '%' : '暂无掌握度数据',
-            progressText:
-              p && p.learningProgress != null
-                ? '已完成 ' + p.learningProgress + '%'
-                : masteryAvg != null
-                  ? '暂无进度数据，图中为掌握度 ' + masteryAvg + '%'
-                  : '暂无数据'
-          }
+        courseNames: courseList.map(function (c) {
+          return c.name || c.courseName || ('课程 ' + c.courseId)
         }),
+        courseIndex: idx,
         loading: false
       })
 
-      // 等首屏布局完成后再取 canvas 节点尺寸
-      setTimeout(() => {
-        this.drawRadar()
-        this.drawTrend()
-      }, 100)
+      this.applyCourse(idx)
 
-      // AI 建议 + 本人预警（失败不影响主体展示，request 层已 toast）
-      if (mainCourseId != null) this.loadAdvice(mainCourseId, mainProfile)
+      // 课程作业完成进度单独取：三态由后端按「作业完成情况」判定
+      this.loadCourseProgress()
+
       if (me && me.userId != null) this.loadAlerts(me.userId)
     } catch (e) {
       this.setData({ loading: false, adviceText: 'AI 学习建议暂不可用' })
     }
+  },
+
+  // 切换课程 → 重新铺掌握度 / 作业成绩 / AI 建议
+  onCourseChange(e) {
+    const idx = Number(e.detail.value) || 0
+    this.setData({ courseIndex: idx })
+    this.applyCourse(idx)
+  },
+
+  /**
+   * 把「某一门课」的学情铺到页面上。
+   *
+   * 掌握度、作业成绩、AI 建议本来就是按课程算的，以前整页只认一个主课程，
+   * 把不同课程的数据混着展示 —— 拼出来的是一份不存在的画像。
+   */
+  applyCourse(idx) {
+    const course = (this._courseList || [])[idx]
+    if (!course) {
+      this.setData({ rank: null, mastery: [], homework: [] })
+      return
+    }
+    const courseId = course.courseId
+    const profile = (this._profiles || [])[idx] || null
+    // 只统计这门课的作业（作业列表自带 courseId）
+    const hwList = (this._hwList || []).filter(function (it) { return it.courseId === courseId })
+    const graded = hwList.filter(function (it) { return it.myScore != null })
+    const done = hwList.filter(function (it) { return it.myStatus }).length
+    const avgScore = graded.length
+      ? Math.round(graded.reduce(function (s, it) { return s + Number(it.myScore) }, 0) / graded.length)
+      : (profile && profile.homeworkAvg != null ? Math.round(Number(profile.homeworkAvg)) : null)
+
+    // 近六次作业：横轴用作业真名，超过 6 字截断（画布放不下长标题）
+    const recent = graded.slice(-6).map(function (it) {
+      const name = String(it.title || '作业')
+      return {
+        label: name.length > 6 ? name.slice(0, 6) + '…' : name,
+        fullName: name,
+        score: it.myScore
+      }
+    })
+
+    this.recommendCourseId = courseId
+    this.setData({
+      stats: [
+        { label: '平均分', value: avgScore != null ? String(avgScore) : '—' },
+        { label: '作业完成', value: hwList.length ? done + '/' + hwList.length : '—' },
+        { label: '本周学习', value: formatStudyTime(profile) }
+      ],
+      // 名次 / 人数 / 超越百分比 / 均分对比 / 口径 全由后端算好，前端只展示
+      rank: (profile && profile.rank) || null,
+      mastery: buildMastery(profile),
+      homework: recent,
+      adviceText: '正在生成 AI 学习建议…'
+    })
+
+    // 等布局完成后量 canvas 节点尺寸
+    setTimeout(() => {
+      this.drawRadar()
+      this.drawTrend()
+    }, 80)
+
+    this.loadAdvice(courseId, profile)
   },
 
   // AI 学习建议：优先用推荐接口的「基础巩固」条目，失败回退画像薄弱点
@@ -204,6 +307,36 @@ Page({
       this.setData({ alerts: mine.slice(0, 5) })
     } catch (e) {
       // request 层已 toast
+    }
+  },
+
+  /**
+   * 课程学习进度（GET /v1/profiles/me/courses）。
+   *
+   * 三态「已完成 / 进行中 / 未开始」由后端按作业完成情况判定；
+   * 失败时保留空状态（列表为空 + 汇总为空），不弹应用层错误，避免把整页拖成不可用。
+   */
+  async loadCourseProgress() {
+    try {
+      const res = await api.ai.myCourseProgress()
+      const list = ((res && res.list) || []).map(function (c) {
+        return {
+          courseId: c.courseId,
+          name: c.courseName,
+          status: c.status,
+          statusText: c.statusText || '',
+          statusClass: STATUS_CLASS[c.status] || 'st-not-started',
+          progress: Number(c.progress || 0),
+          text: c.text || ''
+        }
+      })
+      this.setData({
+        courseProgressList: list,
+        courseStat: (res && res.summary) || null
+      })
+    } catch (e) {
+      // request 层已 toast；这里落到空状态，让该区块自己显示「暂无数据」
+      this.setData({ courseProgressList: [], courseStat: null })
     }
   },
 
@@ -364,40 +497,77 @@ Page({
   },
 
   // 开始 AI 推荐练习（表 3-19 题号 → questions 拉题 → 弹层作答 → 表 3-26 提交判分回流学情）
+  /**
+   * AI 学习建议里的「开始推荐练习」。
+   *
+   * 原来只能吃 loadAdvice 缓存里的推荐：一旦推荐接口失败或还没回来，点下去就弹一句
+   * 「暂无推荐练习」结束。现在改成完整流程 —— 缓存没有就先拉推荐，再取题目、开弹层，
+   * 全程有按钮 loading 态，失败也不会把弹层留在半开状态。
+   */
   async startPractice() {
-    const items = (this.recommend && this.recommend.list) || []
-    const ids = []
-    items.forEach(function (it) {
-      (it.questionIds || []).forEach(function (q) {
-        if (ids.indexOf(q) < 0 && ids.length < 10) ids.push(q)
-      })
-    })
-    if (!ids.length) { wx.showToast({ title: '暂无推荐练习', icon: 'none' }); return }
-    this.setData({ practiceOpen: true, practiceLoading: true, practiceResult: null })
+    if (this.data.practiceStarting) return
+    if (this.recommendCourseId == null) {
+      wx.showToast({ title: '暂无可选课程，无法推荐练习', icon: 'none' })
+      return
+    }
+    this.setData({ practiceStarting: true })
     try {
+      let items = (this.recommend && this.recommend.list) || []
+      if (!items.length) {
+        const rec = await api.ai.recommend(this.recommendCourseId)
+        this.recommend = rec
+        items = (rec && rec.list) || []
+      }
+      const ids = []
+      items.forEach(function (it) {
+        (it.questionIds || []).forEach(function (q) {
+          if (ids.indexOf(q) < 0 && ids.length < 10) ids.push(q)
+        })
+      })
+      if (!ids.length) {
+        wx.showToast({ title: '该课程暂无推荐题目', icon: 'none' })
+        return
+      }
+      this.setData({ practiceOpen: true, practiceLoading: true, practiceResult: null })
       const list = await api.ai.questions(ids)
-      const TYPE_TEXT = { single: '单选', multi: '多选', judge: '判断', blank: '填空' }
+      // 题型取值来自 question.q_type：single / multi / judge / blank / short / program
+      const TYPE_TEXT = {
+        single: '单选', multi: '多选', judge: '判断',
+        blank: '填空', short: '简答', program: '编程'
+      }
+      const CHOICE = { single: 1, multi: 1, judge: 1 }
       const questions = (list || []).map(function (q) {
+        const qtype = q.q_type
         let opts = []
         try { opts = q.options ? JSON.parse(q.options) : [] } catch (e) { opts = [] }
-        if (q.q_type === 'judge' && !opts.length) {
+        if (qtype === 'judge' && !opts.length) {
           opts = [{ key: '正确', text: '正确' }, { key: '错误', text: '错误' }]
         }
         return {
           questionId: q.question_id,
-          qtype: q.q_type,
-          typeText: TYPE_TEXT[q.q_type] || '问答',
+          qtype: qtype,
+          typeText: TYPE_TEXT[qtype] || '问答',
           content: q.content,
-          options: opts,
-          selected: q.q_type === 'multi' ? [] : '',
+          // 选中态算在数据里：WXML 表达式不支持 .indexOf() 这类方法调用，
+          // 以前把它写在模板里恒为 undefined，点了没有任何视觉反馈
+          options: opts.map(function (o) {
+            return { key: String(o.key), text: o.text, checked: false }
+          }),
+          isChoice: !!CHOICE[qtype],
+          isMulti: qtype === 'multi',
+          isProgram: qtype === 'program',
+          // 选择题用字符串/数组存键，主观题用字符串存文本
+          selected: qtype === 'multi' ? [] : '',
           answered: false
         }
       })
       this._practiceStart = Date.now()
       this.setData({ practiceQuestions: questions, practiceLoading: false })
     } catch (e) {
+      // request 层已 toast；这里把弹层收回，避免停在「加载中」的空壳上
       this.setData({ practiceOpen: false, practiceLoading: false })
-      // request 层已 toast
+    } finally {
+      this.setData({ practiceStarting: false })
     }
   },
 
@@ -407,28 +577,36 @@ Page({
     const key = e.currentTarget.dataset.key
     const q = this.data.practiceQuestions[qi]
     if (!q) return
-    if (q.qtype === 'multi') {
+    if (q.judged) return   // 已交卷，别再改答案
+    if (q.isMulti) {
       const sel = q.selected.slice()
       const i = sel.indexOf(key)
       if (i < 0) sel.push(key); else sel.splice(i, 1)
       this.setData({
         ['practiceQuestions[' + qi + '].selected']: sel,
+        ['practiceQuestions[' + qi + '].options']: q.options.map(function (o) {
+          return { key: o.key, text: o.text, checked: sel.indexOf(o.key) >= 0 }
+        }),
         ['practiceQuestions[' + qi + '].answered']: sel.length > 0
       })
     } else {
       this.setData({
         ['practiceQuestions[' + qi + '].selected']: key,
+        ['practiceQuestions[' + qi + '].options']: q.options.map(function (o) {
+          return { key: o.key, text: o.text, checked: o.key === key }
+        }),
         ['practiceQuestions[' + qi + '].answered']: true
       })
     }
   },
 
-  // 填空题输入
-  onBlankAnswer(e) {
+  // 填空 / 简答 / 编程：文本输入（input 与 textarea 共用）
+  onTextAnswer(e) {
     const qi = e.currentTarget.dataset.q
+    const val = (e.detail.value == null ? '' : String(e.detail.value))
     this.setData({
-      ['practiceQuestions[' + qi + '].selected']: e.detail.value,
-      ['practiceQuestions[' + qi + '].answered']: !!e.detail.value
+      ['practiceQuestions[' + qi + '].selected']: val,
+      ['practiceQuestions[' + qi + '].answered']: !!val.trim()
     })
   },
 
@@ -466,13 +644,50 @@ Page({
     }
     try {
       const res = await api.ai.submitPractice({ courseId: this.recommendCourseId, answers: answers })
+      // 后端把每题的标准答案与解析一并返回，这里直接回填到题目上：
+      // 交完卷当场就能看到哪几题错了、错在哪，不必再翻别处
+      const byId = {}
+      ;((res && res.results) || []).forEach(function (r) { byId[r.questionId] = r })
+      const patched = qs.map(function (q) {
+        const r = byId[q.questionId]
+        if (!r) return q
+        // 多选题的标准答案是 "A,C" 这种写法，去掉分隔符后才能逐项比对
+        const rightKeys = String(r.standardAnswer || '').replace(/[,，、\s]/g, '').toUpperCase()
+        return Object.assign({}, q, {
+          judged: true,
+          correct: r.correct === true,
+          wrong: r.correct === false,
+          // 多选题的答案是 "AC"，拆开给人看更像话
+          myAnswer: q.isMulti
+            ? String(r.myAnswer || '').split('').join('、')
+            : (r.myAnswer || ''),
+          standardAnswer: r.standardAnswer || '',
+          analysis: r.analysis || '',
+          // 交卷后标出正确选项：错在哪一眼就能看到
+          options: (q.options || []).map(function (o) {
+            return {
+              key: o.key,
+              text: o.text,
+              checked: o.checked,
+              right: rightKeys.indexOf(String(o.key).toUpperCase()) >= 0
+            }
+          })
+        })
+      })
+      // 简答/编程题不参与机器判分（后端 correct 为 null），结果里要说清楚，
+      // 否则学生会以为"这几题我明明写了却算错"
+      const pending = ((res && res.results) || []).filter(function (r) {
+        return r.correct === null || r.correct === undefined
+      }).length
       this.setData({
+        practiceQuestions: patched,
         practiceResult: {
           correct: res && res.correctCount != null ? res.correctCount : 0,
-          total: res && res.totalCount != null ? res.totalCount : answers.length
+          total: res && res.totalCount != null ? res.totalCount : answers.length,
+          pending: pending
         }
       })
-      // 作答已回流，重算掌握度刷新雷达与建议
+      // 作答已回流，重算掌握度刷新雷达与建议（applyCourse 会保持当前选中课程）
       this.loadAll()
     } catch (e) {
       // request 层已 toast
@@ -486,24 +701,34 @@ Page({
 
   /* ===================== 错题本 ===================== */
 
-  // 入口：打开弹层 → 先补漏记的错题 → 首次补齐学科下拉 → 拉第一页
+  // 入口：打开弹层 → 学科下拉 → 拉第一页 → 后台补同步漏记的错题
   async goWrongBook() {
     this.setData({ wrongOpen: true })
-    // 打开错题本时先同步一次：把已批改作业中答错、但因写入链路被绕过而漏记的题补进来。
-    // 后端只补缺失行，重复调用不会把错次越加越大；同步失败也不阻塞展示。
-    if (!this.data.wrongSynced) {
-      this.setData({ wrongSynced: true })
-      try {
-        await api.homework.syncWrongRecords()
-      } catch (e) {
-        // 静默兜底：仍按已有错题渲染，下次打开重试
-      }
-    }
+    // 同步挪到首屏之后：它只是补偿链路，慢或失败都不该让列表卡在空白页等它
     if (!this.data.wrongCourseOptions.length) {
       await this.loadWrongCourseOptions()
     }
     if (!this.data.wrongLoaded) {
-      this.loadWrong(true)
+      await this.loadWrong(true)
+    }
+    if (!this.data.wrongSynced) {
+      this.setData({ wrongSynced: true })
+      this.syncWrongInBackground()
+    }
+  },
+
+  /**
+   * 后台补一次漏记错题（已批改作业里答错、但因写入链路被绕过而没进错题本的题）。
+   * 只有真的补进了新错题才刷新列表；失败不影响已展示内容，下次打开重试。
+   */
+  async syncWrongInBackground() {
+    try {
+      const res = await api.homework.syncWrongRecords()
+      if (res && res.created > 0) {
+        this.loadWrong(true)
+      }
+    } catch (e) {
+      // 静默：已有错题照常展示
     }
   },
 
@@ -529,7 +754,10 @@ Page({
    * 只传后端支持的 courseId / qType / mastered / startTime / endTime / page / pageSize。
    */
   async loadWrong(reset) {
-    if (this.data.wrongLoading) return
+    // 请求序号：快速切换筛选/翻页时只认最后一次请求的结果。
+    // 以前用 wrongLoading 直接 return，会把"加载中又换了筛选条件"的新请求吞掉，
+    // 界面停在旧数据上；改为序号比对后，旧响应丢弃、新请求照发。
+    const seq = (this._wrongSeq = (this._wrongSeq || 0) + 1)
     const page = reset ? 1 : this.data.wrongPage + 1
     this.setData({ wrongLoading: true, wrongError: '' })
 
@@ -546,6 +774,8 @@ Page({
 
     try {
       const res = await api.homework.wrongRecords(params)
+      // 过期响应直接丢弃（期间又切了筛选条件或翻了页）
+      if (seq !== this._wrongSeq) return
       const list = (res && res.list) || []
       const total = (res && res.total) || 0
       const items = reset ? list : this.data.wrongItems.concat(list)
@@ -559,13 +789,39 @@ Page({
         wrongLoading: false
       })
     } catch (e) {
-      // request 层已 toast；这里只显示重试提示并保留已加载数据，不直接关掉弹层
-      this.setData({ wrongLoading: false, wrongError: '加载失败，请重试' })
+      if (seq !== this._wrongSeq) return
+      // request 层已 toast；这里给出可自查的具体原因，并保留已加载数据
+      this.setData({ wrongLoading: false, wrongError: this.wrongErrorText(e) })
     }
+  },
+
+  /**
+   * 把失败原因翻译成能自查的文案。
+   *
+   * 原来一律显示"加载失败，请重试"，无法区分「后端没起」「真机连不上 127.0.0.1」
+   * 「登录失效」「业务报错」，排查只能靠猜。
+   */
+  wrongErrorText(e) {
+    const msg = (e && e.message) || String(e || '')
+    if (msg.indexOf('request:fail') >= 0 || msg.indexOf('网络') >= 0) {
+      return '网络异常：请确认后端已启动且地址可访问（真机不能用 127.0.0.1）'
+    }
+    if (msg.indexOf('登录') >= 0 || msg.indexOf('401') >= 0) {
+      return '登录已失效，请重新登录'
+    }
+    return msg ? ('加载失败：' + msg) : '加载失败，请点击重试'
+  },
+
+  /** 错误态点击重试 */
+  retryWrong() {
+    this.loadWrong(true)
   },
 
   // 按课程归类（课程名为空时归到「未分类」），qTypeName 由后端返回，前端不做题型映射
   groupWrong(items) {
+    // 回调用 function 声明时 this 不指向 Page 实例，必须先把 this 存下来，
+    // 否则回调里的 this.parseOptions 会报 "Cannot read properties of undefined"
+    const self = this
     const map = {}
     const groups = []
     items.forEach(function (r) {
@@ -580,11 +836,29 @@ Page({
         analysis: r.analysis || '',
         wrongCount: r.wrongCount || 1,
         mastered: !!r.mastered,
+        qType: r.qType || '',
         qTypeName: r.qTypeName || '',
+        answer: r.answer || '',
+        options: self.parseOptions(r.options),
         lastWrongTime: (r.lastWrongTime || '').slice(0, 10)
       })
     })
     return groups
+  },
+
+  /**
+   * 解析题干选项 JSON。
+   * 后端原样返回 question.options（形如 [{"key":"A","text":"2"}]），
+   * 判断题与填空题该列为 NULL，统一降级为空数组，避免模板里再判 null。
+   */
+  parseOptions(raw) {
+    if (!raw) return []
+    try {
+      const arr = typeof raw === 'string' ? JSON.parse(raw) : raw
+      return Array.isArray(arr) ? arr : []
+    } catch (e) {
+      return []
+    }
   },
 
   onWrongCourseChange(e) {
@@ -631,6 +905,190 @@ Page({
 
   closeWrongBook() {
     this.setData({ wrongOpen: false })
+  },
+
+  /* ---- 删除（二次确认） ---- */
+  onDeleteWrong(e) {
+    const that = this
+    const errorId = e.currentTarget.dataset.id
+    wx.showModal({
+      title: '删除错题',
+      content: '删除后该错题不再出现在错题本，也不再参与学情统计，确定删除吗？',
+      confirmText: '删除',
+      confirmColor: '#e64340',
+      success: function (res) {
+        if (res.confirm) {
+          that.doDeleteWrong(errorId)
+        }
+      }
+    })
+  },
+
+  async doDeleteWrong(errorId) {
+    try {
+      await api.homework.deleteWrongRecord(errorId)
+      const groups = (this.data.wrongGroups || [])
+        .map(function (g) {
+          return {
+            courseId: g.courseId,
+            courseName: g.courseName,
+            items: (g.items || []).filter(function (q) {
+              return String(q.errorId) !== String(errorId)
+            })
+          }
+        })
+        .filter(function (g) { return g.items.length })
+      this.setData({
+        wrongGroups: groups,
+        wrongItems: (this.data.wrongItems || []).filter(function (r) {
+          return String(r.errorId) !== String(errorId)
+        }),
+        wrongTotal: Math.max(0, this.data.wrongTotal - 1)
+      })
+      wx.showToast({ title: '已删除', icon: 'success' })
+    } catch (err) {
+      // request 层已提示
+    }
+  },
+
+  /* ---- 重做 ---- */
+  onRedo(e) {
+    const errorId = e.currentTarget.dataset.id
+    const item = this.findWrongItem(errorId)
+    if (!item) return
+    if (item.qType === 'short' || item.qType === 'program') {
+      wx.showToast({ title: '主观题暂不支持自动判分', icon: 'none' })
+      return
+    }
+    this.setData({
+      redoOpen: true,
+      redoItem: item,
+      redoOptions: this.buildRedoOptions(item),
+      redoAnswer: '',
+      redoResult: null,
+      redoSubmitting: false
+    })
+  },
+
+  /**
+   * 生成重做选项。
+   *
+   * 判断题在库里存在两种标准答案形态（老数据「正确/错误」、新数据「A/B」），
+   * 提交值必须与标准答案同形态，否则后端 normalizeBoolean 比对会永远判错，
+   * 因此按标准答案推断该用字母还是中文。
+   */
+  buildRedoOptions(item) {
+    if (item.qType === 'judge') {
+      const letter = /^[AB]$/i.test(String(item.answer || '').trim())
+      return [
+        { key: letter ? 'A' : '正确', text: '正确', checked: false },
+        { key: letter ? 'B' : '错误', text: '错误', checked: false }
+      ]
+    }
+    return (item.options || []).map(function (o) {
+      return { key: o.key, text: o.text, checked: false }
+    })
+  },
+
+  onRedoTapOption(e) {
+    const key = e.currentTarget.dataset.key
+    const item = this.data.redoItem
+    if (!item) return
+    const multi = item.qType === 'multi'
+    const options = this.data.redoOptions.map(function (o) {
+      if (o.key === key) {
+        return Object.assign({}, o, { checked: multi ? !o.checked : true })
+      }
+      return multi ? o : Object.assign({}, o, { checked: false })
+    })
+    const answer = options
+      .filter(function (o) { return o.checked })
+      .map(function (o) { return o.key })
+      .join(',')
+    this.setData({ redoOptions: options, redoAnswer: answer, redoResult: null })
+  },
+
+  onRedoInput(e) {
+    this.setData({ redoAnswer: e.detail.value, redoResult: null })
+  },
+
+  async submitRedo() {
+    const item = this.data.redoItem
+    if (!item || this.data.redoSubmitting) return
+    // 已出结果时再点，是「再试一次」：清空作答重新开始
+    if (this.data.redoResult) {
+      this.setData({
+        redoResult: null,
+        redoAnswer: '',
+        redoOptions: this.buildRedoOptions(item)
+      })
+      return
+    }
+    const answer = (this.data.redoAnswer || '').trim()
+    if (!answer) {
+      wx.showToast({ title: '请先作答', icon: 'none' })
+      return
+    }
+    this.setData({ redoSubmitting: true })
+    try {
+      const res = await api.homework.redoWrongRecord(item.errorId, answer)
+      const result = res || {}
+      this.setData({ redoResult: result, redoSubmitting: false })
+      // 后端已把结果写回错题记录，这里只同步本地卡片，避免整表重拉
+      this.replaceWrongItem(item.errorId, {
+        mastered: !!result.mastered,
+        wrongCount: result.wrongCount,
+        answer: result.correctAnswer || item.answer,
+        analysis: result.analysis || item.analysis
+      })
+      if (result.correct) {
+        wx.showToast({ title: '答对了，已标记掌握', icon: 'success' })
+      }
+    } catch (err) {
+      this.setData({ redoSubmitting: false })
+    }
+  },
+
+  closeRedo() {
+    this.setData({
+      redoOpen: false,
+      redoItem: null,
+      redoOptions: [],
+      redoAnswer: '',
+      redoResult: null
+    })
+  },
+
+  /* ---- 局部更新工具 ---- */
+  findWrongItem(errorId) {
+    const groups = this.data.wrongGroups || []
+    for (let i = 0; i < groups.length; i++) {
+      const items = groups[i].items || []
+      for (let j = 0; j < items.length; j++) {
+        if (String(items[j].errorId) === String(errorId)) return items[j]
+      }
+    }
+    return null
+  },
+
+  /**
+   * 就地更新某条错题（收藏切换、重做后刷新卡片）。
+   * 只改展示层，落库已经在后端接口里完成。
+   */
+  replaceWrongItem(errorId, patch) {
+    const groups = (this.data.wrongGroups || []).map(function (g) {
+      return {
+        courseId: g.courseId,
+        courseName: g.courseName,
+        items: (g.items || []).map(function (q) {
+          return String(q.errorId) === String(errorId) ? Object.assign({}, q, patch) : q
+        })
+      }
+    })
+    const items = (this.data.wrongItems || []).map(function (r) {
+      return String(r.errorId) === String(errorId) ? Object.assign({}, r, patch) : r
+    })
+    this.setData({ wrongGroups: groups, wrongItems: items })
   },
 
   noop() {}

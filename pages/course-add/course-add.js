@@ -127,7 +127,7 @@ Page({
         if (!/^[A-Z0-9]{6}$/.test(code)) {
           return wx.showToast({ title: '二维码内容不是有效课程码', icon: 'none' })
         }
-        this.submitEnroll({ enrollType: 'qrcode', courseCode: code })
+        this.submitEnroll(0, { enrollType: 'qrcode', courseCode: code })
       },
       fail: () => wx.showToast({ title: '已取消扫码', icon: 'none' })
     })
