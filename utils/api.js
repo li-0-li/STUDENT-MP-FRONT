@@ -80,6 +80,8 @@ const scheduleApi = {
 const experimentApi = {
   /** 实验任务列表：GET /api/v1/experiments?courseId= */
   list: (courseId) => request.get('/v1/experiments', courseId ? { courseId } : {}),
+  /** 实验任务详情：GET /api/v1/experiments/{taskId}（目的/内容要求/材料/评分标准/报告模板 + 我的提交状态） */
+  taskDetail: (taskId) => request.get('/v1/experiments/' + taskId),
   /** 表 3-17 提交实验报告：POST /api/v1/experiments/{taskId}/submissions */
   submit: (taskId, data) => request.post('/v1/experiments/' + taskId + '/submissions', data),
   /** 表 3-18 报告详情：GET /api/v1/experiment-submissions/{submissionId} */
@@ -212,6 +214,11 @@ const aiApi = {
   feedback: (qaId, data) => request.post('/v1/qa/' + qaId + '/feedback', data),
   /** 表 3-11 学情画像（雷达图数据）：GET /api/v1/profiles/me?courseId= */
   profile: (courseId) => request.get('/v1/profiles/me', { courseId }),
+  /**
+   * AI 学习建议（缺口补位接口）：GET /api/v1/profiles/me/ai-advice?courseId=
+   * 基于学情画像数据由外部模型服务生成个性化建议；模型不可用时返回规则建议（provider=local）。
+   */
+  aiAdvice: (courseId) => request.get('/v1/profiles/me/ai-advice', { courseId }),
   /**
    * 我的课程学习进度：GET /api/v1/profiles/me/courses
    * 返回每门课的 未开始 / 进行中 / 已完成 三态、作业完成率、掌握度，以及三态汇总。

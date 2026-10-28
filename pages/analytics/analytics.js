@@ -261,22 +261,35 @@ Page({
     this.loadAdvice(courseId, profile)
   },
 
-  // AI 学习建议：优先用推荐接口的「基础巩固」条目，失败回退画像薄弱点
+  // AI 学习建议：优先走后端 AI 建议接口（外部模型服务生成），失败回退推荐接口「基础巩固」条目，
+  // 再失败回退画像薄弱点（保证建议卡片始终有内容）
   async loadAdvice(courseId, profile) {
     let text = ''
+    // ① 后端 AI 建议（GET /v1/profiles/me/ai-advice：模型生成，失败时后端已给规则建议）
     try {
-      const rec = await api.ai.recommend(courseId)
-      this.recommend = rec
-      this.recommendCourseId = courseId
-      const items = (rec && rec.list) || []
-      const basic = items.filter((i) => i.type === 'basic')[0] || items[0]
-      if (basic) {
-        text =
-          '「' + basic.kpName + '」掌握度偏低，建议优先完成推荐练习「' + basic.title + '」' +
-          (basic.count ? '（' + basic.count + ' 题）' : '') + '，并回看相关课件与微课。'
+      const advice = await api.ai.aiAdvice(courseId)
+      if (advice && advice.advice) {
+        text = advice.advice
       }
     } catch (e) {
-      // request 层已 toast
+      // request 层已 toast；接口异常时走下面的本地兜底
+    }
+    // ② 兜底：推荐接口的「基础巩固」条目（保留原有推荐数据加载，供练习跳转）
+    if (!text) {
+      try {
+        const rec = await api.ai.recommend(courseId)
+        this.recommend = rec
+        this.recommendCourseId = courseId
+        const items = (rec && rec.list) || []
+        const basic = items.filter((i) => i.type === 'basic')[0] || items[0]
+        if (basic) {
+          text =
+            '「' + basic.kpName + '」掌握度偏低，建议优先完成推荐练习「' + basic.title + '」' +
+            (basic.count ? '（' + basic.count + ' 题）' : '') + '，并回看相关课件与微课。'
+        }
+      } catch (e) {
+        // request 层已 toast
+      }
     }
     if (!text) {
       const weak = (profile && profile.weakPoints) || []
@@ -663,6 +676,9 @@ Page({
             : (r.myAnswer || ''),
           standardAnswer: r.standardAnswer || '',
           analysis: r.analysis || '',
+          // 主观题 AI 批改（后端调外部模型 API）：建议得分比 0~1 转成百分数展示
+          aiComment: r.aiComment || '',
+          aiScorePercent: r.aiScoreRatio != null ? Math.round(Number(r.aiScoreRatio) * 100) : null,
           // 交卷后标出正确选项：错在哪一眼就能看到
           options: (q.options || []).map(function (o) {
             return {
@@ -679,12 +695,16 @@ Page({
       const pending = ((res && res.results) || []).filter(function (r) {
         return r.correct === null || r.correct === undefined
       }).length
+      const aiCount = ((res && res.results) || []).filter(function (r) {
+        return r.aiComment
+      }).length
       this.setData({
         practiceQuestions: patched,
         practiceResult: {
           correct: res && res.correctCount != null ? res.correctCount : 0,
           total: res && res.totalCount != null ? res.totalCount : answers.length,
-          pending: pending
+          pending: pending,
+          aiCount: aiCount
         }
       })
       // 作答已回流，重算掌握度刷新雷达与建议（applyCourse 会保持当前选中课程）

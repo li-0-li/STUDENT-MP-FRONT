@@ -1,5 +1,5 @@
 <!-- 章节作业 —— 原型：ui-prototype/mp/app-course-detail.html -->
-<!-- 数据：表 3-2 课程详情（课程信息 + 周目录）+ 表 3-5 本课程作业列表（真实接口，按周挂载） -->
+<!-- 数据：表 3-2 课程详情 + 表 3-5 本课程作业列表 + 表 3-17 实验任务列表（均真实接口，按周挂载，实验与作业并排） -->
 <view class="page">
 
   <!-- 课程头部信息（表 3-2） -->
@@ -68,6 +68,15 @@
           <view class="badge {{hw.badge}}">{{hw.statusText}}</view>
         </view>
         <view class="small muted mt8">{{hw.meta}}</view>
+      </view>
+      <!-- 实验入口：与作业同级并排，状态徽章口径一致；点击进入实验页 -->
+      <view wx:for="{{item.experiments}}" wx:for-item="exp" wx:key="id" class="cd-hw"
+            bindtap="goLab" data-id="{{exp.id}}">
+        <view class="between">
+          <view class="cd-chapter-title">🧪 {{exp.title}}</view>
+          <view class="badge {{exp.badge}}">{{exp.statusText}}</view>
+        </view>
+        <view class="small muted mt8">{{exp.meta}}</view>
       </view>
     </view>
   </view>

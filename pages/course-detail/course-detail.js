@@ -3,6 +3,8 @@
 //   表 3-2 api.course.detail 课程详情（课程信息 + 教学周目录）
 //   表 3-5 api.homework.list  本课程作业列表（按 weekNum 挂到对应教学周下，
 //              状态/得分取本人提交 myStatus/myScore —— 与「我的作业」页同一数据源）
+//   表 3-17 api.experiment.list  本课程实验任务列表（实验入口，按 week_num 与
+//              作业并排挂到对应教学周下，状态口径与实验页一致）
 const api = require('../../utils/api')
 const { FILE_BASE_URL } = require('../../utils/config')
 
@@ -75,6 +77,36 @@ function mapHomework(it) {
   }
 }
 
+/** 表 3-17 实验任务 → 章节下实验条目（状态口径与实验页 mapTask 一致，下划线字段） */
+function mapExperiment(t) {
+  // 接口实际返回小写（graded/submitted），契约文档写的是大写 —— 统一大小写不敏感比较
+  const sub = t.sub_status != null ? String(t.sub_status).toUpperCase() : null
+  if (sub === 'GRADED') {
+    return {
+      id: t.task_id, chapter: t.week_num,
+      title: t.title || '未命名实验',
+      statusText: '已批阅' + (t.sub_score != null ? ' · ' + t.sub_score : ''),
+      badge: 'badge-success',
+      meta: '提交于 ' + fmtDate(t.submit_time)
+    }
+  }
+  if (sub == null) {
+    return {
+      id: t.task_id, chapter: t.week_num,
+      title: t.title || '未命名实验',
+      statusText: '待提交', badge: 'badge-warning',
+      meta: '截止：' + fmtDate(t.deadline)
+    }
+  }
+  // SUBMITTED：已提交待批阅
+  return {
+    id: t.task_id, chapter: t.week_num,
+    title: t.title || '未命名实验',
+    statusText: '已提交 · 待批阅', badge: 'badge-info',
+    meta: '提交于 ' + fmtDate(t.submit_time)
+  }
+}
+
 Page({
   data: {
     courseId: 0,
@@ -100,14 +132,16 @@ Page({
   async load() {
     this.setData({ loading: true })
     try {
-      const [detail, hwRes, scheduleRes] = await Promise.all([
+      const [detail, hwRes, scheduleRes, expRes] = await Promise.all([
         api.course.detail(this.courseId),
         api.homework.list({ courseId: this.courseId, page: 1, pageSize: 100 }).catch(() => null),
-        api.course.schedules(this.courseId).catch(() => [])
+        api.course.schedules(this.courseId).catch(() => []),
+        api.experiment.list(this.courseId).catch(() => [])
       ])
       const course = detail.course || {}
       const weeks = detail.weeks || []
       const homeworks = ((hwRes && hwRes.list) || []).map(mapHomework)
+      const experiments = (expRes || []).map(mapExperiment)
       const schedules = (scheduleRes || []).map(mapSchedule)
       // 详情页卡片只展示前 2 条，其余进入「全部排课」页
       const schedulePreview = schedules.slice(0, 2)
@@ -132,13 +166,30 @@ Page({
         }
       })
 
+      // 实验挂载：与作业同一口径按 week_num 挂到教学周下（入口与作业并排）
+      const expByWeek = {}
+      const expOrphans = []
+      experiments.forEach((x) => {
+        const wk = weeks.filter((w) => w.weekNum === x.chapter)[0]
+        if (wk) {
+          const key = String(wk.weekNum)
+          ;(expByWeek[key] || (expByWeek[key] = [])).push(x)
+        } else {
+          expOrphans.push(x)
+        }
+      })
+
       const weekCards = weeks.map((w) => ({
         weekNum: w.weekNum,
         title: w.title,
-        homeworks: byWeek[String(w.weekNum)] || []
+        homeworks: byWeek[String(w.weekNum)] || [],
+        experiments: expByWeek[String(w.weekNum)] || []
       }))
       if (orphans.length) {
-        weekCards.push({ weekNum: '', title: '其他作业', homeworks: orphans })
+        weekCards.push({ weekNum: '', title: '其他作业', homeworks: orphans, experiments: [] })
+      }
+      if (expOrphans.length) {
+        weekCards.push({ weekNum: '', title: '其他实验', homeworks: [], experiments: expOrphans })
       }
 
       this.setData({
@@ -185,6 +236,14 @@ Page({
     const id = e.currentTarget.dataset.id
     wx.navigateTo({
       url: '/pages/submission/submission?id=' + id
+    })
+  },
+
+  /** 实验条目 → 实验详情页（目的/内容要求/评分标准/模板 + 提交入口） */
+  goLab(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({
+      url: '/pages/experiment-detail/experiment-detail?taskId=' + id
     })
   },
 

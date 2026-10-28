@@ -1,0 +1,44 @@
+/* 实验详情 —— 复用 app.wxss 的 .card/.badge/.btn/.empty 等 */
+
+.ed-title { font-size: 30rpx; font-weight: 700; min-width: 0; }
+.ed-sec { font-size: 27rpx; font-weight: 600; }
+
+/* 正文长文本：保留换行、增加行距，长段落可读性优先 */
+.ed-text { line-height: 1.7; white-space: pre-line; word-break: break-all; }
+.ed-mycontent { background: var(--bg-subtle); border-radius: 12rpx; padding: 16rpx; }
+
+/* 评分标准 / 表单条目 */
+.ed-item { padding-bottom: 12rpx; }
+.ed-item-name { min-width: 0; font-weight: 500; }
+
+/* 报告模板「必填」标记 */
+.ed-req { color: var(--warning, #d97706); }
+
+/* 在线填写表单 */
+.ed-form-item { padding-bottom: 8rpx; }
+.ed-input {
+  width: 100%;
+  min-height: 140rpx;
+  background: var(--bg-subtle);
+  border-radius: 12rpx;
+  padding: 16rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+/* 操作按钮行 */
+.ed-actions { gap: 16rpx; }
+.ed-action { flex: 1; }
+
+/* 教师批注 / 查重数字 */
+.ed-plag {
+  border: 1rpx solid var(--border);
+  border-radius: 20rpx;
+  padding: 20rpx;
+  background: var(--bg-subtle);
+}
+.ed-plag-num { font-size: 30rpx; font-weight: 700; color: var(--success, #16a34a); }
+
+/* 附件链接（可点开预览的真实上传文件） */
+.ed-file-link { color: var(--primary, #2563eb); }

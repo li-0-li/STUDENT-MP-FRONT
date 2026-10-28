@@ -16,6 +16,7 @@
     "pages/attendance/attendance",
     "pages/ai/ai",
     "pages/lab/lab",
+    "pages/experiment-detail/experiment-detail",
     "pages/messages/messages",
     "pages/notice/notice",
     "pages/profile/profile",

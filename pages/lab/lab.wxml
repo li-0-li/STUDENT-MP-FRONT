@@ -12,18 +12,13 @@
     <view class="small muted mt8">暂无实验任务</view>
   </view>
 
-  <view wx:for="{{labs}}" wx:key="id" class="card">
+  <view wx:for="{{labs}}" wx:key="id" class="card" bindtap="goDetail" data-id="{{item.id}}">
     <view class="between">
       <view class="lab-title">{{item.title}}</view>
       <view class="badge {{item.badge}}">{{item.statusText}}</view>
     </view>
     <view class="small muted mt8">{{item.courseName}} · {{item.meta}}</view>
-
-    <!-- 待提交：上传报告 / 查看实验指导书 -->
-    <view wx:if="{{item.actions}}" class="row mt8 lab-actions">
-      <view class="btn btn-primary btn-sm lab-action" bindtap="uploadReport" data-id="{{item.id}}">⬆ 上传报告</view>
-      <view class="btn btn-outline btn-sm lab-action" bindtap="viewGuide" data-guide="{{item.guide}}">📄 查看实验指导书</view>
-    </view>
+    <!-- 提交/批阅入口统一走详情页（点击卡片进入，在线填写走表单校验） -->
 
     <!-- AI 查重结果（查重率 + 相似来源） -->
     <view wx:if="{{item.plagiarism}}" class="lab-plag mt8">

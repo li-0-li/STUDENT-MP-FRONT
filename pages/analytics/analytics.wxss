@@ -140,6 +140,7 @@
 .pr-verdict { font-size: 26rpx; font-weight: 600; margin-bottom: 8rpx; color: #64748b; }
 .pr-verdict.ok { color: #0d9488; }
 .pr-verdict.bad { color: #dc2626; }
+.pr-verdict.ai { color: #4f46e5; }
 .pr-answer-line { font-size: 26rpx; color: #475569; margin-top: 4rpx; }
 .pr-answer-line.strong { color: #0f172a; font-weight: 600; }
 .pr-analysis { font-size: 25rpx; color: #64748b; margin-top: 10rpx; line-height: 1.6; }

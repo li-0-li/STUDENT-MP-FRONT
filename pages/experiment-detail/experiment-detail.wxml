@@ -1,0 +1,128 @@
+<!-- 实验详情 —— 原型：ui-prototype/mp/app-lab.html（详情分区展示） -->
+<!-- 数据：GET /api/v1/experiments/{taskId} + 表 3-18 报告回显/教师评语批注 + 表 3-17 提交 + 表 3-22 下载 -->
+<view class="page">
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="card">
+    <view class="small muted mt8">加载中…</view>
+  </view>
+
+  <block wx:elif="{{lab}}">
+
+    <!-- 头部：标题 / 课程 / 状态 -->
+    <view class="card">
+      <view class="between">
+        <view class="ed-title">{{lab.title}}</view>
+        <view class="badge {{lab.badge}}">{{lab.statusText}}</view>
+      </view>
+      <view class="small muted mt8">
+        {{lab.courseName}}{{lab.weekText ? ' · ' + lab.weekText : ''}} · {{lab.meta}}
+      </view>
+      <view wx:if="{{lab.totalScore}}" class="small muted mt4">总分 {{lab.totalScore}} 分</view>
+    </view>
+
+    <!-- 实验目的 -->
+    <view wx:if="{{lab.objective}}" class="card">
+      <view class="ed-sec">🎯 实验目的</view>
+      <view class="small mt8 ed-text">{{lab.objective}}</view>
+    </view>
+
+    <!-- 实验原理 + 内容与要求 -->
+    <view wx:if="{{lab.principle || lab.guide}}" class="card">
+      <view class="ed-sec">📋 实验内容与要求</view>
+      <view wx:if="{{lab.principle}}" class="small mt8 ed-text">{{lab.principle}}</view>
+      <view wx:if="{{lab.guide}}" class="small mt8 ed-text">{{lab.guide}}</view>
+    </view>
+
+    <!-- 实验材料 -->
+    <view wx:if="{{lab.materials.length}}" class="card">
+      <view class="ed-sec">📦 实验材料</view>
+      <view wx:for="{{lab.materials}}" wx:key="*this" class="small mt8">· {{item}}</view>
+    </view>
+
+    <!-- 评分标准 -->
+    <view wx:if="{{lab.rubricItems.length}}" class="card">
+      <view class="ed-sec">💯 评分标准</view>
+      <view wx:for="{{lab.rubricItems}}" wx:key="name" class="ed-item mt8">
+        <view class="between">
+          <view class="small ed-item-name">{{item.name}}</view>
+          <view class="badge badge-neutral">{{item.score}} 分</view>
+        </view>
+        <view wx:if="{{item.points}}" class="small muted mt4">{{item.points}}</view>
+      </view>
+    </view>
+
+    <!-- 报告撰写（在线填写，按模板小节） / 我的报告内容（已提交后回显） -->
+    <view wx:if="{{lab.canSubmit}}" class="card">
+      <view class="ed-sec">📝 报告撰写</view>
+      <view wx:for="{{lab.tplSections}}" wx:key="title" class="ed-form-item mt8">
+        <view class="small ed-item-name">{{item.title}}<text wx:if="{{item.required}}" class="ed-req">（必填）</text></view>
+        <textarea class="ed-input mt4" placeholder="请输入{{item.title}}…" maxlength="2000"
+                  value="{{draft[item.title] || ''}}"
+                  bindinput="onSectionInput" data-title="{{item.title}}"></textarea>
+      </view>
+      <view class="row mt8 ed-actions">
+        <view class="btn btn-primary btn-sm ed-action" bindtap="submitReport">✓ 提交报告</view>
+        <view class="btn btn-outline btn-sm ed-action" bindtap="uploadAttachment">📎 上传附件</view>
+      </view>
+      <view class="small muted mt4">教师批阅前不允许修改；附件暂以文件名登记（文件服务建设中）</view>
+    </view>
+    <view wx:elif="{{lab.myReportSections.length || lab.myDataFiles.length}}" class="card">
+      <view class="ed-sec">📝 我的报告内容{{lab.versionNo ? '（第 ' + lab.versionNo + ' 版）' : ''}}</view>
+      <view wx:for="{{lab.myReportSections}}" wx:key="title" class="ed-form-item mt8">
+        <view class="small ed-item-name">{{item.title}}<text wx:if="{{item.required}}" class="ed-req">（必填）</text></view>
+        <view wx:if="{{item.content}}" class="small mt4 ed-text ed-mycontent">{{item.content}}</view>
+        <view wx:else class="small muted mt4">（未填写）</view>
+      </view>
+      <view wx:if="{{lab.myDataFiles.length}}" class="mt8">
+        <view class="small ed-item-name">附件</view>
+        <view wx:for="{{lab.myDataFiles}}" wx:key="name"
+              class="small mt4 {{item.url ? 'ed-file-link' : 'muted'}}"
+              bindtap="openAttachment" data-url="{{item.url}}">📎 {{item.name}}</view>
+      </view>
+      <!-- 导出实验报告（表 3-22，Word 格式） -->
+      <view class="row mt8 ed-actions">
+        <view class="btn btn-outline btn-sm ed-action" bindtap="downloadReport">⬇ 导出实验报告</view>
+      </view>
+    </view>
+
+    <!-- 提交方式与截止时间 -->
+    <view class="card">
+      <view class="ed-sec">⏰ 提交方式与截止时间</view>
+      <view class="small mt8">提交方式：在线填写报告（按模板小节）或上传附件</view>
+      <view class="small mt4">开始时间：{{lab.startTime}}</view>
+      <view class="small mt4">截止时间：{{lab.deadline}}</view>
+      <view class="small mt4">逾期规则：{{lab.lateText}}</view>
+      <view class="small mt4">AI 查重：{{lab.plagiarismText}}</view>
+    </view>
+
+    <!-- 教师批阅（仅已批阅状态）：等级 / 评语 / 批注 -->
+    <view wx:if="{{lab.subState === 'graded' && (lab.comment || lab.annotations.length)}}" class="card">
+      <view class="ed-sec">💬 教师批阅{{lab.grade ? ' · ' + lab.grade : ''}}</view>
+      <view wx:if="{{lab.comment}}" class="small mt8 ed-text">教师评语：{{lab.comment}}</view>
+      <view wx:if="{{lab.annotations.length}}" class="ed-plag mt8">
+        <view class="small ed-item-name">批注</view>
+        <view wx:for="{{lab.annotations}}" wx:key="*this" class="small muted mt4">· {{item}}</view>
+      </view>
+    </view>
+
+    <!-- 退回原因（仅退回状态：表单已重新可编辑，按原因修改后重交） -->
+    <view wx:if="{{lab.subState === 'returned' && lab.comment}}" class="card">
+      <view class="ed-sec">↩ 退回原因</view>
+      <view class="small mt8 ed-text">{{lab.comment}}</view>
+    </view>
+
+    <!-- AI 查重率 -->
+    <view wx:if="{{lab.duplicateRate != null}}" class="card">
+      <view class="ed-sec">🔍 AI 查重结果</view>
+      <view class="small mt8">查重率 <text class="ed-plag-num">{{lab.duplicateRate}}%</text></view>
+    </view>
+
+  </block>
+
+  <!-- 空状态 -->
+  <view wx:else class="empty">
+    <view class="small">实验不存在或无权查看</view>
+  </view>
+
+</view>

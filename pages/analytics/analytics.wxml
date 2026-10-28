@@ -312,7 +312,7 @@
     <view wx:if="{{practiceLoading}}" class="wb-sheet-loading">出题中…</view>
     <scroll-view wx:else scroll-y class="wb-sheet-body">
       <view wx:if="{{practiceResult}}" class="pr-result">
-        ✓ 本次练习 {{practiceResult.correct}} / {{practiceResult.total}} 题正确{{practiceResult.pending ? '（另有 ' + practiceResult.pending + ' 题简答/编程待批改）' : ''}}，掌握度已更新
+        ✓ 本次练习 {{practiceResult.correct}} / {{practiceResult.total}} 题正确{{practiceResult.pending ? '（另有 ' + practiceResult.pending + ' 题简答/编程' + (practiceResult.aiCount ? '，其中 ' + practiceResult.aiCount + ' 题已出 AI 批改意见' : '待对照答案自查') + '）' : ''}}，掌握度已更新
       </view>
       <block wx:for="{{practiceQuestions}}" wx:key="questionId" wx:for-item="q" wx:for-index="qi">
         <view class="pr-q-item">
@@ -365,10 +365,13 @@
             disabled="{{q.judged}}"
           />
 
-          <!-- 提交后当场对答案：对错 / 我的答案 / 标准答案 / 解析 -->
+          <!-- 提交后当场对答案：对错 / 我的答案 / 标准答案 / 解析 / 主观题 AI 批改意见 -->
           <view wx:if="{{q.judged}}" class="pr-verdict-wrap">
-            <view class="pr-verdict {{q.correct ? 'ok' : (q.wrong ? 'bad' : '')}}">
-              {{q.correct ? '✓ 答对' : (q.wrong ? '✕ 答错' : '· 待人工批改')}}
+            <view class="pr-verdict {{q.correct ? 'ok' : (q.wrong ? 'bad' : (q.aiComment ? 'ai' : ''))}}">
+              {{q.correct ? '✓ 答对' : (q.wrong ? '✕ 答错' : (q.aiComment ? '🤖 AI 批改' : '· 请对照答案自查'))}}
+            </view>
+            <view wx:if="{{q.aiComment}}" class="pr-answer-line">
+              AI 建议：{{q.aiScorePercent}} 分 · {{q.aiComment}}
             </view>
             <view class="pr-answer-line">我的答案：{{q.myAnswer || '未作答'}}</view>
             <view class="pr-answer-line strong">正确答案：{{q.standardAnswer || '—'}}</view>
