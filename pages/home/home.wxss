@@ -1,6 +1,7 @@
 /* 首页 —— 学情概览 / 待办 / 宫格等私有样式；.card/.badge/.icon-box/.progress 等见 app.wxss */
 
-/* ① 学情概览卡（原型：brand-600 → brand-700 渐变） */
+/* ① 学情概览卡（原型：brand-600 → brand-700 渐变）。
+   2026-10-28 改版：删除雷达小卡与学习指标样式，仅留问候行 */
 .hero {
   background: linear-gradient(135deg, var(--brand-600), var(--brand-700));
   border: none;
@@ -16,27 +17,8 @@
   font-weight: 600;
   flex: none;
 }
-.hero-sub { color: var(--brand-100); }
-.hero-body { gap: 32rpx; margin-top: 24rpx; align-items: center; }
-/* 雷达小卡：白色描摹适配深色卡底 */
-.hero-radar {
-  flex: none;
-  width: 172rpx;
-  text-align: center;
-}
-.radar-canvas { width: 172rpx; height: 172rpx; }
-.radar-label { margin-top: 4rpx; }
-/* 关键学习指标 */
-.hero-stats {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20rpx 40rpx;
-}
-.hero-stat { min-width: 150rpx; }
-.hero-num { font-size: 38rpx; font-weight: 800; color: #fff; }
 
-/* ② 今日待办条目 */
+/* ② 今日课程条目 */
 .todo-item { display: flex; gap: 20rpx; align-items: center; }
 .todo-icon {
   width: 76rpx;
@@ -67,3 +49,21 @@
 
 /* ④ 继续学习「继续 →」链接色 */
 .link { color: var(--brand-600); font-weight: 600; }
+
+/* ⑤ 我的作业卡：固定高度可滚动列表 + 底部「查看全部」入口 */
+.hw-todo-card { padding-bottom: 0; }
+.hw-todo-scroll { max-height: 480rpx; }
+.hw-todo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 4rpx;
+  border-bottom: 1rpx solid var(--line, #f0f0f0);
+}
+.hw-todo-empty { padding: 40rpx 0; text-align: center; }
+.hw-todo-footer {
+  padding: 20rpx 0 24rpx;
+  text-align: center;
+  border-top: 1rpx solid var(--line, #f0f0f0);
+}

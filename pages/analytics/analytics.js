@@ -513,8 +513,9 @@ Page({
   /**
    * AI 学习建议里的「开始推荐练习」。
    *
-   * 原来只能吃 loadAdvice 缓存里的推荐：一旦推荐接口失败或还没回来，点下去就弹一句
-   * 「暂无推荐练习」结束。现在改成完整流程 —— 缓存没有就先拉推荐，再取题目、开弹层，
+   * 每次点击都按当前选中课程重新拉推荐（不吃 this.recommend 缓存）：缓存可能来自
+   * 其他课程或旧一轮推荐，且绕过缓存会让后端「出题账本去重」失效 —— 曾导致
+   * 换任何课程都推同一门课的重复题。流程：拉推荐 → 取题目 → 开弹层，
    * 全程有按钮 loading 态，失败也不会把弹层留在半开状态。
    */
   async startPractice() {
@@ -525,12 +526,12 @@ Page({
     }
     this.setData({ practiceStarting: true })
     try {
-      let items = (this.recommend && this.recommend.list) || []
-      if (!items.length) {
-        const rec = await api.ai.recommend(this.recommendCourseId)
-        this.recommend = rec
-        items = (rec && rec.list) || []
-      }
+      // 每次点击都按当前课程重新取推荐：不吃 this.recommend 缓存 ——
+      // 缓存可能来自其他课程或旧一轮推荐（曾导致换课仍推同一门课的重复题），
+      // 而且绕过缓存才能让后端「出题账本去重」每次生效（同学生不推重复题）
+      const rec = await api.ai.recommend(this.recommendCourseId)
+      this.recommend = rec
+      const items = (rec && rec.list) || []
       const ids = []
       items.forEach(function (it) {
         (it.questionIds || []).forEach(function (q) {

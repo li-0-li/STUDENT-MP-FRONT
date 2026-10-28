@@ -1,23 +1,32 @@
 // 我的作业 —— 原型：ui-prototype/mp/app-homework.html
-// UI 设计 7.8：顶部页签切换「待提交 / 已批改 / 申诉」三类状态
-// 接入：api.homework.list —— GET /api/v1/assignments（表 3-5 作业列表）
-//   返回 {list:[{assignmentId,courseId,courseName,weekNum,title,assignType,totalScore,
-//        startTime,deadline,status,myStatus,myScore,isLate,allowAppeal}], total,page,pageSize}
-//   myStatus：null=未提交；draft/submitted/queued/grading/manual/graded/finished/appealing/returned
-// 说明：后端 status 筛选仅支持单值（'pending'=未提交，其余=myStatus 值），而「已批改」页签
-//   需同时覆盖 graded/finished 及批改中的 submitted 等，故一次拉全量（pageSize=100 上限）后前端分组。
+// UI 设计 7.8（2026-10-28 改版）：页签「待提交 / 未批改 / 已批改 / 申诉」，
+//   且页面同时收录课程实验（作业+实验统一分组）。
+// 接入：
+//   api.homework.list —— GET /api/v1/assignments（表 3-5 作业列表）
+//     myStatus：null=未提交；draft/submitted/queued/grading/manual/graded/finished/appealing/returned
+//   api.experiment.list —— GET /api/v1/experiments（实验任务列表，下划线出参）
+//     sub_status：null=未提交；submitted/revision/graded
+// 分组口径：
+//   待提交 = 作业未交/草稿/退回 + 实验未交/退回；
+//   未批改 = 已提交但未出分（作业 submitted/queued/grading/manual + 实验 submitted）；
+//   已批改 = 作业 finished/graded + 实验 graded；
+//   申诉   = 作业 appealing。
+// 说明：后端 status 筛选仅支持单值，而页签需覆盖多个 myStatus 值，
+//   故作业一次拉全量（pageSize=100 上限）后前端分组；实验列表本就全量（上限 100）。
 const api = require('../../utils/api')
 
-// 状态页签（UI 设计 7.8：待提交 / 已批改 / 申诉）
+// 状态页签（2026-10-28：待提交 / 未批改 / 已批改 / 申诉）
 const STATUS_TABS = [
   { key: 'pending', label: '待提交' },
+  { key: 'ungraded', label: '未批改' },
   { key: 'graded', label: '已批改' },
   { key: 'appeal', label: '申诉' }
 ]
 
 const EMPTY_TEXT = {
-  pending: '暂无待提交作业',
-  graded: '暂无已批改作业',
+  pending: '暂无待提交的作业和实验',
+  ungraded: '暂无已提交待批改的作业和实验',
+  graded: '暂无已批改的作业和实验',
   appeal: '暂无申诉中的作业'
 }
 
@@ -39,14 +48,13 @@ function remainTip(deadline) {
   return { extra: txt, extraWarn: ms < 48 * 3600000 }
 }
 
-/** HomeworkItem → 列表卡片视图（status 为页签分组：pending / graded / appeal） */
-function mapView(it) {
+/** 作业行 → 卡片视图（status 为页签分组：pending / ungraded / graded / appeal） */
+function mapAssignment(it) {
   const ms = it.myStatus
   const weekMeta = '第 ' + (it.weekNum || '—') + ' 周 · 总分 ' + (it.totalScore || '—')
   let status, statusText, badge, meta = weekMeta, extra = '', extraWarn = false, score = ''
 
   if (ms == null || ms === 'draft' || ms === 'returned') {
-    // 未提交 / 草稿 / 教师退回 → 待提交组
     status = 'pending'
     statusText = ms === 'returned' ? '已退回 · 请重交' : (ms === 'draft' ? '待提交（草稿）' : '待提交')
     badge = 'badge-warning'
@@ -66,19 +74,59 @@ function mapView(it) {
     score = it.myScore != null ? String(it.myScore) : ''
     extra = it.isLate ? '逾期提交' : ''
   } else {
-    // submitted / queued / grading / manual：已提交，等待批改（归入「已批改」页签展示进度）
-    status = 'graded'
+    // submitted / queued / grading / manual：已提交等待批改 →「未批改」页签
+    status = 'ungraded'
     statusText = '已提交 · 批改中'
     badge = 'badge-info'
     meta = '截止 ' + fmtShort(it.deadline)
   }
 
   return {
-    id: it.assignmentId,
+    id: 'hw-' + it.assignmentId,
+    kind: '作业',
     title: it.title || '未命名作业',
     courseName: it.courseName || '',
     status, statusText, badge, meta, extra, extraWarn, score,
-    allowAppeal: !!it.allowAppeal
+    url: '/pages/submission/submission?id=' + it.assignmentId
+  }
+}
+
+/** 实验行 → 卡片视图（sub_status 大小写不敏感，lab 页同口径） */
+function mapExperiment(t) {
+  const sub = t.sub_status != null ? String(t.sub_status).toUpperCase() : null
+  let status, statusText, badge, meta, score = ''
+
+  if (sub == null) {
+    status = 'pending'
+    statusText = '待提交'
+    badge = 'badge-warning'
+    meta = '截止 ' + fmtShort(t.deadline)
+  } else if (sub === 'GRADED') {
+    status = 'graded'
+    statusText = t.sub_score != null ? '已批阅 ' + t.sub_score : '已批阅'
+    badge = 'badge-success'
+    score = t.sub_score != null ? String(t.sub_score) : ''
+    meta = '提交于 ' + fmtShort(t.submit_time)
+  } else if (sub === 'REVISION' || sub === 'RETURNED') {
+    status = 'pending'
+    statusText = '已退回 · 请重交'
+    badge = 'badge-error'
+    meta = '提交于 ' + fmtShort(t.submit_time)
+  } else {
+    // submitted：已提交待教师批阅 →「未批改」页签
+    status = 'ungraded'
+    statusText = '已提交 · 待批阅'
+    badge = 'badge-info'
+    meta = '提交于 ' + fmtShort(t.submit_time)
+  }
+
+  return {
+    id: 'exp-' + t.task_id,
+    kind: '实验',
+    title: t.title || '未命名实验',
+    courseName: t.course_name || '',
+    status, statusText, badge, meta, extra: '', extraWarn: false, score,
+    url: '/pages/experiment-detail/experiment-detail?taskId=' + t.task_id
   }
 }
 
@@ -86,13 +134,13 @@ Page({
   data: {
     tabs: [],           // [{key,label,active}]
     current: 'pending', // 当前状态页签
-    list: [],           // 筛选后的作业列表
+    list: [],           // 筛选后的作业/实验列表
     emptyText: '',
     loading: true
   },
 
   onLoad() {
-    this.all = []        // 全量作业（已映射为卡片视图）
+    this.all = []        // 全量作业+实验（已映射为卡片视图）
     this._firstShow = true
     this.setData({
       tabs: STATUS_TABS.map(t => ({ key: t.key, label: t.label, active: t.key === this.data.current }))
@@ -100,26 +148,34 @@ Page({
     this.loadAll()
   },
 
-  // 从作业提交页返回后刷新状态（首次 onShow 跳过，避免与 onLoad 重复请求）
+  // 从提交/详情页返回后刷新状态（首次 onShow 跳过，避免与 onLoad 重复请求）
   onShow() {
     if (this._firstShow) { this._firstShow = false; return }
     this.loadAll()
   },
 
-  /** 表 3-5 作业列表：拉全量后按页签分组 */
+  /** 作业全量 + 实验全量 → 统一映射后按页签分组 */
   async loadAll() {
     this.setData({ loading: true })
+    const all = []
     try {
       const data = await api.homework.list({ page: 1, pageSize: 100 })
-      this.all = (((data && data.list) || [])).map(mapView)
+      ;(((data && data.list) || [])).forEach((it) => all.push(mapAssignment(it)))
     } catch (e) {
-      this.all = []  // request 层已 toast
+      // request 层已 toast，实验部分照常
     }
+    try {
+      const exps = await api.experiment.list()
+      ;(Array.isArray(exps) ? exps : []).forEach((it) => all.push(mapExperiment(it)))
+    } catch (e) {
+      // request 层已 toast，作业部分照常
+    }
+    this.all = all
     this.setData({ loading: false })
     this.applyFilter(this.data.current, true)
   },
 
-  /** 状态页签切换（待提交 / 已批改 / 申诉） */
+  /** 状态页签切换（待提交 / 未批改 / 已批改 / 申诉） */
   switchTab(e) {
     this.applyFilter(e.currentTarget.dataset.key)
   },
@@ -135,11 +191,9 @@ Page({
     })
   },
 
-  /** 点击条目 → 作业提交页（已批改可查看详情） */
-  goSubmission(e) {
-    const id = e.currentTarget.dataset.id
-    wx.navigateTo({
-      url: '/pages/submission/submission?id=' + id
-    })
+  /** 点击条目 → 作业提交页 / 实验详情页（已批改可查看详情与评语） */
+  goDetail(e) {
+    const url = e.currentTarget.dataset.url
+    wx.navigateTo({ url })
   }
 })

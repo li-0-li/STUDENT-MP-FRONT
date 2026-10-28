@@ -1,8 +1,8 @@
 <!-- 我的作业 —— 原型：ui-prototype/mp/app-homework.html -->
-<!-- UI 设计 7.8：状态页签「待提交 / 已批改 / 申诉」；数据来自表 3-5 作业列表接口 -->
+<!-- UI 设计 7.8（2026-10-28 改版）：页签「待提交 / 未批改 / 已批改 / 申诉」；作业+实验统一展示 -->
 <view class="page">
 
-  <!-- 状态页签（待提交 / 已批改 / 申诉） -->
+  <!-- 状态页签（待提交 / 未批改 / 已批改 / 申诉） -->
   <view class="hw-tabs-wrap">
     <view class="pilltabs hw-tabs">
       <view wx:for="{{tabs}}" wx:key="key"
@@ -11,12 +11,12 @@
     </view>
   </view>
 
-  <!-- 作业列表 -->
+  <!-- 作业 / 实验列表 -->
   <block wx:if="{{list.length}}">
     <view wx:for="{{list}}" wx:key="id" class="card"
-          bindtap="goSubmission" data-id="{{item.id}}">
+          bindtap="goDetail" data-url="{{item.url}}">
       <view class="between">
-        <view class="hw-title">{{item.title}}</view>
+        <view class="hw-title">{{item.kind === '实验' ? '🧪 ' : '📝 '}}{{item.title}}</view>
         <view class="badge {{item.badge}}">{{item.statusText}}</view>
       </view>
       <view class="small muted mt8">{{item.courseName}} · {{item.meta}}</view>
