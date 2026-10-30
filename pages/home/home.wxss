@@ -67,3 +67,24 @@
   text-align: center;
   border-top: 1rpx solid var(--line, #f0f0f0);
 }
+
+/* 今日课程 · 上课中课程：名称旁小标签 + 右侧进入课堂按钮（2026-10-29） */
+.live-tag {
+  flex-shrink: 0;
+  padding: 2rpx 12rpx;
+  font-size: 20rpx;
+  border-radius: 999rpx;
+  animation: livePulse 1.6s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.btn-live {
+  flex-shrink: 0;
+  padding: 8rpx 24rpx;
+  font-size: 24rpx;
+  color: #fff;
+  background: var(--brand-600, #0d9488);
+  border-radius: 999rpx;
+}

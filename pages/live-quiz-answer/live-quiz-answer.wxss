@@ -1,0 +1,43 @@
+/* 随堂测试 · 作答卷 —— 通用样式见 app.wxss */
+.mt4 { margin-top: 4rpx; }
+.mt16 { margin-top: 16rpx; }
+.center { text-align: center; }
+
+.quiz-options { display: flex; flex-direction: column; gap: 16rpx; }
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 24rpx;
+  border: 2rpx solid var(--line, #e2e8f0);
+  border-radius: 14rpx;
+}
+.quiz-option.on {
+  border-color: var(--brand-600, #0d9488);
+  background: rgba(13, 148, 136, 0.08);
+}
+.quiz-option-key {
+  width: 44rpx; height: 44rpx;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: #f1f5f9;
+  font-weight: 700;
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+.quiz-option.on .quiz-option-key {
+  background: var(--brand-600, #0d9488);
+  color: #fff;
+}
+.quiz-option-text { font-size: 28rpx; }
+
+.btn-submit {
+  margin: 16rpx 0 40rpx;
+  text-align: center;
+  padding: 22rpx 0;
+  color: #fff;
+  background: var(--brand-600, #0d9488);
+  border-radius: 16rpx;
+  font-weight: 700;
+  font-size: 30rpx;
+}

@@ -83,20 +83,37 @@ Page({
     this.initSession()
   },
 
-  // 历史会话列表入口
+  // 历史会话列表入口：带当前课程跳转历史会话页（2026-10-29 已实现）
   goHistory() {
-    // 历史会话列表页面由后续迭代提供，暂以 toast 提示
-    wx.showToast({ title: '历史会话（开发中）', icon: 'none' })
+    const courseId = this.data.courseIds[this.data.kbIndex]
+    if (!courseId) {
+      wx.showToast({ title: '请先选择课程', icon: 'none' })
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/ai-history/ai-history?courseId=' + courseId
+        + '&courseName=' + encodeURIComponent(this.data.kbName || '')
+    })
   },
 
-  // 清空当前会话
+  // 清空当前会话：本地消息 + 服务端该 session_id 的问答记录一并删除（2026-10-29），
+  // 之后换新 sessionId，后续提问落库到全新会话，不会在历史会话里复活
   clearSession() {
     wx.showModal({
       title: '清空会话',
-      content: '确定清空当前会话的全部消息吗？',
+      content: '确定清空当前会话的全部消息吗？（历史会话中的该条记录也会删除）',
       confirmColor: '#0d9488',
       success: (res) => {
-        if (res.confirm) this.initSession()
+        if (!res.confirm) return
+        const courseId = this.data.courseIds[this.data.kbIndex]
+        const oldSessionId = this.sessionId
+        this.sessionId = 'mp-' + Date.now() // 先换新会话，删除失败也不影响继续提问
+        this.initSession()
+        if (courseId && oldSessionId) {
+          api.ai.qaSessionDelete(oldSessionId, courseId).catch(() => {
+            // request 层已 toast；本地已清空，仅历史记录残留
+          })
+        }
       }
     })
   },

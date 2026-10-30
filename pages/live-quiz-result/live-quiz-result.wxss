@@ -1,0 +1,62 @@
+/* 随堂测试 · 答题情况 —— 通用样式见 app.wxss */
+.center { text-align: center; }
+.strong { font-weight: 700; }
+.mb16 { margin-bottom: 16rpx; }
+.row { display: flex; align-items: center; }
+
+.res-accuracy {
+  font-size: 88rpx;
+  font-weight: 800;
+  color: var(--brand-600, #0d9488);
+  margin: 12rpx 0;
+}
+.res-percent { font-size: 32rpx; }
+
+.res-circles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24rpx;
+}
+.res-circle {
+  width: 72rpx; height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  box-sizing: border-box;
+  border: 4rpx solid transparent;
+}
+.res-circle.ok {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+.res-circle.bad {
+  color: #e11d48;
+  border-color: #e11d48;
+}
+.res-demo { width: 28rpx; height: 28rpx; }
+
+.res-legend {
+  display: flex;
+  gap: 48rpx;
+  margin-top: 24rpx;
+}
+
+.btn-primary {
+  margin-top: 20rpx;
+  text-align: center;
+  padding: 22rpx 0;
+  color: #fff;
+  background: var(--brand-600, #0d9488);
+  border-radius: 16rpx;
+  font-weight: 700;
+}
+.btn-ghost {
+  margin: 16rpx 0 40rpx;
+  text-align: center;
+  padding: 20rpx 0;
+  color: var(--muted, #64748b);
+  border: 2rpx solid var(--line, #e2e8f0);
+  border-radius: 16rpx;
+}

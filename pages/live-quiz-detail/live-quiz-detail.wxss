@@ -1,0 +1,61 @@
+/* 随堂测试 · 单题详情 —— 通用样式见 app.wxss */
+.detail-page { display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+
+.center { text-align: center; }
+.strong { font-weight: 700; }
+.mt8 { margin-top: 8rpx; }
+.mt16 { margin-top: 16rpx; }
+.ok { color: #16a34a; }
+.bad { color: #e11d48; }
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+}
+.detail-title { font-weight: 700; font-size: 30rpx; }
+.detail-nav {
+  color: var(--brand-600, #0d9488);
+  font-size: 26rpx;
+  padding: 8rpx 12rpx;
+  min-width: 120rpx;
+  text-align: center;
+}
+.detail-nav.placeholder { visibility: hidden; }
+
+.detail-swiper { flex: 1; height: 0; }
+.detail-scroll { height: 100%; }
+
+.detail-option {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 24rpx;
+  border: 2rpx solid var(--line, #e2e8f0);
+  border-radius: 14rpx;
+  margin-bottom: 16rpx;
+  position: relative;
+}
+.detail-option.right { border-color: #16a34a; background: rgba(22, 163, 74, 0.08); }
+.detail-option.mine:not(.right) { border-color: #e11d48; background: rgba(225, 29, 72, 0.06); }
+.detail-op-key {
+  width: 44rpx; height: 44rpx;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: #f1f5f9;
+  font-weight: 700;
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+.detail-op-text { flex: 1; font-size: 28rpx; }
+.detail-tag { font-size: 20rpx; padding: 4rpx 12rpx; border-radius: 999rpx; }
+.mine-tag { color: #e11d48; background: rgba(225, 29, 72, 0.1); }
+.right-tag { color: #16a34a; background: rgba(22, 163, 74, 0.1); }
+
+.detail-analysis {
+  font-size: 28rpx;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

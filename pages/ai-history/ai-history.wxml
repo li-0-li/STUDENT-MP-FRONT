@@ -1,0 +1,49 @@
+<!-- AI 答疑 · 历史会话（缺口补位功能） -->
+<view class="page">
+
+  <!-- 会话列表 -->
+  <block wx:if="{{view === 'list'}}">
+    <block wx:if="{{sessions.length}}">
+      <view
+        wx:for="{{sessions}}" wx:key="sessionId"
+        class="card" bindtap="openSession" data-id="{{item.sessionId}}">
+        <view class="between">
+          <view class="his-q">{{item.firstQuestion}}</view>
+          <view class="row" style="gap:12rpx;align-items:center">
+            <view class="badge badge-info">{{item.qaCount}} 问</view>
+            <view class="his-del" catchtap="deleteSession" data-id="{{item.sessionId}}">删除</view>
+          </view>
+        </view>
+        <view class="small muted mt8">最近提问 {{item.lastTime}}</view>
+      </view>
+    </block>
+    <view wx:elif="{{loading}}" class="card center"><view class="small muted">加载中…</view></view>
+    <view wx:else class="card center empty">
+      <view class="empty-icon">💬</view>
+      <view class="small muted">该课程还没有历史会话</view>
+    </view>
+  </block>
+
+  <!-- 会话明细 -->
+  <block wx:if="{{view === 'detail'}}">
+    <view class="between">
+      <view class="his-back link" bindtap="backToList">‹ 返回会话列表</view>
+      <view class="his-del" bindtap="deleteSession" data-id="{{detailSessionId}}">删除该会话</view>
+    </view>
+    <view wx:if="{{loading}}" class="card center"><view class="small muted">加载中…</view></view>
+    <block wx:for="{{messages}}" wx:key="index">
+      <!-- 问 -->
+      <view class="card his-msg-q">
+        <view class="small muted">我 · {{item.time}}</view>
+        <view class="mt8">{{item.question}}</view>
+      </view>
+      <!-- 答 -->
+      <view class="card his-msg-a">
+        <view class="small muted">AI 助教{{item.hit ? '' : ' · 未基于课程资料'}}</view>
+        <view class="mt8 his-answer">{{item.answer}}</view>
+        <view wx:if="{{item.refs}}" class="small muted mt8 his-refs">来源：{{item.refs}}</view>
+      </view>
+    </block>
+  </block>
+
+</view>

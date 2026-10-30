@@ -1,0 +1,16 @@
+/* AI 答疑 · 历史会话 —— .card/.badge/.link/.empty 等通用样式见 app.wxss */
+.his-q {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.his-back { padding: 8rpx 8rpx 16rpx; display: inline-block; }
+/* 删除会话入口（列表卡片 / 明细视图共用），红色小字按钮 */
+.his-del { color: #e11d48; font-size: 24rpx; padding: 8rpx; }
+.his-msg-q { background: #f8fafc; }
+.his-msg-a { border-left: 6rpx solid var(--brand-600, #0d9488); }
+.his-answer { white-space: pre-wrap; word-break: break-all; }
+.his-refs { border-top: 1rpx solid #f0f0f0; padding-top: 12rpx; }

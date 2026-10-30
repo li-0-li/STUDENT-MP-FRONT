@@ -14,10 +14,11 @@
       <view class="badge {{item.statusBadge}}">{{item.statusText}}</view>
     </view>
     <view class="small muted mt8">{{item.teacher}} · {{item.hours}} 学时{{item.semester ? ' · ' + item.semester : ''}}</view>
-    <!-- 章节数 / 作业数 / 详情入口 -->
+    <!-- 章节数 / 作业数 / 实验数 / 详情入口 -->
     <view class="row mt8 card-meta">
       <view class="row" style="gap:8rpx"><text>📖</text><text>{{item.chapterCount}} 章节</text></view>
       <view class="row" style="gap:8rpx"><text>📋</text><text>{{item.homeworkCount}} 作业</text></view>
+      <view class="row" style="gap:8rpx"><text>🧪</text><text>{{item.experimentCount}} 实验</text></view>
       <text class="card-more">详情 ›</text>
     </view>
     <!-- 课程进度条（时间口径：首节课 0% → 末节课下课 100%） -->

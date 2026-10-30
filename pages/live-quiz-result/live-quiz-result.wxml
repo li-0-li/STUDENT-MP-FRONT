@@ -1,0 +1,30 @@
+<!-- 随堂测试 · 答题情况：正确率 + 逐题色圈（对=绿 / 错=红） -->
+<view class="page">
+  <view wx:if="{{loading}}" class="card center"><view class="small muted">加载中…</view></view>
+
+  <block wx:else>
+    <!-- 成绩卡 -->
+    <view class="card center">
+      <view class="strong">{{title}}</view>
+      <view class="res-accuracy">{{accuracy}}<text class="res-percent">%</text></view>
+      <view class="small muted">正确率 · 做对 {{correctCount}} / {{total}} 题</view>
+    </view>
+
+    <!-- 题目序号色圈：点击进入该题详情 -->
+    <view class="card">
+      <view class="strong mb16">答题概览</view>
+      <view class="res-circles">
+        <view wx:for="{{answers}}" wx:key="seq"
+          class="res-circle {{item.correct ? 'ok' : 'bad'}}"
+          bindtap="goDetail" data-idx="{{index}}">{{item.seq}}</view>
+      </view>
+      <view class="res-legend">
+        <view class="row" style="gap:8rpx"><view class="res-circle ok res-demo"></view><text class="small muted">做对</text></view>
+        <view class="row" style="gap:8rpx"><view class="res-circle bad res-demo"></view><text class="small muted">做错</text></view>
+      </view>
+    </view>
+
+    <view class="btn-primary" bindtap="goFirstDetail">查看详情</view>
+    <view class="btn-ghost" bindtap="goHistory">历史测试</view>
+  </block>
+</view>

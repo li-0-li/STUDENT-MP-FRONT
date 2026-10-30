@@ -4,7 +4,7 @@ const systemInfo = wx.getSystemInfoSync();
 const isDevTools = systemInfo.platform === 'devtools';
 
 // 2. 配置你的电脑局域网 IP 和线上域名
-const LOCAL_IP = '192.168.70.121';
+const LOCAL_IP = '192.168.100.30';
 const PROD_URL = 'https://api.yourdomain.com'; // 未来上线后的正式地址（先用占位符代替）
 
 // 3. 核心判断逻辑

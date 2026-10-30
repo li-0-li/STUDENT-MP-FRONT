@@ -1,0 +1,26 @@
+<!-- 随堂测试 · 作答卷（readonly=1 时只读浏览，无提交按钮） -->
+<view class="page">
+  <view wx:if="{{loading}}" class="card center"><view class="small muted">加载中…</view></view>
+
+  <block wx:else>
+    <view class="card">
+      <view class="strong">{{title}}</view>
+      <view class="small muted mt4">共 {{total}} 题 · 截止：{{deadline}}</view>
+    </view>
+
+    <view wx:for="{{questions}}" wx:key="seq" class="card">
+      <view class="strong">{{item.seq}}. {{item.content}}</view>
+      <view class="mt16 quiz-options">
+        <view wx:for="{{item.options}}" wx:for-item="op" wx:key="key"
+          class="quiz-option {{item.picked === op.key ? 'on' : ''}}"
+          bindtap="pick" data-idx="{{index}}" data-key="{{op.key}}">
+          <text class="quiz-option-key">{{op.key}}</text>
+          <text class="quiz-option-text">{{op.text}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{!readonly}}" class="btn-submit" bindtap="submit">{{submitting ? '提交中…' : '提交测试'}}</view>
+    <view wx:else class="small muted center mt16">— 仅浏览，无作答权限 —</view>
+  </block>
+</view>

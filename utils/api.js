@@ -102,7 +102,15 @@ const classroomApi = {
   interact: (sessionId, data) => request.post('/v1/sessions/' + sessionId + '/interactions', data),
   /** 表 3-16 课堂聊天消息：GET/POST /api/v1/sessions/{sessionId}/messages */
   messages: (sessionId, params) => request.get('/v1/sessions/' + sessionId + '/messages', params),
-  sendMessage: (sessionId, data) => request.post('/v1/sessions/' + sessionId + '/messages', data)
+  sendMessage: (sessionId, data) => request.post('/v1/sessions/' + sessionId + '/messages', data),
+  /** 学生花名册（只读，2026-10-29）：GET /api/v1/sessions/{sessionId}/stu-roster */
+  stuRoster: (sessionId, page, pageSize) => request.get('/v1/sessions/' + sessionId + '/stu-roster', { page: page || 1, pageSize: pageSize || 50 }),
+  /** 随堂测试（2026-10-29）：当前测试 / 作答卷 / 提交 / 答题情况 / 历史列表 */
+  quizCurrent: (sessionId) => request.get('/v1/sessions/' + sessionId + '/quiz/current'),
+  quizSheet: (quizId) => request.get('/v1/quiz/' + quizId + '/questions'),
+  quizSubmit: (quizId, data) => request.post('/v1/quiz/' + quizId + '/submit', data),
+  quizResult: (quizId) => request.get('/v1/quiz/' + quizId + '/my-result'),
+  courseQuizzes: (courseId) => request.get('/v1/courses/' + courseId + '/quizzes')
 }
 
 /* ===== 消息接口形状兼容层（M-E 会话/消息 + M-A 通知）=====
@@ -212,6 +220,12 @@ const aiApi = {
   ask: (data) => request.post('/v1/qa/ask', data),
   /** 表 3-10 答疑反馈：POST /api/v1/qa/{qaId}/feedback */
   feedback: (qaId, data) => request.post('/v1/qa/' + qaId + '/feedback', data),
+  /** 历史会话列表（缺口补位）：GET /api/v1/qa/sessions?courseId=（按 session_id 聚合，最近在前） */
+  qaSessions: (courseId) => request.get('/v1/qa/sessions', { courseId }),
+  /** 历史会话明细（缺口补位）：GET /api/v1/qa/sessions/{sessionId}/messages?courseId=（正序问答对） */
+  qaSessionMessages: (sessionId, courseId) => request.get('/v1/qa/sessions/' + encodeURIComponent(sessionId) + '/messages', { courseId }),
+  /** 删除历史会话（AI 页「清空当前会话」与历史会话页删除共用；幂等）：DELETE /api/v1/qa/sessions/{sessionId}?courseId= */
+  qaSessionDelete: (sessionId, courseId) => request.del('/v1/qa/sessions/' + encodeURIComponent(sessionId), { courseId }),
   /** 表 3-11 学情画像（雷达图数据）：GET /api/v1/profiles/me?courseId= */
   profile: (courseId) => request.get('/v1/profiles/me', { courseId }),
   /**

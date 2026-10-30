@@ -1,0 +1,36 @@
+<!-- 随堂测试 · 历史测试卡片列表 -->
+<view class="page">
+  <view wx:if="{{loading}}" class="card center"><view class="small muted">加载中…</view></view>
+
+  <block wx:elif="{{list.length}}">
+    <view wx:for="{{list}}" wx:key="quizId" class="card his-card">
+      <view class="his-top">
+        <view class="his-title">{{item.title || '随堂测试'}}</view>
+        <view wx:if="{{item.active}}" class="his-tag doing">进行中</view>
+      </view>
+      <view class="small muted his-meta">
+        <text>发布于 {{item.publishTime || '—'}}</text>
+        <text wx:if="{{item.deadline}}">截止 {{item.deadline}}</text>
+        <text>共 {{item.total}} 题</text>
+      </view>
+
+      <!-- 已参加：当时成绩 -->
+      <view wx:if="{{item.submitted}}" class="his-score">
+        <text class="his-accuracy">{{item.accuracy}}%</text>
+        <text class="small muted">正确率 · 做对 {{item.correctCount}}/{{item.total}} 题</text>
+      </view>
+      <!-- 未参加 -->
+      <view wx:else class="his-score">
+        <text class="small muted">未参加测试</text>
+      </view>
+
+      <view class="his-foot">
+        <view class="btn-ghost btn-sm" data-quiz-id="{{item.quizId}}" data-submitted="{{item.submitted}}" bindtap="goDetail">查看详情</view>
+      </view>
+    </view>
+  </block>
+
+  <view wx:else class="card center">
+    <view class="small muted">该课程暂无历史测试</view>
+  </view>
+</view>

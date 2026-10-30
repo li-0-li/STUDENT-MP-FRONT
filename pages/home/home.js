@@ -104,7 +104,11 @@ Page({
           + '-' + String(it.endTime || '').replace('T', ' ').slice(11, 16)
           + (it.periodName ? ' · ' + it.periodName : ''),
         place: it.classroomName || '地点待定',
-        statusText: it.status === 'ongoing' ? '进行中' : it.status === 'canceled' ? '已取消' : '待上课',
+        // 上课中判定双保险：后端 status 可能滞后，再按「当前时间在起止之间」兜底
+        ongoing: it.status === 'ongoing'
+          || (!!(parseTime(it.startTime) && parseTime(it.startTime) <= now
+            && parseTime(it.endTime) && now < parseTime(it.endTime))),
+        statusText: it.status === 'ongoing' ? '上课中' : it.status === 'canceled' ? '已取消' : '待上课',
         badge: it.status === 'ongoing' ? 'badge-success' : it.status === 'canceled' ? 'badge-neutral' : 'badge-warning',
         url: '/pages/schedule/schedule'
       }))
@@ -128,7 +132,9 @@ Page({
   },
 
   // ③ 我的作业卡：全部课程中未到截止时间的作业 + 实验（已提交未截止的也保留）；
-  //    已过截止但「允许逾期提交」且未出分的也保留。扁平列表按发布时间先后排列。
+  //    已过截止但「允许逾期提交」且未出分的也保留。
+  //    排序（2026-10-29 四梯队）：未提交 → 已提交未批改 → 申诉中 → 已提交已批改；
+  //    「已提交已批改」仅收录当前时间仍在截止日期前的条目。
   async loadTasks() {
     const now = new Date()
     const items = []
@@ -145,7 +151,7 @@ Page({
         // appealing=申诉中 / submitted·queued·grading·manual=批改中(已提交) / 空=待提交
         const st = it.myStatus != null ? String(it.myStatus).toLowerCase() : ''
         let status, badge
-        if (!st) { status = '待提交'; badge = 'badge-warning' }
+        if (!st || st === 'draft') { status = st === 'draft' ? '草稿' : '待提交'; badge = 'badge-warning' }
         else if (st === 'finished') { status = '已完成'; badge = 'badge-success' }
         else if (st === 'returned') { status = '已退回'; badge = 'badge-error' }
         else if (st === 'appealing') { status = '申诉中'; badge = 'badge-info' }
@@ -157,6 +163,14 @@ Page({
           title: it.title,
           courseName: it.courseName || '',
           publish: parseTime(it.startTime),
+          // 排序辅助：梯队（0未提交含草稿/退回，1已提交未批改，2申诉中，3已提交已批改）；
+          // 截止时间戳；是否已过截止
+          _todo: !st || st === 'draft' || st === 'returned',
+          _tier: !st || st === 'draft' || st === 'returned' ? 0
+            : st === 'finished' ? 3
+            : st === 'appealing' ? 2 : 1,
+          _dl: dl.getTime(),
+          _overdue: dl < now,
           deadline: '截止 ' + String(it.deadline || '').replace('T', ' ').slice(0, 16) + overText(dl),
           status,
           badge,
@@ -187,6 +201,11 @@ Page({
           title: it.title,
           courseName: it.course_name || '',
           publish: parseTime(it.published_at),
+          // 排序辅助：梯队（0未提交含退回，1已提交待批阅，3已批阅）；截止时间戳；是否已过截止
+          _todo: st == null || st === 'REVISION' || st === 'RETURNED',
+          _tier: st == null || st === 'REVISION' || st === 'RETURNED' ? 0 : st === 'GRADED' ? 3 : 1,
+          _dl: dl.getTime(),
+          _overdue: dl < now,
           deadline: '截止 ' + String(it.deadline || '').replace('T', ' ').slice(0, 16) + overText(dl),
           status,
           badge,
@@ -197,11 +216,20 @@ Page({
       // request 层已 toast，作业部分照常
     }
 
-    // 按发布时间先后（发布时间为空排最后）
+    // 排序（2026-10-29 四梯队口径）：
+    //   1) 未提交（含草稿/退回）——组内：已过截止（可补交）在上、超期越久越上（_dl 升序），
+    //      未到截止的随后、截止越近越上；
+    //   2) 已提交未批改；3) 申诉中；4) 已提交已批改（已过截止的在收录阶段剔除）。
+    //   第 2~4 梯队内部按发布时间由近到远。
     items.sort((a, b) => {
-      const pa = a.publish ? a.publish.getTime() : Infinity
-      const pb = b.publish ? b.publish.getTime() : Infinity
-      return pa - pb
+      if (a._tier !== b._tier) return a._tier - b._tier          // 梯队：未提交 → 未批改 → 申诉 → 已批改
+      if (a._tier === 0) {
+        if (a._overdue !== b._overdue) return a._overdue ? -1 : 1 // 已过截止（可补交）在上
+        return a._dl - b._dl                                      // 截止越早越上
+      }
+      const pa = a.publish ? a.publish.getTime() : 0              // 2~4 梯队：发布由近到远
+      const pb = b.publish ? b.publish.getTime() : 0
+      return pb - pa
     })
     this.setData({ todoTasks: items })
   },

@@ -8,7 +8,7 @@ const STATUS_TEXT = { creating: '创建中', certifying: '认证中', active: '�
 const STATUS_BADGE = { creating: 'badge-info', certifying: 'badge-warning', active: 'badge-success', archived: 'badge-neutral' }
 
 // 课程进度已接入表 3-1 字段 progress（时间口径：首节课 0% → 末节课下课 100%，无排课为 0）
-//   章节数/作业数同为真实字段（chapterCount/homeworkCount，后端实时计数）
+//   章节数/作业数/实验数同为真实字段（chapterCount/homeworkCount/experimentCount，后端实时计数）
 function mapCourse(it) {
   return {
     courseId: it.courseId,
@@ -18,6 +18,7 @@ function mapCourse(it) {
     studentCount: it.studentCount || 0,
     chapterCount: it.chapterCount || 0,
     homeworkCount: it.homeworkCount || 0,
+    experimentCount: it.experimentCount || 0,
     progress: it.progress != null ? it.progress : 0,
     status: it.status || '',
     statusText: STATUS_TEXT[it.status] || it.status || '',

@@ -9,7 +9,8 @@
     </view>
   </view>
 
-  <!-- ② 今日课程：当天课表（已开始的课剔除，进行中保留；按上课时间升序） -->
+  <!-- ② 今日课程：当天课表（已开始的课剔除，进行中保留；按上课时间升序）。
+       进行中的课：名称旁标「上课中」，右侧「进入课堂」直达实时课堂页（catchtap 防冒泡到整卡跳转） -->
   <view class="section-title">今日课程</view>
   <view
     wx:for="{{todayCourses}}" wx:key="id"
@@ -17,8 +18,12 @@
     <view class="todo-icon">{{item.icon}}</view>
     <view class="todo-mid">
       <view class="between">
-        <text class="small strong">{{item.name}}</text>
-        <view class="badge {{item.badge}}">{{item.statusText}}</view>
+        <view class="row" style="gap:10rpx;align-items:center;min-width:0">
+          <text class="small strong">{{item.name}}</text>
+          <view wx:if="{{item.ongoing}}" class="badge badge-success live-tag">上课中</view>
+        </view>
+        <view wx:if="{{item.ongoing}}" class="btn-live" catchtap="go" data-url="/pages/live/live">进入课堂</view>
+        <view wx:else class="badge {{item.badge}}">{{item.statusText}}</view>
       </view>
       <view class="small muted mt4">{{item.time}} · {{item.place}}</view>
     </view>
@@ -56,7 +61,9 @@
   </block>
 
   <!-- ⑤ 我的作业：全部课程中未到截止时间的作业+实验（已提交未截止的也保留；
-       已过截止但允许逾期提交的也保留），扁平按发布顺序排列，可滚动，底部「查看全部」进作业页 -->
+       已过截止但允许逾期提交的也保留；已批改且过截止的剔除）。
+       四梯队排序：未提交（超期可补交最上、未到期截止近者靠上）→ 已提交未批改 → 申诉中 → 已提交已批改；
+       可滚动，底部「查看全部」进作业页 -->
   <view class="section-title">我的作业</view>
   <view class="card hw-todo-card">
     <scroll-view wx:if="{{todoTasks.length}}" scroll-y class="hw-todo-scroll">

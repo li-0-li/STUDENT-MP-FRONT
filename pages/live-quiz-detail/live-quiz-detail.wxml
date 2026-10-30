@@ -1,0 +1,41 @@
+<!-- 随堂测试 · 单题详情：可左右滑动，首题无上一题、末题无下一题 -->
+<view class="page detail-page">
+  <view wx:if="{{loading}}" class="card center"><view class="small muted">加载中…</view></view>
+
+  <block wx:elif="{{answers.length}}">
+    <!-- 顶部：题号 + 左右翻题按钮 -->
+    <view class="detail-head">
+      <view wx:if="{{idx > 0}}" class="detail-nav" bindtap="prev">‹ 上一题</view>
+      <view wx:else class="detail-nav placeholder"></view>
+      <view class="detail-title">第 {{answers[idx].seq}} 题<text class="{{answers[idx].correct ? 'ok' : 'bad'}}">{{answers[idx].correct ? ' · 做对' : ' · 做错'}}</text></view>
+      <view wx:if="{{idx < total - 1}}" class="detail-nav" bindtap="next">下一题 ›</view>
+      <view wx:else class="detail-nav placeholder"></view>
+    </view>
+
+    <!-- 滑动区：每题一屏 -->
+    <swiper class="detail-swiper" current="{{idx}}" bindchange="onSwiper" duration="240">
+      <swiper-item wx:for="{{answers}}" wx:key="seq">
+        <scroll-view scroll-y class="detail-scroll">
+          <view class="card">
+            <view class="strong">{{item.content}}</view>
+            <view class="mt16">
+              <view wx:for="{{item.options}}" wx:for-item="op" wx:key="key"
+                class="detail-option {{item.myAnswer === op.key ? 'mine' : ''}} {{item.rightAnswer === op.key ? 'right' : ''}}">
+                <text class="detail-op-key">{{op.key}}</text>
+                <text class="detail-op-text">{{op.text}}</text>
+                <text wx:if="{{item.myAnswer === op.key}}" class="detail-tag mine-tag">我的答案</text>
+                <text wx:if="{{item.rightAnswer === op.key}}" class="detail-tag right-tag">正确答案</text>
+              </view>
+            </view>
+          </view>
+          <view class="card">
+            <view class="small muted">答案解析</view>
+            <view class="mt8 detail-analysis">{{item.analysis || '（教师未提供解析）'}}</view>
+          </view>
+        </scroll-view>
+      </swiper-item>
+    </swiper>
+  </block>
+
+  <view wx:else class="card center"><view class="small muted">暂无答题数据</view></view>
+</view>
