@@ -38,9 +38,10 @@ Page({
         seq: q.seq,
         questionId: q.questionId,
         qType: q.qType,
+        multi: q.qType === 'multi',
         content: q.content || '',
-        options: this.parseOptions(q.options),
-        picked: ''
+        options: this.parseOptions(q.options, q.qType).map((op) => Object.assign({}, op, { sel: false })),
+        picked: q.qType === 'multi' ? [] : ''
       }))
       this.setData({
         loading: false,
@@ -55,9 +56,12 @@ Page({
     }
   },
 
-  // options 为题库 JSON 字符串 [{key,text}]；judge 题为 null → 渲染 正确/错误
-  parseOptions(raw) {
-    if (!raw) return [{ key: '正确', text: '正确' }, { key: '错误', text: '错误' }]
+  // 按题型渲染选项：
+  //   single → 题库 options JSON [{key,text}]；judge → 固定 正确/错误 两个选项框；
+  //   其余题型（填空/简答等无 options）→ 无选项，作答卷渲染文本输入框
+  parseOptions(raw, qType) {
+    if (qType === 'judge') return [{ key: '正确', text: '正确' }, { key: '错误', text: '错误' }]
+    if (!raw) return []
     let arr = raw
     if (typeof raw === 'string') {
       try { arr = JSON.parse(raw) } catch (e) { arr = [] }
@@ -65,24 +69,51 @@ Page({
     return Array.isArray(arr) ? arr : []
   },
 
-  // 选择答案
+  // 选择答案：single/judge 单选直接记录；multi 多选 → 点选/取消切换 sel 标记
   pick(e) {
     if (this.data.readonly) return
     const idx = Number(e.currentTarget.dataset.idx)
     const key = e.currentTarget.dataset.key
-    this.setData({ ['questions[' + idx + '].picked']: key })
+    const q = this.data.questions[idx]
+    if (q.multi) {
+      const pos = q.picked.indexOf(key)
+      const picked = pos >= 0 ? q.picked.filter((k) => k !== key) : q.picked.concat([key])
+      const patch = { ['questions[' + idx + '].picked']: picked }
+      q.options.forEach((op, oi) => {
+        patch['questions[' + idx + '].options[' + oi + '].sel'] = picked.indexOf(op.key) >= 0
+      })
+      this.setData(patch)
+    } else {
+      const patch = { ['questions[' + idx + '].picked']: key }
+      q.options.forEach((op, oi) => {
+        patch['questions[' + idx + '].options[' + oi + '].sel'] = op.key === key
+      })
+      this.setData(patch)
+    }
+  },
+
+  // 文本作答（填空/简答等无选项题型）
+  typeAnswer(e) {
+    if (this.data.readonly) return
+    const idx = Number(e.currentTarget.dataset.idx)
+    this.setData({ ['questions[' + idx + '].picked']: e.detail.value })
   },
 
   // 提交测试 → 跳答题情况页
   async submit() {
     if (this.data.readonly || this.data.submitting) return
     const questions = this.data.questions
-    const unanswered = questions.filter((q) => !q.picked).length
+    // 未作答判定：选项题看是否选了（multi 看数组长度）；文本题看是否输入
+    const unanswered = questions.filter((q) =>
+      q.options.length ? (q.multi ? q.picked.length === 0 : !q.picked) : !q.picked
+    ).length
     const doSubmit = () => {
       this.setData({ submitting: true })
       api.classroom.quizSubmit(this.data.quizId, {
         answers: questions.map((q) => ({
-          seq: q.seq, questionId: q.questionId, answer: q.picked || ''
+          seq: q.seq, questionId: q.questionId,
+          // multi 多选：选中的 key 排序后拼 'A,C'（与题库标准答案格式一致）
+          answer: q.multi ? q.picked.slice().sort().join(',') : (q.picked || '')
         }))
       })
         .then(() => {

@@ -4,13 +4,27 @@
 .mb16 { margin-bottom: 16rpx; }
 .row { display: flex; align-items: center; }
 
+/* 成绩卡横排：正确率 与 做对题数 左右分列 */
+.res-hero {
+  display: flex;
+  align-items: center;
+  margin-top: 16rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx solid rgba(0, 0, 0, 0.05);
+}
+.res-accuracy-box { flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 4rpx; }
 .res-accuracy {
-  font-size: 88rpx;
+  font-size: 56rpx;
   font-weight: 800;
   color: var(--brand-600, #0d9488);
-  margin: 12rpx 0;
+  line-height: 1;
 }
-.res-percent { font-size: 32rpx; }
+.res-percent { font-size: 24rpx; font-weight: 700; color: var(--brand-600, #0d9488); }
+.res-acc-label { margin-left: 8rpx; }
+.res-hero-divider { width: 2rpx; height: 56rpx; background: rgba(0, 0, 0, 0.08); }
+.res-hero-right { flex: 1; text-align: center; }
+.res-correct-num { font-size: 40rpx; font-weight: 700; line-height: 1.2; }
+.res-correct-total { font-size: 26rpx; color: #94a3b8; }
 
 .res-circles {
   display: flex;

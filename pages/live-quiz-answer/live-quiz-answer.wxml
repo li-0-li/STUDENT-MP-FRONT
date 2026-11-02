@@ -8,16 +8,23 @@
       <view class="small muted mt4">共 {{total}} 题 · 截止：{{deadline}}</view>
     </view>
 
-    <view wx:for="{{questions}}" wx:key="seq" class="card">
-      <view class="strong">{{item.seq}}. {{item.content}}</view>
-      <view class="mt16 quiz-options">
+    <view wx:for="{{questions}}" wx:key="seq" wx:for-index="qi" class="card">
+      <view class="strong">{{item.seq}}. {{item.content}}<text wx:if="{{item.multi}}" class="small muted">（多选）</text></view>
+
+      <!-- 有选项（single / judge / multi）→ 选项框，选中态统一用 sel 标记 -->
+      <view wx:if="{{item.options.length}}" class="mt16 quiz-options">
         <view wx:for="{{item.options}}" wx:for-item="op" wx:key="key"
-          class="quiz-option {{item.picked === op.key ? 'on' : ''}}"
-          bindtap="pick" data-idx="{{index}}" data-key="{{op.key}}">
+          class="quiz-option {{op.sel ? 'on' : ''}}"
+          bindtap="pick" data-idx="{{qi}}" data-key="{{op.key}}">
           <text class="quiz-option-key">{{op.key}}</text>
           <text class="quiz-option-text">{{op.text}}</text>
         </view>
       </view>
+
+      <!-- 无选项题型（填空/简答）→ 文本作答 -->
+      <textarea wx:else class="quiz-textarea mt16" value="{{item.picked}}"
+        bindinput="typeAnswer" data-idx="{{qi}}" disabled="{{readonly}}"
+        placeholder="{{readonly ? '（未作答）' : '输入你的答案'}}" maxlength="500" auto-height />
     </view>
 
     <view wx:if="{{!readonly}}" class="btn-submit" bindtap="submit">{{submitting ? '提交中…' : '提交测试'}}</view>

@@ -18,16 +18,32 @@
         <scroll-view scroll-y class="detail-scroll">
           <view class="card">
             <view class="strong">{{item.content}}</view>
-            <view class="mt16">
+
+            <!-- 有选项（single / judge / multi）→ 选项卡（我的答案/正确答案高亮，multi 按集合匹配） -->
+            <view wx:if="{{item.options.length}}" class="mt16">
               <view wx:for="{{item.options}}" wx:for-item="op" wx:key="key"
-                class="detail-option {{item.myAnswer === op.key ? 'mine' : ''}} {{item.rightAnswer === op.key ? 'right' : ''}}">
+                class="detail-option {{op.mine ? 'mine' : ''}} {{op.right ? 'right' : ''}}">
                 <text class="detail-op-key">{{op.key}}</text>
                 <text class="detail-op-text">{{op.text}}</text>
-                <text wx:if="{{item.myAnswer === op.key}}" class="detail-tag mine-tag">我的答案</text>
-                <text wx:if="{{item.rightAnswer === op.key}}" class="detail-tag right-tag">正确答案</text>
+                <text wx:if="{{op.mine}}" class="detail-tag mine-tag">我的答案</text>
+                <text wx:if="{{op.right}}" class="detail-tag right-tag">正确答案</text>
               </view>
             </view>
+
+            <!-- 本人作答情况（所有题型都展示，醒目文字行） -->
+            <view class="mt16 detail-verdict {{item.correct ? 'v-ok' : 'v-bad'}}">
+              <view class="detail-verdict-row">
+                <text class="detail-verdict-label">我的答案</text>
+                <text class="detail-verdict-value">{{item.myAnswer || '（未作答）'}}</text>
+              </view>
+              <view class="detail-verdict-row">
+                <text class="detail-verdict-label">正确答案</text>
+                <text class="detail-verdict-value">{{item.rightAnswer || '—'}}</text>
+              </view>
+              <view class="detail-verdict-badge">{{item.correct ? '✓ 回答正确' : '✗ 回答错误'}}</view>
+            </view>
           </view>
+
           <view class="card">
             <view class="small muted">答案解析</view>
             <view class="mt8 detail-analysis">{{item.analysis || '（教师未提供解析）'}}</view>

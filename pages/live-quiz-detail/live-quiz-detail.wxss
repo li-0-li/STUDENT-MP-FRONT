@@ -59,3 +59,33 @@
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* 本人作答情况（醒目文字行 + 对错徽标） */
+.detail-verdict {
+  margin-top: 20rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 14rpx;
+}
+.v-ok { background: rgba(22, 163, 74, 0.08); }
+.v-bad { background: rgba(225, 29, 72, 0.06); }
+.detail-verdict-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
+}
+.detail-verdict-label { font-size: 24rpx; color: #64748b; flex-shrink: 0; }
+.detail-verdict-value { font-size: 30rpx; font-weight: 700; word-break: break-all; }
+.v-ok .detail-verdict-value { color: #16a34a; }
+.v-bad .detail-verdict-value { color: #e11d48; }
+.detail-verdict-badge {
+  display: inline-block;
+  margin-top: 8rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #fff;
+}
+.v-ok .detail-verdict-badge { background: #16a34a; }
+.v-bad .detail-verdict-badge { background: #e11d48; }

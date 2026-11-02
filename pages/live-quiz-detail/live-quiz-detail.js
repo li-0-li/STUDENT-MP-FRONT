@@ -21,7 +21,16 @@ Page({
   async load() {
     try {
       const r = await api.classroom.quizResult(this.data.quizId)
-      const answers = (r.answers || []).map((a) => Object.assign({ options: this.parseOptions(a.options) }, a))
+      // 逐选项预计算「我的/正确」标记（WXML 无法调用方法；multi 的答案是 'A,C' 逗号串 → 按集合匹配）
+      const answers = (r.answers || []).map((a) => {
+        const mine = String(a.myAnswer || '').split(',').map((s) => s.trim()).filter(Boolean)
+        const right = String(a.rightAnswer || '').split(',').map((s) => s.trim()).filter(Boolean)
+        const options = this.parseOptions(a.options, a.qType).map((op) => Object.assign({}, op, {
+          mine: mine.indexOf(op.key) >= 0,
+          right: right.indexOf(op.key) >= 0
+        }))
+        return Object.assign({}, a, { options })
+      })
       this.setData({
         loading: false,
         answers,
@@ -34,9 +43,10 @@ Page({
     }
   },
 
-  // options 为题库 JSON 字符串 [{key,text}]；null → judge 题的 正确/错误
-  parseOptions(raw) {
-    if (!raw) return [{ key: '正确', text: '正确' }, { key: '错误', text: '错误' }]
+  // 按题型渲染选项：single → 题库 options；judge → 固定 正确/错误；其余无选项题型 → 无选项卡（只显示文字作答行）
+  parseOptions(raw, qType) {
+    if (qType === 'judge') return [{ key: '正确', text: '正确' }, { key: '错误', text: '错误' }]
+    if (!raw) return []
     let arr = raw
     if (typeof raw === 'string') {
       try { arr = JSON.parse(raw) } catch (e) { arr = [] }

@@ -8,6 +8,8 @@
 //   stuRoster 学生花名册（2026-10-29 新增接口）；quizCurrent 随堂测试当前状态（驱动测试红点）
 // 注：后端暂无「课堂列表/发现」接口，页面参数可传 sessionId 覆盖，未传时默认种子课堂 9001
 const api = require('../../utils/api')
+const auth = require('../../utils/auth')
+const config = require('../../utils/config')
 
 const DEFAULT_SESSION_ID = 9001
 const STATE_POLL = 8000    // 签到状态 + 测试状态轮询间隔
@@ -61,7 +63,9 @@ Page({
       room: '',
       section: '',
       stage: '',
-      online: ''      // 已签/应到（后端无实时在线接口，以签到数近似）
+      signed: 0,      // 已签到人数（8s 轮询刷新）
+      should: 0,      // 应到人数（选课人数）
+      online: 0       // 学生在线人数（WebSocket 连接数，服务端 presence 广播 + 轮询兜底）
     },
     // ===== 导航 =====
     tab: 'class',        // class 课堂 | quiz 随堂测试
@@ -101,9 +105,49 @@ Page({
     this.refreshState()
   },
 
-  onShow() { this.startTimers() },
-  onHide() { this.stopTimers() },
-  onUnload() { this.stopTimers() },
+  onShow() { this.startTimers(); this.connectWS() },
+  onHide() { this.stopTimers(); this.closeWS() },
+  onUnload() { this.stopTimers(); this.closeWS() },
+
+  // ===== WebSocket 在线状态（连接即「在线」，服务端按学生连接数统计并广播） =====
+
+  connectWS() {
+    this.closeWS()
+    const token = auth.getToken()
+    if (!token) return
+    const wsBase = config.BASE_URL.replace(/^http/, 'ws').replace(/\/api$/, '')
+    this.wsVisible = true
+    this.wsTask = wx.connectSocket({ url: wsBase + '/ws/session/' + this.data.sessionId + '?token=' + token })
+    this.wsTask.onOpen(() => this.refreshState())
+    this.wsTask.onMessage((msg) => this.onWSMessage(msg))
+    this.wsTask.onClose(() => {
+      this.wsTask = null
+      // 页面仍可见 → 5s 后重连（断网恢复/服务端重启场景）
+      if (this.wsVisible) {
+        this.wsRetry = setTimeout(() => { if (this.wsVisible) this.connectWS() }, 5000)
+      }
+    })
+    this.wsTask.onError(() => { /* 随后触发 onClose 走重连 */ })
+  },
+
+  closeWS() {
+    this.wsVisible = false
+    if (this.wsRetry) { clearTimeout(this.wsRetry); this.wsRetry = null }
+    if (this.wsTask) {
+      try { this.wsTask.close({}) } catch (e) { /* 已断开 */ }
+      this.wsTask = null
+    }
+  },
+
+  /** 服务端下行 {type,payload}：presence 在线人数实时更新，其余类型暂不处理 */
+  onWSMessage(msg) {
+    try {
+      const m = JSON.parse(msg.data || '{}')
+      if (m.type === 'presence' && m.payload && typeof m.payload.onlineCount === 'number') {
+        this.setData({ 'current.online': m.payload.onlineCount })
+      }
+    } catch (e) { /* 非业务消息忽略 */ }
+  },
 
   // ===== 轮询生命周期 =====
 
@@ -129,7 +173,10 @@ Page({
         signed,
         signedTime: st.myAttendance ? hmOf(st.myAttendance.sign_time) : '',
         signinDot: !!(task && !signed && notExpired),
-        'current.online': (st.signedCount || 0) + '/' + (st.shouldCount || 0) + ' 人'
+        'current.signed': st.signedCount || 0,
+        'current.should': st.shouldCount || 0,
+        // onlineCount 仅在线时才覆盖（旧版后端无该字段时保留 WS/上次值）
+        ...(typeof st.onlineCount === 'number' ? { 'current.online': st.onlineCount } : {})
       })
     } catch (e) { /* 轮询失败静默 */ }
     try {
@@ -158,6 +205,7 @@ Page({
       }
       const ct = s.class_time || ''
       const week = ct ? (Number(ct.slice(5, 7)) + '月' + Number(ct.slice(8, 10)) + '日') : ''
+      const cur = this.data.current
       this.setData({
         loading: false,
         current: {
@@ -167,7 +215,9 @@ Page({
           room: s.classroom_name || '教室待定',
           section: (s.period_no || '') + ' 节',
           stage: STAGE_TEXT[s.status] || (s.status || ''),
-          online: this.data.current.online
+          signed: cur.signed,
+          should: cur.should,
+          online: cur.online
         }
       })
     } catch (e) {

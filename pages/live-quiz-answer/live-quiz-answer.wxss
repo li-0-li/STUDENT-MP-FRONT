@@ -41,3 +41,16 @@
   font-weight: 700;
   font-size: 30rpx;
 }
+
+/* 无选项题型（填空/简答）的文本作答框 */
+.quiz-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120rpx;
+  padding: 20rpx 24rpx;
+  background: #f8fafc;
+  border: 2rpx solid #e2e8f0;
+  border-radius: 14rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+}

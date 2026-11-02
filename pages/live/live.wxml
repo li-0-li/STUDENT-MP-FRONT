@@ -11,7 +11,7 @@
       </view>
       <view class="online-box">
         <view class="online-num">{{current.online}}</view>
-        <view class="small muted">在线人数</view>
+        <view class="small muted">在线人数 · 已签 {{current.signed}}/{{current.should}}</view>
       </view>
     </view>
   </view>
