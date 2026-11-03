@@ -94,6 +94,8 @@ const experimentApi = {
 const classroomApi = {
   /** 表 3-13 进入课堂：POST /api/v1/sessions/{sessionId}/enter */
   enter: (sessionId) => request.post('/v1/sessions/' + sessionId + '/enter'),
+  /** 当前课堂发现：GET /api/v1/sessions/current（我选的课里最近开课且进行中的；无则 null） */
+  current: () => request.get('/v1/sessions/current'),
   /** 签到状态：GET /api/v1/sessions/{sessionId}/signin */
   signinState: (sessionId) => request.get('/v1/sessions/' + sessionId + '/signin'),
   /** 表 3-14 课堂签到：POST /api/v1/sessions/{sessionId}/signin */

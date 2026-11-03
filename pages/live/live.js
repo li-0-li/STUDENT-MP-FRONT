@@ -3,15 +3,14 @@
 //   课堂 tab：在线人数 + 签到按钮（教师发布签到显红点；五种方式）+ 花名册（只读，10s 轮询自动刷新）
 //   随堂测试 tab：当前测试信息 + 开始测试；未发布时空态 + 查看历史测试
 // 接入：
+//   current 当前课堂发现（GET /sessions/current）→ 按学生选课解析「现在该上哪节课」
 //   enter 进入课堂（表 3-13）→ signinState 签到状态（8s 轮询，驱动签到红点与在线人数）
 //   signin 课堂签到（表 3-14，支持 numeric 课程码/qr 二维码/location 位置/photo 拍照/gesture 手势）
-//   stuRoster 学生花名册（2026-10-29 新增接口）；quizCurrent 随堂测试当前状态（驱动测试红点）
-// 注：后端暂无「课堂列表/发现」接口，页面参数可传 sessionId 覆盖，未传时默认种子课堂 9001
+//   stuRoster 学生花名册；quizCurrent 随堂测试当前状态（驱动测试红点）
+// 注：URL 可显式传 sessionId 覆盖（调试口）；未传时按当前进行中的课堂解析，无课显示空态
 const api = require('../../utils/api')
 const auth = require('../../utils/auth')
 const config = require('../../utils/config')
-
-const DEFAULT_SESSION_ID = 9001
 const STATE_POLL = 8000    // 签到状态 + 测试状态轮询间隔
 const ROSTER_POLL = 10000  // 花名册轮询间隔（教师加分/标迟到后自动刷新）
 
@@ -53,8 +52,9 @@ function toTs(s) {
 
 Page({
   data: {
-    sessionId: DEFAULT_SESSION_ID,
+    sessionId: 0,
     loading: true,
+    noClass: false,   // 当前没有进行中的课堂（教师未开课）
     // 课堂状态卡（enter 填充）
     current: {
       course: '',
@@ -100,9 +100,28 @@ Page({
   onLoad(options) {
     this.stateTimer = null
     this.rosterTimer = null
-    this.setData({ sessionId: Number(options.sessionId) || DEFAULT_SESSION_ID })
-    this.enterClass()
-    this.refreshState()
+    const explicit = Number(options.sessionId) || 0
+    if (explicit) {
+      // 调试口：URL 显式指定课堂
+      this.setData({ sessionId: explicit })
+      this.enterClass()
+      this.refreshState()
+      return
+    }
+    this.resolveCurrent()
+  },
+
+  /** 当前课堂发现：按我的选课解析进行中的课堂；教师未开课 → 空态 */
+  async resolveCurrent() {
+    let cur = null
+    try { cur = await api.classroom.current() } catch (e) { /* request 层已 toast */ }
+    if (cur && Number(cur.sessionId) > 0) {
+      this.setData({ sessionId: Number(cur.sessionId) })
+      this.enterClass()
+      this.refreshState()
+      return
+    }
+    this.setData({ loading: false, noClass: true })
   },
 
   onShow() { this.startTimers(); this.connectWS() },

@@ -1,5 +1,16 @@
-<!-- 实时课堂（2026-10-29 改版）：课堂 | 随堂测试 双导航；无投屏/直播/互动 -->
+<!-- 实时课堂：进入时按选课解析当前进行中的课堂；教师未开课显示空态 -->
 <view class="page">
+
+  <!-- 空态：当前没有进行中的课堂 -->
+  <block wx:if="{{noClass}}">
+    <view class="card center empty">
+      <view class="empty-icon">📺</view>
+      <view class="strong">当前没有进行中的课堂</view>
+      <view class="small muted mt8">教师开课后，再次点击「上课入口」即可进入</view>
+    </view>
+  </block>
+
+  <block wx:else>
 
   <!-- 课堂状态卡 -->
   <view class="card">
@@ -127,5 +138,7 @@
       </view>
     </view>
   </view>
+
+  </block>
 
 </view>
