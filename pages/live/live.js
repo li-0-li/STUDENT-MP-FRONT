@@ -115,25 +115,30 @@ Page({
   async resolveCurrent() {
     let cur = null
     try { cur = await api.classroom.current() } catch (e) { /* request 层已 toast */ }
-    if (cur && Number(cur.sessionId) > 0) {
-      this.setData({ sessionId: Number(cur.sessionId) })
+    // 兼容驼峰/下划线两种键名（后端返回 session_id）
+    const sid = Number(cur.sessionId || cur.session_id || 0)
+    if (sid > 0) {
+      this.setData({ sessionId: sid })
       this.enterClass()
       this.refreshState()
+      this.connectWS()   // onShow 抢跑时 sessionId 还是 0，解析完成后再连 WS
       return
     }
     this.setData({ loading: false, noClass: true })
   },
 
-  onShow() { this.startTimers(); this.connectWS() },
-  onHide() { this.stopTimers(); this.closeWS() },
-  onUnload() { this.stopTimers(); this.closeWS() },
+  onShow() { this.pageVisible = true; this.startTimers(); this.connectWS() },
+  onHide() { this.stopTimers(); this.closeWS(); this.pageVisible = false },
+  onUnload() { this.stopTimers(); this.closeWS(); this.pageVisible = false },
 
   // ===== WebSocket 在线状态（连接即「在线」，服务端按学生连接数统计并广播） =====
 
   connectWS() {
     this.closeWS()
     const token = auth.getToken()
-    if (!token) return
+    // 课堂未解析到（sessionId=0，onShow 可能先于 resolveCurrent 完成）或页面不可见时不连接，
+    // 解析成功后由 resolveCurrent 补连
+    if (!token || !this.pageVisible || !this.data.sessionId) return
     const wsBase = config.BASE_URL.replace(/^http/, 'ws').replace(/\/api$/, '')
     this.wsVisible = true
     this.wsTask = wx.connectSocket({ url: wsBase + '/ws/session/' + this.data.sessionId + '?token=' + token })
@@ -158,12 +163,17 @@ Page({
     }
   },
 
-  /** 服务端下行 {type,payload}：presence 在线人数实时更新，其余类型暂不处理 */
+  /** 服务端下行 {type,payload}：presence 在线人数实时更新；session_end 课堂被结束（含超时自动关闭） */
   onWSMessage(msg) {
     try {
       const m = JSON.parse(msg.data || '{}')
       if (m.type === 'presence' && m.payload && typeof m.payload.onlineCount === 'number') {
         this.setData({ 'current.online': m.payload.onlineCount })
+      } else if (m.type === 'session_end' && m.payload) {
+        // 课堂被结束（教师手动 / 下课 5 分钟后超时自动）：断开连接并回到空态
+        wx.showToast({ title: '本节课已结束', icon: 'none' })
+        this.closeWS()
+        this.setData({ noClass: true, loading: false })
       }
     } catch (e) { /* 非业务消息忽略 */ }
   },
