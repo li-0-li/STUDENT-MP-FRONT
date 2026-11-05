@@ -38,6 +38,12 @@
     "navigationBarTextStyle": "white",
     "backgroundColor": "#f1f5f6"
   },
+  "requiredPrivateInfos": ["getLocation"],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于位置签到时向教师确认你在教室范围内"
+    }
+  },
   "tabBar": {
     "color": "#94a3b8",
     "selectedColor": "#0d9488",
