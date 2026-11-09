@@ -1,0 +1,21 @@
+<!-- 群文件（期3修订）：只放文件记录，图片/视频请到聊天记录页按类型查看 -->
+<view class="page">
+  <view wx:if="{{loading}}" class="center muted small msg-end">加载中…</view>
+
+  <block wx:if="{{!loading}}">
+    <view wx:for="{{files}}" wx:key="id" class="gf-file" bindtap="openFile" data-url="{{item.url}}">
+      <view class="gf-file-icon">📄</view>
+      <view class="gf-file-info">
+        <view class="gf-file-name">{{item.name}}</view>
+        <view class="small muted">{{item.size}} · {{item.sender}} · {{item.time}}</view>
+      </view>
+      <text class="gf-file-arrow">›</text>
+    </view>
+
+    <view wx:if="{{!files.length}}" class="empty">
+      <view class="empty-icon">🗂️</view>
+      <view class="small">暂无群文件</view>
+    </view>
+    <view wx:if="{{files.length}}" class="center muted small msg-end">— 点按文件下载查看 —</view>
+  </block>
+</view>

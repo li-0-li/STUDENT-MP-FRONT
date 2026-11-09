@@ -1,0 +1,19 @@
+<!-- 群成员列表（期2）：群主在前，本人标「我」 -->
+<view class="page">
+  <view wx:for="{{members}}" wx:key="userId" class="mem-row">
+    <view class="mem-av">{{item.initial}}</view>
+    <view class="mem-mid">
+      <view class="mem-name">{{item.name}}
+        <text wx:if="{{item.isOwner}}" class="mem-tag">群主</text>
+        <text wx:if="{{item.isMe}}" class="mem-tag mem-tag-me">我</text>
+      </view>
+      <view wx:if="{{item.studentNo}}" class="small muted">学号 {{item.studentNo}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="center muted small mem-end">加载中…</view>
+  <view wx:if="{{!loading && !members.length}}" class="empty">
+    <view class="empty-icon">👥</view>
+    <view class="small">暂无成员</view>
+  </view>
+</view>

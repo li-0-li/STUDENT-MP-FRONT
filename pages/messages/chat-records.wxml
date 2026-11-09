@@ -1,0 +1,64 @@
+<!-- 聊天记录搜索（期3修订 独立页面）：群聊=人员+类型+关键词；私聊=类型+关键词 -->
+<view class="page">
+  <!-- 关键词输入 -->
+  <view class="cr-search">
+    <input class="input cr-input" value="{{keyword}}" bindinput="onKeyInput"
+      placeholder="搜索聊天内容…" confirm-type="search" bindconfirm="doSearch" />
+    <view class="btn btn-primary btn-sm" bindtap="doSearch">搜索</view>
+  </view>
+
+  <!-- 类型筛选（私聊/群聊通用） -->
+  <scroll-view class="cr-pills" scroll-x>
+    <view wx:for="{{typePills}}" wx:key="k" class="pill {{typeIdx === index ? 'active' : ''}}"
+      bindtap="tapTypePill" data-idx="{{index}}">{{item.t}}</view>
+  </scroll-view>
+
+  <!-- 人员筛选（仅群聊） -->
+  <scroll-view wx:if="{{convType === 'group'}}" class="cr-pills cr-members" scroll-x>
+    <view wx:for="{{members}}" wx:key="index" class="pill {{memberIdx === index ? 'active' : ''}}"
+      bindtap="tapMember" data-idx="{{index}}">{{item.name}}</view>
+  </scroll-view>
+
+  <view wx:if="{{loading}}" class="center muted small msg-end">加载中…</view>
+
+  <!-- 结果列表 -->
+  <block wx:if="{{!loading}}">
+    <view wx:for="{{results}}" wx:key="id" class="cr-item" bindtap="tapResult" data-idx="{{index}}">
+      <!-- 文本 -->
+      <view wx:if="{{item.type === 'text'}}" class="cr-item-main">
+        <view class="cr-text">{{item.text}}</view>
+        <view class="small muted">{{item.sender}} · {{item.time}}</view>
+      </view>
+      <!-- 图片：缩略图 -->
+      <view wx:elif="{{item.type === 'image'}}" class="cr-item-main cr-item-media">
+        <image class="cr-thumb" src="{{item.url}}" mode="aspectFill" />
+        <view class="cr-media-meta">
+          <view class="cr-text">[图片]</view>
+          <view class="small muted">{{item.sender}} · {{item.time}}</view>
+        </view>
+      </view>
+      <!-- 视频：🎬 标记 -->
+      <view wx:elif="{{item.type === 'video'}}" class="cr-item-main cr-item-media">
+        <view class="cr-video-flag">🎬</view>
+        <view class="cr-media-meta">
+          <view class="cr-text">[视频]</view>
+          <view class="small muted">{{item.sender}} · {{item.time}}</view>
+        </view>
+      </view>
+      <!-- 文件卡片 -->
+      <view wx:elif="{{item.type === 'file'}}" class="cr-item-main cr-item-media">
+        <view class="cr-video-flag">📄</view>
+        <view class="cr-media-meta">
+          <view class="cr-text">{{item.name}}</view>
+          <view class="small muted">{{item.size}} · {{item.sender}} · {{item.time}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{searched && results.length === 0}}" class="empty">
+      <view class="empty-icon">🔍</view>
+      <view class="small">没有匹配的聊天记录</view>
+    </view>
+    <view wx:if="{{results.length}}" class="center muted small msg-end">— 最多展示最近 100 条 · 图片/视频/文件点按查看 —</view>
+  </block>
+</view>

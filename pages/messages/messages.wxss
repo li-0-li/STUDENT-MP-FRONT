@@ -159,3 +159,99 @@
   background: var(--bg-soft);
   border-color: transparent;
 }
+
+/* 通知分组标题（课程名 / 系统通知） */
+.notice-sec-title {
+  padding: 20rpx 32rpx 8rpx;
+  font-weight: 600;
+}
+
+/* 会话行名称区：置顶/免打扰角标 + 名称同行 */
+.msg-name-row { display: flex; align-items: center; gap: 8rpx; min-width: 0; }
+.conv-flag { font-size: 24rpx; flex: none; }
+
+/* 课程文件夹行（通知 tab）：课程名 + 未读红点 + 跳转箭头 */
+.notice-folder {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: #fff;
+  border: 1rpx solid var(--border);
+  border-radius: 20rpx;
+  padding: 28rpx 28rpx;
+  margin: 0 24rpx 16rpx;
+}
+.notice-folder-icon { font-size: 40rpx; flex: none; }
+.notice-folder-name { font-size: 30rpx; font-weight: 600; color: var(--ink-700); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notice-folder-dot { position: static; flex: none; }
+.notice-folder-arrow { font-size: 40rpx; color: var(--ink-300); flex: none; }
+
+/* ============ 期3：聊天增强（撤回/转发/图片/文件/搜索/历史） ============ */
+
+/* 头部操作位（搜索 / 群菜单） */
+.chat-head-act {
+  font-size: 36rpx;
+  color: var(--ink-600);
+  padding: 8rpx 4rpx;
+  flex: none;
+  line-height: 1;
+}
+
+/* ============ 期3修订：撤回系统提示行（居中/灰色/小字/无气泡，群聊私聊同款） ============ */
+.chat-msg-sys-row {
+  width: 100%;
+  text-align: center;
+  padding: 4rpx 0;
+}
+.chat-recalled-sys {
+  font-size: 22rpx;
+  color: var(--ink-400);
+  text-align: center;
+}
+
+/* 视频气泡（内联播放） */
+.chat-video {
+  width: 400rpx;
+  height: 300rpx;
+  border-radius: 16rpx;
+  display: block;
+  background: #000;
+}
+
+/* 图片气泡 */
+.chat-bub-media { padding: 6rpx; background: transparent; }
+.chat-img {
+  width: 320rpx;
+  height: 320rpx;
+  border-radius: 16rpx;
+  display: block;
+  background: var(--bg-soft);
+}
+
+/* 文件卡片气泡 */
+.chat-bub-file {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  min-width: 320rpx;
+}
+.chat-file-icon { font-size: 48rpx; flex: none; }
+.chat-file-info { flex: 1; min-width: 0; }
+.chat-file-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320rpx;
+}
+
+/* 输入栏「+」（发图片 / 发文件） */
+.chat-plus {
+  font-size: 52rpx;
+  font-weight: 300;
+  color: var(--ink-600);
+  line-height: 1;
+  padding: 0 4rpx;
+  flex: none;
+}

@@ -1,0 +1,13 @@
+/* 课程通告子页 —— 复用 messages 页的条目样式（.card/.msg/.msg-av/.msg-dot 见 messages.wxss 与 app.wxss） */
+@import "messages.wxss";
+
+.msg-end { padding: 32rpx 0; }
+
+/* 未读红点（无头像版卡片：跟在标题左侧） */
+.notice-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 999rpx;
+  background: var(--error);
+  flex: none;
+}

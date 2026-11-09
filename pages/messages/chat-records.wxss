@@ -1,0 +1,45 @@
+/* 聊天记录搜索页（期3修订）；.page/.pill/.input/.empty 见 app.wxss */
+@import "messages.wxss";
+
+.cr-search {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 24rpx 8rpx;
+}
+.cr-input { flex: 1; border-radius: 999rpx; background: #fff; border-color: var(--border); }
+
+.cr-pills {
+  white-space: nowrap;
+  padding: 12rpx 24rpx;
+  display: flex;
+  gap: 12rpx;
+}
+.cr-pills .pill { display: inline-block; flex: none; }
+.cr-members { padding-top: 0; }
+
+.cr-item {
+  background: #fff;
+  border: 1rpx solid var(--border);
+  border-radius: 20rpx;
+  margin: 0 24rpx 16rpx;
+  padding: 24rpx 28rpx;
+}
+.cr-item-main { display: flex; flex-direction: column; gap: 4rpx; }
+.cr-item-media { flex-direction: row; align-items: center; gap: 20rpx; }
+.cr-text {
+  font-size: 28rpx;
+  color: var(--ink-700);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cr-thumb {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  background: var(--bg-soft);
+  flex: none;
+}
+.cr-video-flag { font-size: 48rpx; flex: none; }
+.cr-media-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4rpx; }

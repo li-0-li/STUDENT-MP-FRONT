@@ -138,29 +138,39 @@ function convCompat(c) {
     last_message: c.lastMessage,
     // M-E 列表 lastMessage 常为 null，退回 updateTime 保证时间列不空
     last_message_time: c.lastMessageTime || c.updateTime,
-    unread_count: c.unreadCount || 0
+    unread_count: c.unreadCount || 0,
+    course_id: c.courseId,
+    is_pinned: c.isPinned || 0,
+    is_muted: c.isMuted || 0
   }
 }
 
-/** 表 2-12 消息记录：驼峰 → snake_case */
+/** 表 2-12 消息记录：驼峰 → snake_case（期3 补 msg_type/文件三件套/撤回标记） */
 function msgCompat(m) {
   return {
     message_id: m.messageId,
     sender_id: m.senderId,
     sender_name: m.senderName,
+    msg_type: m.msgType,
     content: m.content,
+    file_url: m.fileUrl,
+    file_name: m.fileName,
+    file_size: m.fileSize,
+    is_recalled: m.isRecalled,
     send_time: m.sendTime
   }
 }
 
-/** 表 2-13 通知条目：驼峰 → snake_case */
+/** 表 2-13 通知条目：驼峰 → snake_case（biz_type/biz_id 供通知页按课程分组） */
 function noticeCompat(n) {
   return {
     notice_id: n.noticeId,
     title: n.title,
     content: n.content,
     create_time: n.createTime,
-    is_read: n.isRead
+    is_read: n.isRead,
+    biz_type: n.bizType,
+    biz_id: n.bizId
   }
 }
 
@@ -172,8 +182,27 @@ const messageApi = {
   /** 会话消息记录：GET /api/v1/conversations/{conversationId}/messages（兼容层翻为倒序，页面正序展示） */
   messages: (conversationId, params) => request.get('/v1/conversations/' + conversationId + '/messages', params)
     .then((r) => unwrapMsgList(r).map(msgCompat).reverse()),
-  /** 发送消息：POST /api/v1/conversations/{conversationId}/messages */
+  /** 发送消息：POST /api/v1/conversations/{conversationId}/messages（text→content；image/file→fileUrl 必填） */
   send: (conversationId, data) => request.post('/v1/conversations/' + conversationId + '/messages', data),
+  /** 上拉加载历史：GET …/messages?beforeId=（message_id < beforeId 倒序取 pageSize 条，正序返回） */
+  messagesBefore: (conversationId, beforeId, pageSize) => request.get('/v1/conversations/' + conversationId + '/messages', { beforeId, pageSize: pageSize || 20 })
+    .then((r) => unwrapMsgList(r).map(msgCompat)),
+  /** 会话内聊天记录搜索（期3）：GET /api/v1/conversations/{id}/messages/search?keyword= */
+  search: (conversationId, keyword) => request.get('/v1/conversations/' + conversationId + '/messages/search', { keyword })
+    .then((r) => unwrapMsgList(r).map(msgCompat)),
+  /** 会话文件列表/群文件夹（期3）：GET /api/v1/conversations/{id}/files */
+  files: (conversationId) => request.get('/v1/conversations/' + conversationId + '/files')
+    .then((r) => unwrapMsgList(r).map(msgCompat)),
+  /** 聊天记录筛选查询（期3修订 独立搜索页）：GET …/records?msgType=&senderId=&keyword=（全可空） */
+  records: (conversationId, params) => request.get('/v1/conversations/' + conversationId + '/records',
+    { msgType: (params && params.msgType) || '', senderId: (params && params.senderId) || '', keyword: (params && params.keyword) || '' })
+    .then((r) => unwrapMsgList(r).map(msgCompat)),
+  /** 上传聊天图片/附件（期3）：POST /api/v1/files/upload（multipart，字段名 file）→ {fileUrl,fileName,…} */
+  uploadFile: (filePath) => request.upload('/v1/files/upload', filePath, 'file'),
+  /** 撤回消息（已有接口，期3 前端接入）：POST /api/v1/messages/{messageId}/recall（本人 + 24h 内） */
+  recall: (messageId) => request.post('/v1/messages/' + messageId + '/recall'),
+  /** 举报消息（期4）：POST /api/v1/messages/{messageId}/report，body {reason 2-100 字}；结果以通知投递给任课教师/管理员 */
+  report: (messageId, reason) => request.post('/v1/messages/' + messageId + '/report', { reason: reason }),
   /** 站内通知列表：GET /api/v1/notifications（形状兼容：PageResult 驼峰 → snake_case 数组） */
   notifications: () => request.get('/v1/notifications', { page: 1, pageSize: 50 })
     .then((r) => unwrapMsgList(r).map(noticeCompat)),
@@ -182,10 +211,18 @@ const messageApi = {
     .then((n) => ({ total: typeof n === 'number' ? n : (n && n.total) || 0 })),
   /** 已读标记：POST /api/v1/notifications/read */
   markRead: (data) => request.post('/v1/notifications/read', data),
-  /** 新增会话（发起一对一会话）：POST /api/v1/conversations */
+  /** 新增会话：POST /api/v1/conversations（direct：targetUserId；group：title+courseId+memberIds） */
   create: (data) => request.post('/v1/conversations', data),
+  /** 课程花名册（期2 建群/私聊选人）：GET /api/v1/courses/{courseId}/roster（keyword 姓名/学号搜索） */
+  roster: (courseId, params) => request.get('/v1/courses/' + courseId + '/roster', params),
+  /** 会话成员列表（群成员页）：GET /api/v1/conversations/{conversationId}/members */
+  members: (conversationId) => request.get('/v1/conversations/' + conversationId + '/members'),
   /** 删除通知/会话：POST /api/v1/messages/delete（targetType: notice/conversation） */
-  remove: (data) => request.post('/v1/messages/delete', data)
+  remove: (data) => request.post('/v1/messages/delete', data),
+  /** 标记会话已读：POST /api/v1/conversations/{id}/read（进入聊天/收到新消息后调用） */
+  read: (conversationId) => request.post('/v1/conversations/' + conversationId + '/read'),
+  /** 会话偏好（置顶/免打扰）：POST /api/v1/conversations/{id}/prefs {isPinned?, isMuted?} */
+  prefs: (conversationId, data) => request.post('/v1/conversations/' + conversationId + '/prefs', data)
 }
 
 /* ===== M-D 客服（表 3-20/3-23~3-25） ===== */

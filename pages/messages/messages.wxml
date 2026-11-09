@@ -7,19 +7,12 @@
     <view class="pill {{tab === 'chat' ? 'active' : ''}}" bindtap="selectTab" data-key="chat">会话</view>
   </view>
 
-  <!-- ① 系统通知列表 -->
+  <!-- ① 通知：按课程分组的「文件夹」，点击进入该课程通告子页（course-notice） -->
   <block wx:if="{{tab === 'notice'}}">
-    <view wx:for="{{notices}}" wx:key="id" class="card msg" bindtap="openNotice" bindlongpress="deleteNotice" data-id="{{item.id}}">
-      <view class="msg-av msg-av-sys">📢
-        <view wx:if="{{item.unread}}" class="msg-dot"></view>
-      </view>
-      <view class="msg-mid">
-        <view class="between">
-          <text class="msg-name">{{item.title}}</text>
-          <text class="small muted">{{item.time}}</text>
-        </view>
-        <view class="msg-text2 small">{{item.text}}</view>
-      </view>
+    <view wx:for="{{notices}}" wx:key="id" class="notice-folder" bindtap="openFolder" data-idx="{{index}}">
+      <text class="notice-folder-name">{{item.title}}</text>
+      <view wx:if="{{item.unread}}" class="msg-dot notice-folder-dot"></view>
+      <text class="notice-folder-arrow">›</text>
     </view>
     <view wx:if="{{loading}}" class="center muted small msg-end">加载中…</view>
     <view wx:if="{{!loading && notices.length === 0}}" class="empty">
@@ -36,10 +29,14 @@
       </view>
       <view class="msg-mid">
         <view class="between">
-          <text class="msg-name msg-name-ellipsis">{{item.name}}</text>
+          <view class="msg-name-row">
+            <text wx:if="{{item.pinned}}" class="conv-flag">📌</text>
+            <text wx:if="{{item.muted}}" class="conv-flag">🔇</text>
+            <text class="msg-name msg-name-ellipsis">{{item.name}}</text>
+          </view>
           <text class="small muted conv-time">{{item.time}}</text>
         </view>
-        <view class="conv-last small">{{item.last}}</view>
+        <view class="conv-last small">{{item.muted ? '［免打扰］' : ''}}{{item.last}}</view>
       </view>
     </view>
     <view wx:if="{{!loading && chats.length === 0}}" class="empty">
@@ -48,28 +45,60 @@
     </view>
   </block>
 
-  <view class="center muted small msg-end">— 以上为最近消息（长按可删除）—</view>
+  <view class="center muted small msg-end">— 长按会话可置顶 / 免打扰 / 删除 —</view>
 
-  <!-- 发起新对话（从「我学的课」选任课教师 → 新增会话） -->
-  <view wx:if="{{tab === 'chat' && !chatOpen}}" class="fab" bindtap="askTeacher">＋</view>
+  <!-- 发起新对话：群聊 / 私聊同学 / 联系任课教师 -->
+  <view wx:if="{{tab === 'chat' && !chatOpen}}" class="fab" bindtap="fabTap">＋</view>
 
-  <!-- 聊天详情浮层（表 2-11/2-12 会话消息） -->
+  <!-- 聊天详情浮层（表 2-11/2-12 会话消息；期3：图片/文件/撤回/转发/历史/搜索） -->
   <view wx:if="{{chatOpen}}" class="chat-page">
     <view class="chat-head">
       <view class="chat-back" bindtap="closeChat">‹</view>
-      <view class="chat-head-mid">
+      <view class="chat-head-mid" bindtap="openMembers">
         <view class="chat-head-name">{{chat.name}}</view>
         <view class="small muted">{{chat.sub}}</view>
       </view>
+      <view class="chat-head-act" bindtap="openRecords">🔍</view>
+      <view wx:if="{{chat.type === 'group'}}" class="chat-head-act" bindtap="groupMenu">···</view>
     </view>
-    <scroll-view class="chat-body" scroll-y scroll-into-view="{{chatScrollInto}}">
+
+    <!-- 消息区：上拉到顶加载更早历史（beforeId 翻页） -->
+    <scroll-view class="chat-body" scroll-y scroll-into-view="{{chatScrollInto}}"
+      bindscrolltoupper="loadHistory" scroll-upper-threshold="30">
       <view class="chat-bub-sys" wx:if="{{chat.msgs.length === 0}}">会话已建立，发送第一条消息吧</view>
-      <view wx:for="{{chat.msgs}}" wx:key="index" class="chat-msg {{item.from === 'me' ? 'u' : 'a'}}">
-        <view class="chat-bub">{{item.text}}<view class="chat-tm">{{item.time}}</view></view>
+      <view wx:for="{{chat.msgs}}" wx:key="index" id="m-{{item.id}}"
+        class="{{item.recalled ? 'chat-msg-sys-row' : 'chat-msg ' + (item.from === 'me' ? 'u' : 'a')}}"
+        bindlongpress="longPressMsg" data-idx="{{index}}">
+        <!-- 已撤回：居中灰色小字系统提示，无气泡框，群聊/私聊同款（期3修订） -->
+        <view wx:if="{{item.recalled}}" class="chat-recalled-sys">该消息已被撤回</view>
+        <!-- 图片消息：气泡内缩略图，点按全屏预览 -->
+        <view wx:elif="{{item.type === 'image'}}" class="chat-bub chat-bub-media">
+          <image class="chat-img" src="{{item.url}}" mode="aspectFill" bindtap="previewImage" data-url="{{item.url}}" />
+          <view class="chat-tm">{{item.time}}</view>
+        </view>
+        <!-- 视频消息：内联播放（期3修订） -->
+        <view wx:elif="{{item.type === 'video'}}" class="chat-bub chat-bub-media">
+          <video class="chat-video" src="{{item.url}}" object-fit="contain" />
+          <view class="chat-tm">{{item.time}}</view>
+        </view>
+        <!-- 文件消息：文件卡片（文件名 + 大小），点按下载后打开 -->
+        <view wx:elif="{{item.type === 'file'}}" class="chat-bub chat-bub-file" bindtap="openFile" data-url="{{item.url}}" data-name="{{item.name}}">
+          <view class="chat-file-icon">📄</view>
+          <view class="chat-file-info">
+            <view class="chat-file-name">{{item.name}}</view>
+            <view class="small muted">{{item.size}}</view>
+          </view>
+          <view class="chat-tm">{{item.time}}</view>
+        </view>
+        <!-- 文本消息 -->
+        <view wx:else class="chat-bub">{{item.text}}<view class="chat-tm">{{item.time}}</view></view>
       </view>
       <view id="m-bottom"></view>
     </scroll-view>
+
+    <!-- 输入栏：+ 号（发图片/文件）+ 文本输入 + 发送 -->
     <view class="chat-foot">
+      <view class="chat-plus" bindtap="chatPlus">＋</view>
       <input class="input" value="{{chatInput}}" bindinput="onChatInput" placeholder="输入消息…" confirm-type="send" bindconfirm="sendChat" />
       <view class="btn btn-primary btn-sm" bindtap="sendChat">发送</view>
     </view>

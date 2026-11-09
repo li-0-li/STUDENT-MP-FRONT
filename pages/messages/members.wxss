@@ -1,0 +1,35 @@
+/* 群成员列表：头像 + 姓名/学号 + 群主/我 标签 */
+.mem-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  background: #fff;
+  border-bottom: 1rpx solid var(--border);
+  padding: 22rpx 32rpx;
+}
+.mem-av {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  background: var(--primary, #0d9488);
+  color: #fff;
+  font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.mem-mid { flex: 1; min-width: 0; }
+.mem-name { font-size: 30rpx; color: var(--ink-700); }
+.mem-tag {
+  display: inline-block;
+  font-size: 20rpx;
+  color: #fff;
+  background: var(--primary, #0d9488);
+  border-radius: 8rpx;
+  padding: 2rpx 10rpx;
+  margin-left: 12rpx;
+  vertical-align: middle;
+}
+.mem-tag-me { background: var(--ink-300, #94a3b8); }
+.mem-end { padding: 32rpx 0; }

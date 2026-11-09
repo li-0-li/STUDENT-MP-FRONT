@@ -1,0 +1,72 @@
+/* 选联系人（建群/私聊）：课程横滑条 + 花名册 + 建群底栏 */
+.course-bar {
+  display: flex;
+  white-space: nowrap;
+  padding: 20rpx 24rpx 8rpx;
+  background: #fff;
+}
+.course-pill {
+  display: inline-block;
+  padding: 12rpx 28rpx;
+  border-radius: 999rpx;
+  background: var(--bg-soft);
+  color: var(--ink-500);
+  font-size: 26rpx;
+  margin-right: 16rpx;
+}
+.course-pill.on { background: var(--primary, #0d9488); color: #fff; }
+
+.search-row { padding: 20rpx 24rpx; background: #fff; }
+.search-input { border-radius: 999rpx; background: var(--bg-soft); border-color: transparent; padding: 14rpx 28rpx; }
+
+.stu-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  background: #fff;
+  border-bottom: 1rpx solid var(--border);
+  padding: 22rpx 32rpx;
+}
+.stu-row.on { background: rgba(13, 148, 136, 0.06); }
+.stu-av {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  background: var(--primary, #0d9488);
+  color: #fff;
+  font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.stu-mid { flex: 1; min-width: 0; }
+.stu-name { font-size: 30rpx; color: var(--ink-700); }
+.stu-check {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  border: 2rpx solid var(--border);
+  color: #fff;
+  font-size: 28rpx;
+  text-align: center;
+  line-height: 44rpx;
+  flex: none;
+}
+.stu-check.on { background: var(--primary, #0d9488); border-color: var(--primary, #0d9488); }
+.stu-check.hidden { visibility: hidden; }
+.list-end { padding: 32rpx 0; }
+
+.group-foot {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1rpx solid var(--border);
+}
+.btn-disabled { opacity: 0.5; }

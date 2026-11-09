@@ -1,0 +1,31 @@
+/* 群文件（期3）：通用 .page/.empty 见 app.wxss，.msg-end 见 messages.wxss（@import 链） */
+@import "messages.wxss";
+
+.gf-sec-title {
+  padding: 24rpx 32rpx 8rpx;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+/* 文件列表行 */
+.gf-file {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  background: #fff;
+  border: 1rpx solid var(--border);
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
+  margin: 0 24rpx 16rpx;
+}
+.gf-file-icon { font-size: 48rpx; flex: none; }
+.gf-file-info { flex: 1; min-width: 0; }
+.gf-file-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--ink-700);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gf-file-arrow { font-size: 40rpx; color: var(--ink-300); flex: none; }

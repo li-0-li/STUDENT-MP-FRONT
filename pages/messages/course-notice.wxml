@@ -1,0 +1,22 @@
+<!-- 课程通告子页：messages 页课程文件夹点进来的二级列表（点击详情/标已读，长按删除） -->
+<view class="page">
+  <view wx:for="{{items}}" wx:key="id" class="card msg" bindtap="openNotice" bindlongpress="deleteNotice" data-idx="{{index}}">
+    <view class="msg-mid">
+      <view class="between">
+        <view class="msg-name-row">
+          <view wx:if="{{item.unread}}" class="notice-dot"></view>
+          <text class="msg-name">{{item.title}}</text>
+        </view>
+        <text class="small muted">{{item.time}}</text>
+      </view>
+      <view class="msg-text2 small">{{item.text}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="center muted small msg-end">加载中…</view>
+  <view wx:if="{{!loading && items.length === 0}}" class="empty">
+    <view class="empty-icon">📭</view>
+    <view class="small">该课程暂无通告</view>
+  </view>
+  <view wx:if="{{items.length}}" class="center muted small msg-end">— 长按可删除通告 —</view>
+</view>

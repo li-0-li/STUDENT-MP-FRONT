@@ -1,0 +1,38 @@
+<!-- 选联系人（期2 建群/私聊）：课程选择条 + 花名册搜索 + 选人 -->
+<view class="page">
+  <!-- 课程横滑选择条 -->
+  <scroll-view class="course-bar" scroll-x>
+    <view class="course-pill {{courseId === item.courseId ? 'on' : ''}}"
+          wx:for="{{courses}}" wx:key="courseId"
+          bindtap="selectCourse" data-id="{{item.courseId}}" data-name="{{item.courseName}}">{{item.courseName}}</view>
+  </scroll-view>
+
+  <!-- 搜索框（姓名/学号） -->
+  <view class="search-row">
+    <input class="input search-input" value="{{keyword}}" bindinput="onSearch"
+           placeholder="按姓名或学号搜索…" confirm-type="search" />
+  </view>
+
+  <!-- 花名册 -->
+  <view wx:for="{{filtered}}" wx:key="studentId" class="stu-row {{item.checked ? 'on' : ''}}"
+        bindtap="tapStudent" data-id="{{item.studentId}}">
+    <view class="stu-av">{{item.initial}}</view>
+    <view class="stu-mid">
+      <view class="stu-name">{{item.name}}</view>
+      <view class="small muted">学号 {{item.studentNo}}</view>
+    </view>
+    <view class="stu-check {{mode === 'group' ? (item.checked ? 'on' : '') : 'hidden'}}">{{item.checked ? '✓' : ''}}</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="center muted small list-end">加载中…</view>
+  <view wx:if="{{!loading && !filtered.length}}" class="empty">
+    <view class="empty-icon">🔍</view>
+    <view class="small">{{roster.length ? '没有匹配的同学' : '该课程暂无其他选课学生'}}</view>
+  </view>
+
+  <!-- 建群底栏 -->
+  <view wx:if="{{mode === 'group'}}" class="group-foot">
+    <text class="small muted">{{courseName}} · 已选 {{selectedCount}} 人</text>
+    <view class="btn btn-primary btn-sm {{selectedCount ? '' : 'btn-disabled'}}" bindtap="createGroup">创建群聊</view>
+  </view>
+</view>
