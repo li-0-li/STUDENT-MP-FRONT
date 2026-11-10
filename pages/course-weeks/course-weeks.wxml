@@ -1,0 +1,17 @@
+<!-- 章节目录页（2026-11-10 改版：纯目录，不关联周次） -->
+<view class="page">
+  <!-- 纯章节目录列表 -->
+  <view wx:for="{{chapters}}" wx:key="index" class="card cw-chapter">
+    <view class="between">
+      <view class="cw-chapter-name">{{item.name}}</view>
+      <view class="cw-chapter-no">{{item.index}}</view>
+      <view class="cw-arrow">›</view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty"><view class="small">加载中…</view></view>
+  <view wx:if="{{!chapters.length && !loading}}" class="empty">
+    <view class="empty-icon">📖</view>
+    <view class="small">课程尚未发布章节目录</view>
+  </view>
+</view>

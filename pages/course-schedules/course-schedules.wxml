@@ -1,31 +1,56 @@
-<!-- 全部排课（按上课日期排序） -->
+<!-- 全部排课页（2026-11-10 改版）：全量周聚合 —— 第 N 周 大卡片 → 课次 → 资源挂载 -->
 <view class="page">
+  <view wx:if="{{termText}}" class="small muted cs-term">{{termText}}</view>
 
-  <!-- 概要 -->
-  <view class="card">
-    <view class="cs-name">{{courseName}}</view>
-    <view class="small muted mt4">共 {{schedules.length}} 次排课</view>
-  </view>
-
-  <!-- 排课列表 -->
-  <view wx:if="{{schedules.length}}">
-    <view wx:for="{{schedules}}" wx:key="scheduleId" class="card sch-item">
+  <block wx:for="{{weeks}}" wx:key="key" wx:for-item="w">
+    <!-- 第 N 周 大卡片 -->
+    <view class="card cs-week {{w.weekNum === currentWeek ? 'cs-week-cur' : ''}}">
       <view class="between">
-        <view class="sch-time">{{item.weekdayText}} {{item.periodNo}}节</view>
-        <view class="badge {{item.status === 'ongoing' ? 'badge-info' : ''}}">{{item.statusText}}</view>
+        <view class="cs-week-title">{{w.label}}</view>
+        <view class="badge badge-info">{{w.lessons.length}} 课次</view>
       </view>
-      <view class="small muted mt4">🕐 {{item.classTimeFullText}}<text wx:if="{{item.durationMin}}">（{{item.durationMin}}分钟）</text></view>
-      <view wx:if="{{item.classroomName}}" class="small muted mt4">📍 {{item.classroomName}}<text wx:if="{{item.classroomLocation}}"> · {{item.classroomLocation}}</text></view>
-      <view wx:if="{{item.weekRef}}" class="small muted mt4">📚 第 {{item.weekRef}} 教学周</view>
-    </view>
-  </view>
 
-  <!-- 无排课 -->
-  <view wx:elif="{{!loading}}" class="empty">
+      <!-- 周级共用：未绑定课次的历史数据 -->
+      <view wx:if="{{w.common.items.length}}" class="cs-common">
+        <view class="small muted cs-group-title">本周共用（未绑定课次）</view>
+        <view wx:for="{{w.common.items}}" wx:key="id" wx:for-item="it" class="cs-item"
+              bindtap="openItem" data-kind="{{it.kind}}" data-id="{{it.id}}"
+              data-url="{{it.url}}" data-type="{{it.fileType}}">
+          <text class="cs-ico">{{it.icon}}</text>
+          <text class="cs-item-name">{{it.name}}</text>
+          <view class="badge {{it.badge}}">{{it.statusText}}</view>
+        </view>
+      </view>
+
+      <!-- 课次小卡片 + 资源小卡片 -->
+      <view wx:for="{{w.lessons}}" wx:key="scheduleId" wx:for-item="l" class="cs-lesson">
+        <view class="between">
+          <view class="cs-lesson-head">{{l.weekdayText}} {{l.periodNo}}节 <text class="cs-lesson-time">{{l.timeText}}</text></view>
+          <view wx:if="{{l.badge}}" class="badge {{l.badge}}">{{l.statusText}}</view>
+        </view>
+        <view wx:if="{{l.classroomName}}" class="small muted mt4">
+          📍 {{l.classroomName}}<text wx:if="{{l.classroomLocation}}"> · {{l.classroomLocation}}</text>
+        </view>
+
+        <view wx:if="{{l.items.length}}" class="cs-lesson-body">
+          <view wx:for="{{l.items}}" wx:key="id" wx:for-item="it" class="cs-item"
+                bindtap="openItem" data-kind="{{it.kind}}" data-id="{{it.id}}"
+                data-url="{{it.url}}" data-type="{{it.fileType}}">
+            <text class="cs-ico">{{it.icon}}</text>
+            <text class="cs-item-name">{{it.name}}</text>
+            <text class="cs-item-meta">{{it.meta}}</text>
+            <view class="badge {{it.badge}}">{{it.statusText}}</view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{!w.lessons.length && !w.itemCount}}" class="small muted cs-empty">本周暂无课次安排</view>
+    </view>
+  </block>
+
+  <view wx:if="{{loading}}" class="empty"><view class="small">加载中…</view></view>
+  <view wx:if="{{!weeks.length && !loading}}" class="empty">
+    <view class="empty-icon">📅</view>
     <view class="small">教师暂未安排上课时间</view>
   </view>
-  <view wx:if="{{loading}}" class="empty">
-    <view class="small">加载中…</view>
-  </view>
-
 </view>

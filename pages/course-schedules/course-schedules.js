@@ -1,40 +1,16 @@
-// 全部排课页 —— 展示某课程的所有排课，按上课日期排序
-const api = require('../../utils/api')
-
-/** 上课时间 → 完整「YYYY-MM-DD HH:mm」 */
-function fmtFull(iso) {
-  if (!iso) return ''
-  return String(iso).replace('T', ' ').slice(0, 16)
-}
-
-/** 排课条目 → 卡片 */
-function mapSchedule(it) {
-  const statusMap = {
-    normal: '正常',
-    ongoing: '进行中',
-    canceled: '已取消'
-  }
-  return {
-    scheduleId: it.scheduleId,
-    weekdayText: it.weekdayText || '',
-    periodNo: it.periodNo || '',
-    classTime: it.classTime,
-    classTimeFullText: fmtFull(it.classTime),
-    durationMin: it.durationMin,
-    classroomName: it.classroomName,
-    classroomLocation: it.classroomLocation,
-    weekRef: it.weekRef,
-    status: it.status,
-    statusText: statusMap[it.status] || '正常'
-  }
-}
+// 全部排课页（2026-11-10 改版）：全量「第 N 周」大卡片 → 课次小卡片 → 资源挂载
+// 与课程详情页「上课安排」同一数据源/同一形态（utils/week-mount.js），
+// 差异仅在本页展示全部周块，详情页只展示当前周。
+const { loadWeekMount, openItem } = require('../../utils/week-mount')
 
 Page({
   data: {
     courseId: 0,
     courseName: '',
-    schedules: [],
-    loading: true
+    loading: true,
+    weeks: [],        // 周块列表（全部）
+    termText: '',
+    currentWeek: null
   },
 
   onLoad(options) {
@@ -53,18 +29,19 @@ Page({
   async load() {
     this.setData({ loading: true })
     try {
-      const res = await api.course.schedules(this.courseId)
-      const list = (res || []).map(mapSchedule)
-      // 按上课日期升序（最早的在前）
-      list.sort((a, b) => {
-        const ta = a.classTime ? new Date(a.classTime).getTime() : 0
-        const tb = b.classTime ? new Date(b.classTime).getTime() : 0
-        return ta - tb
+      const m = await loadWeekMount(this.courseId)
+      this.setData({
+        weeks: m.weeks,
+        termText: m.termText,
+        currentWeek: m.currentWeek,
+        loading: false
       })
-      this.setData({ schedules: list, loading: false })
-      wx.setNavigationBarTitle({ title: '全部排课' })
+      wx.setNavigationBarTitle({ title: '全部排课', fail: function () {} })
     } catch (e) {
       this.setData({ loading: false })
     }
-  }
+  },
+
+  // 挂载项点按分发（作业/实验/文件），逻辑见共享模块
+  openItem: openItem
 })

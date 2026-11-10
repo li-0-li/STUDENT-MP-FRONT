@@ -9,6 +9,7 @@
     "pages/schedule/schedule",
     "pages/course-detail/course-detail",
     "pages/course-schedules/course-schedules",
+    "pages/course-weeks/course-weeks",
     "pages/homework/homework",
     "pages/submission/submission",
     "pages/analytics/analytics",

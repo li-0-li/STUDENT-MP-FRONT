@@ -33,6 +33,8 @@ const courseApi = {
   withdraw: (courseId) => request.del('/v1/courses/' + courseId + '/enroll'),
   /** 课程上课安排：GET /api/v1/courses/{courseId}/schedules */
   schedules: (courseId) => request.get('/v1/courses/' + courseId + '/schedules'),
+  /** 周课次聚合（2026-11-10 章节目录页）：GET /api/v1/courses/{courseId}/week-lessons */
+  weekLessons: (courseId) => request.get('/v1/courses/' + courseId + '/week-lessons'),
   /** 加课前课程搜索：GET /api/v1/courses/search（courseCode 精确 / keyword 模糊，学生专用） */
   search: (params) => request.get('/v1/courses/search', params),
   /** 公开课列表（学生）：GET /api/v1/courses/public（is_public=1 且已发布，带 enrolled 标记） */
@@ -179,9 +181,10 @@ const messageApi = {
   /** 会话列表：GET /api/v1/conversations（形状兼容：PageResult 驼峰 → snake_case 数组） */
   conversations: () => request.get('/v1/conversations', { page: 1, pageSize: 50 })
     .then((r) => unwrapMsgList(r).map(convCompat)),
-  /** 会话消息记录：GET /api/v1/conversations/{conversationId}/messages（兼容层翻为倒序，页面正序展示） */
-  messages: (conversationId, params) => request.get('/v1/conversations/' + conversationId + '/messages', params)
-    .then((r) => unwrapMsgList(r).map(msgCompat).reverse()),
+  /** 会话消息记录（初始加载=最新一页）：GET …/messages?beforeId=MAX&pageSize=（beforeId 模式返回最近 pageSize 条正序） */
+  messages: (conversationId, params) => request.get('/v1/conversations/' + conversationId + '/messages',
+    { beforeId: 999999999999, pageSize: (params && params.pageSize) || 30 })
+    .then((r) => unwrapMsgList(r).map(msgCompat)),
   /** 发送消息：POST /api/v1/conversations/{conversationId}/messages（text→content；image/file→fileUrl 必填） */
   send: (conversationId, data) => request.post('/v1/conversations/' + conversationId + '/messages', data),
   /** 上拉加载历史：GET …/messages?beforeId=（message_id < beforeId 倒序取 pageSize 条，正序返回） */

@@ -1,0 +1,7 @@
+/* 章节目录页局部样式（2026-11-10 改版：纯目录）：复用全局 card/badge/small/mt4/mt8 */
+.cw-term { padding: 8rpx 8rpx 0; }
+
+.cw-chapter { display: flex; align-items: center; }
+.cw-chapter-name { flex: 1; font-size: 30rpx; font-weight: 600; color: var(--ink-900, #1c2b3a); }
+.cw-chapter-no { font-size: 24rpx; color: var(--ink-400, #94a3b8); margin-right: 8rpx; }
+.cw-arrow { color: var(--ink-400, #94a3b8); font-size: 30rpx; }

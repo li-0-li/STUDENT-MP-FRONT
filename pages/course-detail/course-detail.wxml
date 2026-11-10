@@ -20,24 +20,13 @@
     <view class="small">加载中…</view>
   </view>
 
-  <!-- 上课安排（表 3-2 补充：排课信息，仅展示前 2 条） -->
-  <view wx:if="{{course && !loading}}" class="card">
-    <view class="cd-title" style="font-size:28rpx;">上课安排</view>
-    <view wx:if="{{schedules.length}}">
-      <view wx:for="{{schedulePreview}}" wx:key="scheduleId" class="sch-item">
-        <view class="between">
-          <view class="sch-time">{{item.weekdayText}} {{item.periodNo}}节</view>
-          <view class="badge {{item.status === 'ongoing' ? 'badge-info' : ''}}">{{item.statusText}}</view>
-        </view>
-        <view class="small muted mt4">🕐 {{item.classTimeText}}<text wx:if="{{item.durationMin}}">（{{item.durationMin}}分钟）</text></view>
-        <view wx:if="{{item.classroomName}}" class="small muted mt4">📍 {{item.classroomName}}<text wx:if="{{item.classroomLocation}}"> · {{item.classroomLocation}}</text></view>
-      </view>
-      <!-- 还有更多排课 → 查看全部 -->
-      <view wx:if="{{schedules.length > 2}}" class="view-all" bindtap="goAllSchedules">
-        查看全部 {{schedules.length}} 次排课 ›
-      </view>
+  <!-- 章节入口卡（2026-11-10：章节内容移入「章节目录」子页，此处仅留入口） -->
+  <view wx:if="{{course && !loading}}" class="card cd-chapter" bindtap="goWeeks">
+    <view class="between">
+      <view class="cd-chapter-title">章节目录</view>
+      <view class="badge badge-info">共 {{chapterCount}} 章</view>
     </view>
-    <view wx:else class="small muted mt8" style="padding:8rpx 0;">教师暂未安排上课时间</view>
+    <view class="small muted mt8">点击查看全部章节目录 ›</view>
   </view>
 
   <!-- 课程导学：说课视频（三重认证 approved 才展示，原型 pc/student-course-detail.html） -->
@@ -48,40 +37,58 @@
     <view class="small muted mt8">🎬 说课视频{{intro.durationText ? ' · ' + intro.durationText : ''}}</view>
   </view>
 
-  <!-- 章节 + 作业 信息流（UI 设计 7.7：按章节列出学习资源，并在对应章节下挂载作业任务） -->
-  <view class="sec">章节</view>
-  <view wx:if="{{weeks.length}}">
-    <view wx:for="{{weeks}}" wx:key="weekNum" class="card cd-chapter">
+  <!-- 上课安排（2026-11-10 改版：只展示当前教学周 —— 第 N 周 大卡片 → 课次 → 资源挂载；
+       每周一零点随 currentWeek 自然翻周，无需定时任务。全部周次进「全部排课」页） -->
+  <view wx:if="{{course && !loading}}" class="card">
+    <view class="between">
+      <view class="cd-title" style="font-size:28rpx;">上课安排</view>
+      <view wx:if="{{weekCount}}" class="view-all" style="margin-top:0;" bindtap="goAllSchedules">查看全部 ›</view>
+    </view>
+
+    <view wx:if="{{weekLabel}}" class="cd-week">
+      <!-- 第 N 周 大卡片标题 -->
       <view class="between">
-        <view class="cd-chapter-title">{{item.weekNum ? '第 ' + item.weekNum + ' 周 ' : ''}}{{item.title}}</view>
-        <view class="badge badge-info">{{item.weekNum ? '教学周' : '作业'}}</view>
+        <view class="cd-week-title">{{weekLabel}}</view>
+        <view class="badge badge-info">{{weekLessons.length}} 课次</view>
       </view>
-      <!-- 学习资源入口 -->
-      <view class="row mt8 cd-actions">
-        <view class="btn btn-outline btn-sm cd-action" bindtap="goResources">📖 查看资源</view>
-      </view>
-      <!-- 挂载在本章节下的作业任务（截止时间与状态） -->
-      <view wx:for="{{item.homeworks}}" wx:for-item="hw" wx:key="id" class="cd-hw"
-            bindtap="goSubmission" data-id="{{hw.id}}">
-        <view class="between">
-          <view class="cd-chapter-title">{{hw.title}}</view>
-          <view class="badge {{hw.badge}}">{{hw.statusText}}</view>
+
+      <!-- 周级共用资源（未绑定课次的历史数据） -->
+      <view wx:if="{{weekCommon.length}}" class="cd-week-common">
+        <view class="small muted" style="margin-bottom:8rpx;">本周共用（未绑定课次）</view>
+        <view wx:for="{{weekCommon}}" wx:key="id" wx:for-item="it" class="cd-item"
+              bindtap="openItem" data-kind="{{it.kind}}" data-id="{{it.id}}"
+              data-url="{{it.url}}" data-type="{{it.fileType}}">
+          <text class="cd-item-ico">{{it.icon}}</text>
+          <text class="cd-item-name">{{it.name}}</text>
+          <view class="badge {{it.badge}}">{{it.statusText}}</view>
         </view>
-        <view class="small muted mt8">{{hw.meta}}</view>
       </view>
-      <!-- 实验入口：与作业同级并排，状态徽章口径一致；点击进入实验页 -->
-      <view wx:for="{{item.experiments}}" wx:for-item="exp" wx:key="id" class="cd-hw"
-            bindtap="goLab" data-id="{{exp.id}}">
+
+      <!-- 课次小卡片 + 资源小卡片 -->
+      <view wx:for="{{weekLessons}}" wx:key="scheduleId" wx:for-item="l" class="cd-lesson">
         <view class="between">
-          <view class="cd-chapter-title">🧪 {{exp.title}}</view>
-          <view class="badge {{exp.badge}}">{{exp.statusText}}</view>
+          <view class="cd-lesson-head">{{l.weekdayText}} {{l.periodNo}}节 <text class="cd-lesson-time">{{l.timeText}}</text></view>
+          <view wx:if="{{l.badge}}" class="badge {{l.badge}}">{{l.statusText}}</view>
         </view>
-        <view class="small muted mt8">{{exp.meta}}</view>
+        <view wx:if="{{l.classroomName}}" class="small muted mt4">
+          📍 {{l.classroomName}}<text wx:if="{{l.classroomLocation}}"> · {{l.classroomLocation}}</text>
+        </view>
+
+        <view wx:if="{{l.items.length}}" class="cd-lesson-body">
+          <view wx:for="{{l.items}}" wx:key="id" wx:for-item="it" class="cd-item"
+                bindtap="openItem" data-kind="{{it.kind}}" data-id="{{it.id}}"
+                data-url="{{it.url}}" data-type="{{it.fileType}}">
+            <text class="cd-item-ico">{{it.icon}}</text>
+            <text class="cd-item-name">{{it.name}}</text>
+            <text class="cd-item-meta">{{it.meta}}</text>
+            <view class="badge {{it.badge}}">{{it.statusText}}</view>
+          </view>
+        </view>
       </view>
     </view>
-  </view>
-  <view wx:elif="{{!loading}}" class="empty">
-    <view class="small">课程尚未发布章节目录</view>
+    <view wx:else class="small muted mt8" style="padding:8rpx 0;">
+      {{weekCount ? '本周暂无课次安排' : '教师暂未安排上课时间'}}
+    </view>
   </view>
 
   <!-- 退出课程按钮 -->

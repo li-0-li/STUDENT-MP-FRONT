@@ -307,9 +307,9 @@ Page({
     this.noMoreHistory = false
     try {
       const list = await api.message.messages(id)
-      // 后端按 message_id 倒序返回，正序展示
+      // 兼容层已返回最新一页正序（beforeId=MAX 模式），直接展示
       const that = this
-      const msgs = (list || []).slice().reverse().map(function (m) { return mapMsg(m, that.myUserId) })
+      const msgs = (list || []).map(function (m) { return mapMsg(m, that.myUserId) })
       this.setData({ 'chat.msgs': msgs })
       this.scrollBottom()
     } catch (e) {
