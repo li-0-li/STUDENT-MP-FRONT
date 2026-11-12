@@ -18,3 +18,10 @@
 /* 空状态 */
 .hw-empty { text-align: center; padding: 56rpx 24rpx; }
 .hw-empty-icon { font-size: 72rpx; }
+
+/* 课程筛选下拉（2026-11-11） */
+.hw-course-filter { padding: 12rpx 24rpx 4rpx; }
+.hw-course-picker { display: inline-flex; align-items: center; gap: 10rpx; padding: 10rpx 24rpx;
+  background: rgba(12, 74, 110, 0.06); border-radius: 28rpx; font-size: 26rpx;
+  color: var(--ink-700, #334155); max-width: 100%; }
+.hw-picker-arrow { color: var(--ink-400, #94a3b8); font-size: 22rpx; }

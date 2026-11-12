@@ -26,14 +26,12 @@ Page({
       { num: '-', label: '平均分' },
       { num: '-', label: '已交作业' }
     ],
-    // 学习入口
+    // 学习入口（2026-11-11 改版：移除「我的课程」入口，课程走底部 tabBar）
     studyEntries: [
-      { key: 'analytics', icon: '📊', label: '我的学情' },
-      { key: 'courses', icon: '📚', label: '我的课程' }
+      { key: 'analytics', icon: '📊', label: '我的学情' }
     ],
-    // 通用入口（实名认证 / 设置 / 客服）
+    // 通用入口（2026-11-11 改版：移除「实名认证」入口）
     generalEntries: [
-      { key: 'verify', icon: '🪪', label: '实名认证' },
       { key: 'settings', icon: '⚙️', label: '设置' },
       { key: 'support', icon: '🎧', label: '客服', badge: 0 }
     ]
@@ -57,7 +55,7 @@ Page({
           name,
           avatarUrl: avatarUrl(u.avatar),
           subtitle: [u.className, u.userNo ? '学号 ' + u.userNo : ''].filter(Boolean).join(' · '),
-          school: ''
+          school: u.schoolName || ''
         }
       })
     } catch (e) {
@@ -87,16 +85,14 @@ Page({
     }
   },
 
+  // 头像卡片 → 个人信息页（2026-11-11 新增）
+  goUserInfo() {
+    wx.navigateTo({ url: '/pages/user-info/user-info' })
+  },
+
   // 功能入口跳转
   goEntry(e) {
     const key = e.currentTarget.dataset.key
-    // tabBar 页（我的课程）用 switchTab，其余 navigateTo
-    if (key === 'courses') { wx.switchTab({ url: '/pages/courses/courses' }); return }
-    if (key === 'verify') {
-      // 实名认证接口由 M-A 提供（与管理端「师生资料上传」档案比对），当前为演示提示
-      wx.showToast({ title: '实名认证待接入（M-A）', icon: 'none' })
-      return
-    }
     const urls = {
       analytics: '/pages/analytics/analytics',
       settings: '/pages/settings/settings',

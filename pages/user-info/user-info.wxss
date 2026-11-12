@@ -1,0 +1,10 @@
+/* 个人信息页局部样式（2026-11-11）：复用全局 card/badge/small/mt4/mt8/btn */
+.ui-avatar-card { display: flex; align-items: center; gap: 16rpx; }
+.ui-name { font-size: 32rpx; font-weight: 700; }
+.ui-cam { font-size: 24rpx; color: var(--ink-400, #94a3b8); }
+
+.ui-row { display: flex; justify-content: space-between; padding: 14rpx 4rpx; }
+.ui-row + .ui-row { border-top: 1rpx solid rgba(12, 74, 110, 0.08); }
+.ui-label { color: var(--ink-400, #94a3b8); font-size: 28rpx; }
+.ui-val { color: var(--ink-900, #1c2b3a); font-size: 28rpx; text-align: right; }
+

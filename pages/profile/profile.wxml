@@ -1,7 +1,7 @@
 <!-- 我的 —— 原型：ui-prototype/mp/app-profile.html（文档 7.15：我的学情/我的课程/实名认证/设置/客服） -->
 <view class="page">
-  <!-- 个人信息卡片（表 2-14 users/me；头像为空时回落文字首字） -->
-  <view class="card">
+  <!-- 个人信息卡片（表 2-14 users/me；点击进入「个人信息」页，2026-11-11） -->
+  <view class="card" bindtap="goUserInfo">
     <view class="row">
       <image wx:if="{{user.avatarUrl}}" class="avatar avatar-lg" src="{{user.avatarUrl}}" mode="aspectFill" />
       <view wx:else class="avatar avatar-lg">{{user.name[0]}}</view>
@@ -10,6 +10,7 @@
         <view class="small muted mt4">{{user.subtitle}}</view>
         <view wx:if="{{user.school}}" class="small muted">{{user.school}}</view>
       </view>
+      <text class="chevron">›</text>
     </view>
   </view>
 

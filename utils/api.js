@@ -143,7 +143,8 @@ function convCompat(c) {
     unread_count: c.unreadCount || 0,
     course_id: c.courseId,
     is_pinned: c.isPinned || 0,
-    is_muted: c.isMuted || 0
+    is_muted: c.isMuted || 0,
+    other_name: c.otherName
   }
 }
 

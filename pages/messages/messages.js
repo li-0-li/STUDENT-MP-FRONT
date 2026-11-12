@@ -96,7 +96,11 @@ function mapMsg(m, myUserId) {
 // 会话条目（表 2-10）→ 列表展示字段；conv_type=notice 的系统会话由「通知」tab 覆盖
 function mapConv(c, idx) {
   const type = c.conv_type
-  const name = c.title || '会话'
+  // 2026-11-12 修复：私聊显示对方姓名（后端 other_name = 对方 display_name/昵称/账号），
+  // 群聊显示群名；都不存在才回落「会话」
+  const name = type === 'direct'
+    ? (c.other_name || c.title || '会话')
+    : (c.title || '会话')
   // direct=私聊 / group=学生自建群（期2）/ course_group=教师建的课程群
   const sub = type === 'direct' ? '私聊'
     : type === 'group' ? '群聊'
@@ -567,13 +571,46 @@ Page({
     const url = e.currentTarget.dataset.url
     const name = e.currentTarget.dataset.name || '文件'
     if (!url) return
+    // 2026-11-12 修复：按扩展名分发 —— 图片 previewImage（此前 png 走 openDocument 打不开）、
+    // 视频下载后 previewMedia、其余文档 openDocument
+    const ext = (url.split('?')[0].split('.').pop() || '').toLowerCase()
+    if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'gif' || ext === 'webp') {
+      wx.previewImage({ current: url, urls: [url] })
+      return
+    }
     wx.showLoading({ title: '下载中…', mask: true })
+    if (ext === 'mp4' || ext === 'mov' || ext === 'm4v') {
+      wx.downloadFile({
+        url: url,
+        success(res) {
+          wx.hideLoading()
+          if (wx.previewMedia) {
+            wx.previewMedia({ sources: [{ url: res.tempFilePath, type: 'video' }] })
+          } else {
+            wx.showToast({ title: '当前微信版本不支持视频预览', icon: 'none' })
+          }
+        },
+        fail() {
+          wx.hideLoading()
+          wx.showToast({ title: '下载失败', icon: 'none' })
+        }
+      })
+      return
+    }
     wx.downloadFile({
       url: url,
       success(res) {
         wx.hideLoading()
+        // 2026-11-12 修复：显式传 fileType —— downloadFile 按 Content-Type 落盘可能丢扩展名，
+        // openDocument 判不了类型会报「暂不支持预览」；从 URL/文件名提取 ext 双保险
+        const supported = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']
+        const extFromUrl = ext
+        const extFromName = ((name || '').split('.').pop() || '').toLowerCase()
+        const fileType = supported.indexOf(extFromUrl) >= 0 ? extFromUrl
+          : supported.indexOf(extFromName) >= 0 ? extFromName : undefined
         wx.openDocument({
           filePath: res.tempFilePath,
+          fileType: fileType,
           showMenu: true,
           fail() { wx.showToast({ title: '该文件类型暂不支持预览', icon: 'none' }) }
         })

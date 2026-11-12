@@ -3,6 +3,17 @@
 <view class="page">
 
   <!-- 状态页签（待提交 / 未批改 / 已批改 / 申诉） -->
+  <!-- 课程筛选下拉（2026-11-11）：选课后四个页签只显示该课程的作业/实验 -->
+  <view class="hw-course-filter">
+    <picker mode="selector" range="{{courseOptions}}" range-key="name" value="{{courseIndex}}"
+            bindchange="onCourseChange">
+      <view class="hw-course-picker">
+        <text>{{courseOptions[courseIndex].name}}</text>
+        <text class="hw-picker-arrow">▾</text>
+      </view>
+    </picker>
+  </view>
+
   <view class="hw-tabs-wrap">
     <view class="pilltabs hw-tabs">
       <view wx:for="{{tabs}}" wx:key="key"

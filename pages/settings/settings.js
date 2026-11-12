@@ -2,7 +2,7 @@
 // 接入（真实接口）：
 //   api.user.me         表 2-14 当前用户（绑定手机号 + 通知偏好 notifyPref）
 //   api.user.notifyPref 表 2-16 通知偏好设置（homework / live / notice / message 四类开关）
-// 通用与隐私项后端暂无接口：缓存大小取本地真实值；「个性化学习推荐」为本地开关。
+// 2026-11-11 改版：移除「个性化学习推荐」开关；通知开关已在投递侧按 notify_pref 过滤生效。
 const api = require('../../utils/api')
 const auth = require('../../utils/auth')
 
@@ -33,8 +33,7 @@ Page({
     phone: '—',             // 绑定手机号（脱敏展示，来自表 2-14）
     version: 'v1.0.0',
     cacheSize: '—',
-    notifyRows: [],         // 通知开关（来自 notifyPref，改动即调表 2-16 持久化）
-    privacyRecommend: true  // 隐私设置：个性化学习推荐开关（后端暂无对应接口，本地保存）
+    notifyRows: []          // 通知开关（来自 notifyPref，改动即调表 2-16 持久化）
   },
 
   onLoad() {
@@ -70,11 +69,6 @@ Page({
         notifyRows: this.data.notifyRows.map((r) => (r.key === key ? Object.assign({}, r, { on: !r.on }) : r))
       })
     })
-  },
-
-  // 隐私设置开关切换（后端暂无对应接口，本地保存）
-  togglePrivacy() {
-    this.setData({ privacyRecommend: !this.data.privacyRecommend })
   },
 
   // 隐私与数据授权（演示说明）

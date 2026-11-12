@@ -1,0 +1,25 @@
+<!-- 个人信息（2026-11-11 新增）：头像可改，其余管理端维护只读 -->
+<view class="page">
+  <!-- 头像卡（点击换头像） -->
+  <view class="card ui-avatar-card" bindtap="changeAvatar">
+    <image wx:if="{{avatarSrc}}" class="avatar avatar-lg" src="{{avatarSrc}}" mode="aspectFill" />
+    <view wx:else class="avatar avatar-lg">{{user.name[0]}}</view>
+    <view class="flex1 mt4">
+      <view class="ui-name">{{user.name}}</view>
+      <view class="small muted mt4">学号 {{user.userNo}}</view>
+    </view>
+    <view class="ui-cam">📷 换头像</view>
+  </view>
+
+  <!-- 基本信息（只读：管理端维护） -->
+  <view class="section-title">基本信息（由学校/管理员维护）</view>
+  <view class="card">
+    <view class="ui-row"><text class="ui-label">姓名</text><text class="ui-val">{{user.name}}</text></view>
+    <view class="ui-row"><text class="ui-label">性别</text><text class="ui-val">{{user.sexText}}</text></view>
+    <view class="ui-row"><text class="ui-label">学校</text><text class="ui-val">{{user.schoolName}}</text></view>
+    <view class="ui-row"><text class="ui-label">学院</text><text class="ui-val">{{user.collegeName}}</text></view>
+    <view class="ui-row"><text class="ui-label">专业</text><text class="ui-val">{{user.majorName}}</text></view>
+    <view class="ui-row"><text class="ui-label">班级</text><text class="ui-val">{{user.className}}</text></view>
+    <view class="ui-row"><text class="ui-label">学号</text><text class="ui-val">{{user.userNo}}</text></view>
+  </view>
+</view>

@@ -85,6 +85,7 @@ function mapAssignment(it) {
     id: 'hw-' + it.assignmentId,
     kind: '作业',
     title: it.title || '未命名作业',
+    courseId: it.courseId || 0,
     courseName: it.courseName || '',
     status, statusText, badge, meta, extra, extraWarn, score,
     url: '/pages/submission/submission?id=' + it.assignmentId
@@ -124,6 +125,7 @@ function mapExperiment(t) {
     id: 'exp-' + t.task_id,
     kind: '实验',
     title: t.title || '未命名实验',
+    courseId: t.course_id || 0,
     courseName: t.course_name || '',
     status, statusText, badge, meta, extra: '', extraWarn: false, score,
     url: '/pages/experiment-detail/experiment-detail?taskId=' + t.task_id
@@ -133,6 +135,8 @@ function mapExperiment(t) {
 Page({
   data: {
     tabs: [],           // [{key,label,active}]
+    courseOptions: [],  // 课程筛选下拉：[{id, name}]，id=0 表示全部（2026-11-11 新增）
+    courseIndex: 0,     // 当前选中课程（picker 索引）
     current: 'pending', // 当前状态页签
     list: [],           // 筛选后的作业/实验列表
     emptyText: '',
@@ -154,7 +158,7 @@ Page({
     this.loadAll()
   },
 
-  /** 作业全量 + 实验全量 → 统一映射后按页签分组 */
+  /** 作业全量 + 实验全量 → 统一映射后按页签分组；并行拉我的课程供筛选下拉 */
   async loadAll() {
     this.setData({ loading: true })
     const all = []
@@ -171,7 +175,26 @@ Page({
       // request 层已 toast，作业部分照常
     }
     this.all = all
-    this.setData({ loading: false })
+    // 课程筛选下拉（2026-11-11）：全部 + 我选的各门课程
+    let courseOptions = [{ id: 0, name: '全部课程' }]
+    try {
+      const mine = await api.course.listMine({ page: 1, pageSize: 100 })
+      const rows = (mine && (mine.list || mine)) || []
+      courseOptions = courseOptions.concat(rows.map((c) => ({ id: c.courseId, name: c.courseName || '未命名课程' })))
+    } catch (e) {
+      // request 层已 toast，下拉回落「全部课程」
+    }
+    // 作业列表接口不返回课程名，用「我的课程」表回填展示
+    const nameById = {}
+    courseOptions.forEach((c) => { nameById[c.id] = c.name })
+    all.forEach((it) => { if (!it.courseName && it.courseId) it.courseName = nameById[it.courseId] || '' })
+    this.setData({ courseOptions, loading: false })
+    this.applyFilter(this.data.current, true)
+  },
+
+  /** 课程筛选切换（2026-11-11）：重套当前页签过滤 */
+  onCourseChange(e) {
+    this.setData({ courseIndex: Number(e.detail.value) || 0 })
     this.applyFilter(this.data.current, true)
   },
 
@@ -183,10 +206,11 @@ Page({
   applyFilter(key, force) {
     if (!key) key = 'pending'
     if (key === this.data.current && !force && this.data.tabs.length) return
+    const opt = (this.data.courseOptions || [])[this.data.courseIndex] || { id: 0 }
     this.setData({
       current: key,
       tabs: STATUS_TABS.map(t => ({ key: t.key, label: t.label, active: t.key === key })),
-      list: this.all.filter(h => h.status === key),
+      list: this.all.filter(h => h.status === key && (opt.id === 0 || h.courseId === opt.id)),
       emptyText: EMPTY_TEXT[key] || '暂无作业'
     })
   },

@@ -32,6 +32,7 @@
     "pages/notice/notice",
     "pages/profile/profile",
     "pages/settings/settings",
+    "pages/user-info/user-info",
     "pages/support/support",
     "pages/resource-view/resource-view",
     "pages/change-phone/change-phone",
