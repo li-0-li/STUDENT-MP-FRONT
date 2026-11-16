@@ -144,7 +144,8 @@ function convCompat(c) {
     course_id: c.courseId,
     is_pinned: c.isPinned || 0,
     is_muted: c.isMuted || 0,
-    other_name: c.otherName
+    other_name: c.otherName,
+    other_avatar: c.otherAvatar
   }
 }
 
@@ -160,7 +161,8 @@ function msgCompat(m) {
     file_name: m.fileName,
     file_size: m.fileSize,
     is_recalled: m.isRecalled,
-    send_time: m.sendTime
+    send_time: m.sendTime,
+    sender_avatar: m.senderAvatar
   }
 }
 

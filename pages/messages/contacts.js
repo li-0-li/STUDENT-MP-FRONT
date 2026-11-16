@@ -4,6 +4,16 @@
 //   私聊：单选确认 → POST /conversations {convType:'direct', targetUserId}
 // 建成后 navigateBack 回 messages 页并打开聊天浮层
 const api = require('../../utils/api')
+const FILE_BASE = require('../../utils/config').FILE_BASE_URL
+
+/** 头像 URL 归一（2026-11-13）：http 原样；/api·/files 开头拼静态根；其余形态返回空走默认头像 */
+function avatarUrl(u) {
+  if (!u) return ''
+  const s = String(u).trim()
+  if (/^https?:\/\//i.test(s)) return s
+  if (s.indexOf('/api/') === 0 || s.indexOf('/files/') === 0) return FILE_BASE + s
+  return ''
+}
 
 Page({
   data: {
@@ -58,7 +68,9 @@ Page({
         .filter(function (s) { return s.studentId !== meId })   // 不和自己建群/私聊
         .map(function (s) {
           const name = s.name || ('同学 ' + s.studentId)
-          return { studentId: s.studentId, name: name, initial: name.slice(0, 1), studentNo: s.studentNo || '' }
+          const av = avatarUrl(s.avatar)   // 2026-11-13：花名册接口新增 avatar，选人页展示真实头像
+          return { studentId: s.studentId, name: name, initial: name.slice(0, 1),
+                   studentNo: s.studentNo || '', avatarUrl: av, avatarShow: !!av }
         })
       this.setData({ roster, loading: false })
       this.applyFilter()

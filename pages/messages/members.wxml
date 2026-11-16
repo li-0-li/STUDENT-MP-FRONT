@@ -1,7 +1,8 @@
 <!-- 群成员列表（期2）：群主在前，本人标「我」 -->
 <view class="page">
-  <view wx:for="{{members}}" wx:key="userId" class="mem-row">
-    <view class="mem-av">{{item.initial}}</view>
+  <view wx:for="{{members}}" wx:key="userId" class="mem-row" bindtap="showProfile" data-id="{{item.userId}}">
+    <image wx:if="{{item.avatarShow}}" class="mem-av-img" src="{{item.avatarUrl}}" mode="aspectFill" />
+    <image wx:else class="mem-av-img" src="/images/default-avatar.png" mode="aspectFill" />
     <view class="mem-mid">
       <view class="mem-name">{{item.name}}
         <text wx:if="{{item.isOwner}}" class="mem-tag">群主</text>
@@ -9,11 +10,26 @@
       </view>
       <view wx:if="{{item.studentNo}}" class="small muted">学号 {{item.studentNo}}</view>
     </view>
+    <text class="chevron">›</text>
   </view>
 
   <view wx:if="{{loading}}" class="center muted small mem-end">加载中…</view>
   <view wx:if="{{!loading && !members.length}}" class="empty">
     <view class="empty-icon">👥</view>
     <view class="small">暂无成员</view>
+  </view>
+
+  <!-- 成员资料卡（2026-11-12「个人主页」轻量版） -->
+  <view wx:if="{{profile}}" class="mem-mask" bindtap="hideProfile">
+    <view class="mem-card" catchtap="">
+      <image wx:if="{{profile.avatarShow}}" class="mem-card-av" src="{{profile.avatarUrl}}" mode="aspectFill" />
+      <image wx:else class="mem-card-av" src="/images/default-avatar.png" mode="aspectFill" />
+      <view class="mem-card-name">{{profile.name}}
+        <text wx:if="{{profile.isOwner}}" class="mem-tag">群主</text>
+      </view>
+      <view class="small muted mt4" wx:if="{{profile.studentNo}}">学号 {{profile.studentNo}}</view>
+      <view class="small muted mt4" wx:if="{{profile.className}}">班级 {{profile.className}}</view>
+      <view class="small muted mt4">角色：{{profile.isOwner ? '群主' : (profile.isMe ? '本人' : '成员')}}</view>
+    </view>
   </view>
 </view>

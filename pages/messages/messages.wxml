@@ -24,7 +24,9 @@
   <!-- ② 师生会话列表 -->
   <block wx:if="{{tab === 'chat'}}">
     <view wx:for="{{chats}}" wx:key="id" class="conv" bindtap="openChat" bindlongpress="deleteChat" data-id="{{item.id}}">
-      <view class="msg-av" style="background:{{item.color}}">{{item.initial}}
+      <view class="msg-av msg-av-rel" style="{{item.avatarUrl ? '' : 'background:' + item.color}}">
+        <image wx:if="{{item.avatarUrl}}" class="msg-av-img" src="{{item.avatarUrl}}" mode="aspectFill" />
+        <image wx:else class="msg-av-img" src="/images/default-avatar.png" mode="aspectFill" />
         <view wx:if="{{item.unread}}" class="msg-dot msg-dot-num">{{item.unread > 9 ? '9+' : item.unread}}</view>
       </view>
       <view class="msg-mid">
@@ -59,7 +61,7 @@
         <view class="small muted">{{chat.sub}}</view>
       </view>
       <view class="chat-head-act" bindtap="openRecords">🔍</view>
-      <view wx:if="{{chat.type === 'group'}}" class="chat-head-act" bindtap="groupMenu">···</view>
+      <view wx:if="{{chat.type !== 'direct'}}" class="chat-head-act" bindtap="groupMenu">···</view>
     </view>
 
     <!-- 消息区：上拉到顶加载更早历史（beforeId 翻页） -->
@@ -69,16 +71,29 @@
       <view wx:for="{{chat.msgs}}" wx:key="index" id="m-{{item.id}}"
         class="{{item.recalled ? 'chat-msg-sys-row' : 'chat-msg ' + (item.from === 'me' ? 'u' : 'a')}}"
         bindlongpress="longPressMsg" data-idx="{{index}}">
+        <!-- 头像列（2026-11-12）：QQ 式，自己靠右（.u 行 row-reverse 自动置右）；点按看资料卡 -->
+        <view wx:if="{{!item.recalled}}" class="chat-av-wrap" bindtap="showSenderProfile" data-id="{{item.senderId}}">
+          <image wx:if="{{item.avatarUrl}}" class="chat-av" src="{{item.avatarUrl}}" mode="aspectFill" />
+          <image wx:else class="chat-av" src="/images/default-avatar.png" mode="aspectFill" />
+        </view>
         <!-- 已撤回：居中灰色小字系统提示，无气泡框，群聊/私聊同款（期3修订） -->
         <view wx:if="{{item.recalled}}" class="chat-recalled-sys">该消息已被撤回</view>
+        <!-- 气泡容器（2026-11-13）：群聊时发送者名在气泡上方 -->
+        <view wx:if="{{!item.recalled}}" class="chat-main">
+          <view wx:if="{{chat.type !== 'direct' && item.senderName}}" class="chat-sender">{{item.senderName}}</view>
         <!-- 图片消息：气泡内缩略图，点按全屏预览 -->
         <view wx:elif="{{item.type === 'image'}}" class="chat-bub chat-bub-media">
           <image class="chat-img" src="{{item.url}}" mode="aspectFill" bindtap="previewImage" data-url="{{item.url}}" />
           <view class="chat-tm">{{item.time}}</view>
         </view>
         <!-- 视频消息：内联播放（期3修订） -->
-        <view wx:elif="{{item.type === 'video'}}" class="chat-bub chat-bub-media">
-          <video class="chat-video" src="{{item.url}}" object-fit="contain" />
+        <!-- 2026-11-12 方案A：视频消息改卡片，点击全屏预览（previewMedia 自带退出按钮） -->
+        <view wx:elif="{{item.type === 'video'}}" class="chat-bub chat-bub-file" bindtap="previewVideo" data-url="{{item.url}}" data-name="{{item.name}}">
+          <view class="chat-file-icon">🎬</view>
+          <view class="chat-file-info">
+            <view class="chat-file-name">{{item.name || '视频'}}</view>
+            <view class="small muted">点击全屏播放<text wx:if="{{item.size}}"> · {{item.size}}</text></view>
+          </view>
           <view class="chat-tm">{{item.time}}</view>
         </view>
         <!-- 文件消息：文件卡片（文件名 + 大小），点按下载后打开 -->
@@ -89,14 +104,29 @@
             <view class="small muted">{{item.size}}</view>
           </view>
           <view class="chat-tm">{{item.time}}</view>
+          <!-- 下载小标（2026-11-12）：仅下载保存，不触发预览 -->
+          <view class="chat-dl" catchtap="downloadAttachment" data-url="{{item.url}}" data-name="{{item.name}}">⬇</view>
         </view>
         <!-- 文本消息 -->
         <view wx:else class="chat-bub">{{item.text}}<view class="chat-tm">{{item.time}}</view></view>
+        </view>
       </view>
       <view id="m-bottom"></view>
     </scroll-view>
 
     <!-- 输入栏：+ 号（发图片/文件）+ 文本输入 + 发送 -->
+    <!-- 发送者资料卡（2026-11-12）：点头像弹出，点遮罩关闭 -->
+    <view wx:if="{{senderProfile}}" class="mem-mask" bindtap="hideSenderProfile">
+      <view class="mem-card" catchtap="">
+        <image wx:if="{{senderProfile.avatarShow}}" class="mem-card-av" src="{{senderProfile.avatarUrl}}" mode="aspectFill" />
+        <image wx:else class="mem-card-av" src="/images/default-avatar.png" mode="aspectFill" />
+        <view class="mem-card-name">{{senderProfile.name}}</view>
+        <view class="small muted mt4" wx:if="{{senderProfile.studentNo}}">学号 {{senderProfile.studentNo}}</view>
+        <view class="small muted mt4" wx:if="{{senderProfile.className}}">班级 {{senderProfile.className}}</view>
+        <view class="small muted mt4">角色：{{senderProfile.isOwner ? '群主' : '成员'}}</view>
+      </view>
+    </view>
+
     <view class="chat-foot">
       <view class="chat-plus" bindtap="chatPlus">＋</view>
       <input class="input" value="{{chatInput}}" bindinput="onChatInput" placeholder="输入消息…" confirm-type="send" bindconfirm="sendChat" />

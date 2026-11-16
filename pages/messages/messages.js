@@ -79,10 +79,23 @@ function ensureNicePath(filePath, wantName) {
 }
 
 // 消息记录（表 2-12 兼容层 snake_case）→ 聊天气泡视图模型（期3：type/url/name/recalled）
+/** 头像 URL 归一（2026-11-12）：http 原样；/api·/files 开头拼 BASE；不可读形态返回空串回退首字 */
+function avatarUrl(u) {
+  if (!u) return ''
+  const t = String(u).trim()
+  if (/^https?:\/\//i.test(t)) return t
+  if (t.indexOf('/api/') === 0 || t.indexOf('/files/') === 0) return FILE_BASE + t
+  return ''
+}
+
 function mapMsg(m, myUserId) {
   return {
     id: m.message_id,
     from: m.sender_id === myUserId ? 'me' : 'them',
+    senderId: m.sender_id,
+    avatarUrl: avatarUrl(m.sender_avatar),
+    senderName: m.sender_name || '',
+    senderInitial: (m.sender_name || '友').slice(0, 1),
     type: m.msg_type || 'text',
     text: m.content || '',
     time: fmtHM(m.send_time),
@@ -106,9 +119,12 @@ function mapConv(c, idx) {
     : type === 'group' ? '群聊'
     : type === 'course_group' ? ((c.class_name ? c.class_name + ' · ' : '') + '课程群聊')
     : '会话'
+  // 会话列表头像（2026-11-13）：私聊用对方真头像（可读形态），群聊/不可读回退首字
+  const av = type === 'direct' ? avatarUrl(c.other_avatar) : ''
   return {
     id: c.conversation_id,
     type,
+    avatarUrl: av,
     name,
     sub,
     color: COLORS[idx % COLORS.length],
@@ -302,6 +318,12 @@ Page({
       chat: { id, name, sub: conv.sub, type: conv.type, msgs: [] },
       chatInput: ''
     })
+    // 2026-11-12：缓存我的头像（本地追加气泡显示用；接口拉取的历史消息自带 sender_avatar）
+    const that0 = this
+    api.user.me().then(function (me) {
+      that0.myAvatar = avatarUrl(me.avatar)
+      that0.myName = me.name || ''
+    }).catch(function () {})
     // 聊天为全屏浮层：打开时隐藏 tabBar（本页是 tabBar 页），关闭时恢复
     wx.hideTabBar({ animation: false, fail: function () {} })
     this.setData({ ['chats[' + idx + '].unread']: 0 })
@@ -335,9 +357,10 @@ Page({
     this.openChatById(id, name)
   },
 
-  // 聊天浮层标题点击：群聊 → 群成员页（期2）；私聊/未知类型不响应
+  // 聊天浮层标题点击：群聊/课程群 → 群成员页；私聊/未知类型不响应
+  // 2026-11-16：课程群（course_group）此前被 === 'group' 条件漏掉，无成员入口
   openMembers() {
-    if (this.data.chat.type !== 'group') return
+    if (!this.data.chat.type || this.data.chat.type === 'direct') return
     wx.navigateTo({ url: '/pages/messages/members?conversationId=' + this.data.chat.id })
   },
 
@@ -352,6 +375,7 @@ Page({
       const res = await api.message.send(this.data.chat.id, { msgType: 'text', content: v })
       const msgs = this.data.chat.msgs.concat([{
         id: res && res.messageId, from: 'me', type: 'text', text: v,
+        avatarUrl: this.myAvatar || '', senderInitial: (this.myName || '我').slice(0, 1),
         time: (res && res.sendTime) || nowHM(), recalled: false
       }])
       this.setData({ 'chat.msgs': msgs, chatInput: '' })
@@ -429,10 +453,14 @@ Page({
       // 先复制到用户目录的展示名路径，服务端才能存到真实文件名
       const upPath = await ensureNicePath(filePath, niceName)
       const up = await api.message.uploadFile(upPath)
-      const payload = { msgType: msgType, fileUrl: up && up.url, fileName: nameOverride || (up && up.fileName) || niceName, fileSize: (up && up.size) || size }
+      // 2026-11-12 契约切 MinIO：上传响应带 objectKey 时组装稳定代理 URL 落库
+      //（预签名 URL 仅 7 天有效，落库一周后全部失效）
+      const stableUrl = up && up.objectKey ? '/api/v1/files/obj/' + up.objectKey : (up && up.url)
+      const payload = { msgType: msgType, fileUrl: stableUrl, fileName: nameOverride || (up && up.fileName) || niceName, fileSize: (up && up.size) || size }
       const res = await api.message.send(this.data.chat.id, payload)
       const msgs = this.data.chat.msgs.concat([{
         id: res && res.messageId, from: 'me', type: msgType,
+        avatarUrl: this.myAvatar || '', senderInitial: (this.myName || '我').slice(0, 1),
         text: '', url: absUrl(payload.fileUrl), name: payload.fileName, size: fmtBytes(payload.fileSize),
         time: (res && res.sendTime) || nowHM(), recalled: false
       }])
@@ -544,9 +572,9 @@ Page({
     })
   },
 
-  // 期3：群聊标题「···」菜单：群成员 / 群文件
+  // 期3：群聊标题「···」菜单：群成员 / 群文件（2026-11-16：课程群同享入口）
   groupMenu() {
-    if (this.data.chat.type !== 'group') return
+    if (!this.data.chat.type || this.data.chat.type === 'direct') return
     const that = this
     wx.showActionSheet({
       itemList: ['群成员', '群文件'],
@@ -555,6 +583,40 @@ Page({
         else wx.navigateTo({ url: '/pages/messages/group-files?conversationId=' + that.data.chat.id })
       }
     })
+  },
+
+  // 点气泡头像 → 发送者资料卡（2026-11-12，复用成员接口；直接/群聊同款）
+  showSenderProfile(e) {
+    const that = this
+    const id = Number(e.currentTarget.dataset.id)
+    if (!this.data.chat.id || !id) return
+    api.message.members(this.data.chat.id).then(function (res) {
+      const m = ((res && res.list) || []).find(function (x) { return x.userId === id })
+      if (!m) return
+      const name = m.displayName || ('用户 ' + m.userId)
+      const au = avatarUrl(m.avatar)
+      that.setData({ senderProfile: {
+        userId: m.userId, name: name, initial: name.slice(0, 1),
+        avatarUrl: au, avatarShow: !!au,
+        studentNo: m.studentNo || '', className: m.className || '',
+        isOwner: m.memberRole === 'owner'
+      } })
+    }).catch(function () {})
+  },
+
+  hideSenderProfile() {
+    this.setData({ senderProfile: null })
+  },
+
+  // 视频消息点按（2026-11-12 方案A）→ 全屏预览（previewMedia 自带退出按钮），不再内联播放
+  previewVideo(e) {
+    const url = e.currentTarget.dataset.url
+    if (!url) return
+    if (wx.previewMedia) {
+      wx.previewMedia({ sources: [{ url: url, type: 'video' }] })
+    } else {
+      wx.showToast({ title: '当前微信版本不支持视频预览', icon: 'none' })
+    }
   },
 
   // 图片消息点按 → 全屏预览（当前会话内所有图片可左右滑）
@@ -601,18 +663,48 @@ Page({
       url: url,
       success(res) {
         wx.hideLoading()
-        // 2026-11-12 修复：显式传 fileType —— downloadFile 按 Content-Type 落盘可能丢扩展名，
-        // openDocument 判不了类型会报「暂不支持预览」；从 URL/文件名提取 ext 双保险
+        // 2026-11-12 修复：显式传 fileType（downloadFile 落盘可能丢扩展名）；
+        // txt/md/csv 等不在 openDocument 七种支持类型内 → 下载保存并明示，不再走必失败的预览
         const supported = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']
-        const extFromUrl = ext
         const extFromName = ((name || '').split('.').pop() || '').toLowerCase()
-        const fileType = supported.indexOf(extFromUrl) >= 0 ? extFromUrl
-          : supported.indexOf(extFromName) >= 0 ? extFromName : undefined
+        const previewExt = supported.indexOf(ext) >= 0 ? ext : extFromName
+        if (supported.indexOf(previewExt) < 0) {
+          const fs = wx.getFileSystemManager()
+          fs.saveFile({
+            tempFilePath: res.tempFilePath,
+            success(sv) { wx.showToast({ title: '该类型不支持在线预览，文件已保存：' + sv.savedFilePath, icon: 'none', duration: 3000 }) },
+            fail() { wx.showToast({ title: '该类型不支持在线预览，下载失败', icon: 'none' }) }
+          })
+          return
+        }
         wx.openDocument({
           filePath: res.tempFilePath,
-          fileType: fileType,
+          fileType: previewExt,
           showMenu: true,
           fail() { wx.showToast({ title: '该文件类型暂不支持预览', icon: 'none' }) }
+        })
+      },
+      fail() {
+        wx.hideLoading()
+        wx.showToast({ title: '下载失败', icon: 'none' })
+      }
+    })
+  },
+
+  // 文件气泡「下载」小标（2026-11-12）：仅下载保存，不触发预览
+  downloadAttachment(e) {
+    const url = e.currentTarget.dataset.url
+    if (!url) return
+    wx.showLoading({ title: '下载中…', mask: true })
+    wx.downloadFile({
+      url: url,
+      success(res) {
+        wx.hideLoading()
+        const fs = wx.getFileSystemManager()
+        fs.saveFile({
+          tempFilePath: res.tempFilePath,
+          success(sv) { wx.showToast({ title: '已保存：' + sv.savedFilePath, icon: 'none', duration: 3000 }) },
+          fail() { wx.showToast({ title: '保存失败', icon: 'none' }) }
         })
       },
       fail() {

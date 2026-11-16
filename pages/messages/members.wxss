@@ -33,3 +33,14 @@
 }
 .mem-tag-me { background: var(--ink-300, #94a3b8); }
 .mem-end { padding: 32rpx 0; }
+
+/* 成员真实头像 + 资料卡（2026-11-12） */
+.mem-av-img { width: 72rpx; height: 72rpx; border-radius: 50%; flex-shrink: 0; }
+.mem-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99;
+  display: flex; align-items: center; justify-content: center; }
+.mem-card { width: 560rpx; background: #fff; border-radius: 24rpx; padding: 40rpx 32rpx 32rpx;
+  display: flex; flex-direction: column; align-items: center; }
+.mem-card-av { width: 140rpx; height: 140rpx; border-radius: 50%; }
+.mem-card-av-txt { background: #0d9488; color: #fff; font-size: 56rpx;
+  display: flex; align-items: center; justify-content: center; }
+.mem-card-name { font-size: 34rpx; font-weight: 600; margin-top: 16rpx; }
