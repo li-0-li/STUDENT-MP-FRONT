@@ -16,9 +16,10 @@
   <!-- 花名册 -->
   <view wx:for="{{filtered}}" wx:key="studentId" class="stu-row {{item.checked ? 'on' : ''}}"
         bindtap="tapStudent" data-id="{{item.studentId}}">
-    <view class="stu-av" style="{{item.avatarShow ? '' : 'background:#cbd5e1'}}">
-      <image wx:if="{{item.avatarShow}}" class="stu-av-img" src="{{item.avatarUrl}}" mode="aspectFill" />
-      <image wx:else class="stu-av-img" src="/images/default-avatar.png" mode="aspectFill" />
+    <view class="stu-av">
+      <image wx:if="{{item.avatarUrl && !item.avFail}}" class="stu-av-img" src="{{item.avatarUrl}}" mode="aspectFill"
+             data-id="{{item.studentId}}" binderror="onAvError" />
+      <view wx:else>{{item.initial}}</view>
     </view>
     <view class="stu-mid">
       <view class="stu-name">{{item.name}}</view>

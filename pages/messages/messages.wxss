@@ -285,3 +285,12 @@
 
 /* 群聊气泡发送者名（2026-11-13） */
 .chat-sender { font-size: 20rpx; color: var(--ink-400, #94a3b8); margin-bottom: 4rpx; }
+
+/* 视频消息内联播放器（2026-11-16，样式对齐课程导学说课视频） */
+.chat-video {
+  width: 420rpx;
+  height: 300rpx;
+  border-radius: 12rpx;
+  display: block;
+}
+.chat-video-cap { margin-top: 6rpx; }

@@ -94,10 +94,14 @@ const experimentApi = {
 
 /* ===== M-D 课堂参与（表 3-13~3-16） ===== */
 const classroomApi = {
-  /** 表 3-13 进入课堂：POST /api/v1/sessions/{sessionId}/enter */
-  enter: (sessionId) => request.post('/v1/sessions/' + sessionId + '/enter'),
+  /** 表 3-13 学生进入课堂：POST /api/v1/sessions/{sessionId}/stu-enter（2026-11-18 修复：原 /enter 是教师开课端点，学生 403） */
+  enterStu: (sessionId) => request.post('/v1/sessions/' + sessionId + '/stu-enter'),
   /** 当前课堂发现：GET /api/v1/sessions/current（我选的课里最近开课且进行中的；无则 null） */
   current: () => request.get('/v1/sessions/current'),
+  /** 按课进堂（2026-11-18 独立课堂入口）：GET /api/v1/sessions/by-schedule/{scheduleId}
+   *  返回该排课自己的课堂会话 {scheduleId, sessionId, sessionStatus, courseName...}；
+   *  各课「进入课堂」按钮各自携带排课 id 调用，多课窗口重叠不再相互顶替 */
+  sessionBySchedule: (scheduleId) => request.get('/v1/sessions/by-schedule/' + scheduleId),
   /** 签到状态：GET /api/v1/sessions/{sessionId}/signin */
   signinState: (sessionId) => request.get('/v1/sessions/' + sessionId + '/signin'),
   /** 表 3-14 课堂签到：POST /api/v1/sessions/{sessionId}/signin */
@@ -114,7 +118,29 @@ const classroomApi = {
   quizSheet: (quizId) => request.get('/v1/quiz/' + quizId + '/questions'),
   quizSubmit: (quizId, data) => request.post('/v1/quiz/' + quizId + '/submit', data),
   quizResult: (quizId) => request.get('/v1/quiz/' + quizId + '/my-result'),
-  courseQuizzes: (courseId) => request.get('/v1/courses/' + courseId + '/quizzes')
+  courseQuizzes: (courseId) => request.get('/v1/courses/' + courseId + '/quizzes'),
+  /** 实时画布（2026-11-16）：舞台状态快照 {slide, playback, strokes[], rev, digest}（student-pc 模块 REST，同单体） */
+  liveStage: (sessionId) => request.get('/v1/stu/live/sessions/' + sessionId + '/stage'),
+  /** 实时画布：课件列表（resourceId → previewUrl 定位底图） */
+  liveSlides: (sessionId) => request.get('/v1/stu/live/sessions/' + sessionId + '/slides'),
+  /** 实时画布：教师-pc 课件背景页图（2026-11-18）：slide 帧/快照的 resourceId+page 变化时调用，
+   *  后端 PDFBox 渲染该页 PNG（MinIO 缓存）返回预签名 URL，加载为画布底图 */
+  stageBg: (sessionId, resourceId, page) => request.get('/v1/stu/live/sessions/' + sessionId + '/stage-bg'
+    + '?resourceId=' + resourceId + '&page=' + (page || 1)),
+  /** 实时画布：统一文件视图（2026-11-18 多类型）：按 file_url 扩展名判型分流——
+   *  pdf/ppt/pptx→pages（后端渲染页图）/ jpg等→image / mp4等→video / doc等→native（openDocument） */
+  stageFile: (sessionId, resourceId, page) => request.get('/v1/stu/live/sessions/' + sessionId + '/stage-file'
+    + '?resourceId=' + resourceId + '&page=' + (page || 1)),
+  /** 实时画布（2026-11-18）：教师-mp 课件批注状态 {docId, page, total, pages, annotations[]}（学生中途进入/刷新/重连时恢复当前页批注） */
+  liveCourseware: (sessionId) => request.get('/v1/stu/live/sessions/' + sessionId + '/courseware'),
+  /** ===== 学生 MP 实时语音（2026-11-20，LiveKit RTMP 桥）=====
+   *  audio-token：房间凭证 {url, token, room, identity, canPublish}
+   *  audio/downlink：课堂合成音拉流地址 {pullUrl}（live-player 听教师/房间语音）
+   *  audio/uplink：开麦推流地址 {pushUrl}（live-pusher 经 Ingress 进房间，教师可禁言）
+   *  未配置（LiveKit 密钥/桥接组件未部署）统一 503 → 前端提示「仅同步课件」 */
+  mpAudioToken: (sessionId) => request.post('/v1/mp/live/sessions/' + sessionId + '/audio-token'),
+  mpAudioDownlink: (sessionId) => request.get('/v1/mp/live/sessions/' + sessionId + '/audio/downlink'),
+  mpAudioUplink: (sessionId) => request.post('/v1/mp/live/sessions/' + sessionId + '/audio/uplink')
 }
 
 /* ===== 消息接口形状兼容层（M-E 会话/消息 + M-A 通知）=====
@@ -130,10 +156,14 @@ function unwrapMsgList(res) {
 
 /** 表 2-10 会话条目：驼峰 → snake_case（direct_key/created_by 供前端解析私聊对方） */
 function convCompat(c) {
+  const status = c.status || 'active'
   return {
     conversation_id: c.conversationId,
     conv_type: c.convType,
     title: c.title,
+    // 解散群保留在列表（2026-11-18）：标题加前缀明示，防「发不了消息」困惑
+    title_display: status === 'dissolved' ? '[已解散] ' + c.title : c.title,
+    status: status,
     class_name: c.className,
     direct_key: c.directKey,
     created_by: c.createdBy,
@@ -145,7 +175,8 @@ function convCompat(c) {
     is_pinned: c.isPinned || 0,
     is_muted: c.isMuted || 0,
     other_name: c.otherName,
-    other_avatar: c.otherAvatar
+    other_avatar: c.otherAvatar,
+    avatar: c.avatar
   }
 }
 
@@ -203,8 +234,9 @@ const messageApi = {
   records: (conversationId, params) => request.get('/v1/conversations/' + conversationId + '/records',
     { msgType: (params && params.msgType) || '', senderId: (params && params.senderId) || '', keyword: (params && params.keyword) || '' })
     .then((r) => unwrapMsgList(r).map(msgCompat)),
-  /** 上传聊天图片/附件（期3）：POST /api/v1/files/upload（multipart，字段名 file）→ {fileUrl,fileName,…} */
-  uploadFile: (filePath) => request.upload('/v1/files/upload', filePath, 'file'),
+  /** 上传聊天图片/附件（期3）：POST /api/v1/files/upload（multipart，字段名 file）→ {fileUrl,fileName,…}
+   *  2026-11-16 必传 bizType=CHAT：对象名落 CHAT/ 前缀（教师端附件规则只认 CHAT/，默认 RESOURCE 会导致教师PC看不到学生MP发的图） */
+  uploadFile: (filePath) => request.upload('/v1/files/upload', filePath, 'file', { bizType: 'CHAT' }),
   /** 撤回消息（已有接口，期3 前端接入）：POST /api/v1/messages/{messageId}/recall（本人 + 24h 内） */
   recall: (messageId) => request.post('/v1/messages/' + messageId + '/recall'),
   /** 举报消息（期4）：POST /api/v1/messages/{messageId}/report，body {reason 2-100 字}；结果以通知投递给任课教师/管理员 */
@@ -223,6 +255,12 @@ const messageApi = {
   roster: (courseId, params) => request.get('/v1/courses/' + courseId + '/roster', params),
   /** 会话成员列表（群成员页）：GET /api/v1/conversations/{conversationId}/members */
   members: (conversationId) => request.get('/v1/conversations/' + conversationId + '/members'),
+  /** 更换群头像（2026-11-16，含课程群聊）：POST /api/v1/conversations/{id}/avatar（multipart）→ {avatar} */
+  setGroupAvatar: (conversationId, filePath) => request.upload('/v1/conversations/' + conversationId + '/avatar', filePath, 'file'),
+  /** 群主移出成员（2026-11-18）：POST /api/v1/conversations/{id}/members/{userId}/kick（仅群主） */
+  kick: (conversationId, userId) => request.post('/v1/conversations/' + conversationId + '/members/' + userId + '/kick'),
+  /** 群主解散群聊（2026-11-18）：POST /api/v1/conversations/{id}/dissolve（仅群主，不可逆） */
+  dissolve: (conversationId) => request.post('/v1/conversations/' + conversationId + '/dissolve'),
   /** 删除通知/会话：POST /api/v1/messages/delete（targetType: notice/conversation） */
   remove: (data) => request.post('/v1/messages/delete', data),
   /** 标记会话已读：POST /api/v1/conversations/{id}/read（进入聊天/收到新消息后调用） */

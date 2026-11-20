@@ -56,15 +56,21 @@ Page({
     this.setData({ notifyRows: rows })
   },
 
-  // 通知开关切换：本地更新 + 表 2-16 持久化（保存失败回滚）
+  // 通知开关切换：本地更新 + 表 2-16 持久化（成败均有明确反馈；失败回滚）
   toggleNotify(e) {
     const key = e.currentTarget.dataset.key
+    if (!key) return
     const rows = this.data.notifyRows.map((r) => (r.key === key ? Object.assign({}, r, { on: !r.on }) : r))
     this.setData({ notifyRows: rows })
     const pref = {}
     rows.forEach((r) => { pref[r.key] = r.on })
-    api.user.notifyPref(pref).catch(() => {
-      // request 层已 toast；回滚开关状态
+    // 2026-11-16 修复「通知偏好不能为空」：契约要求 {pref: {...}} 整体覆盖（NotifyPrefRequest），
+    // 此前发的是扁平对象，后端 getPref() 为 null 直接拒单
+    api.user.notifyPref({ pref: pref }).then(() => {
+      wx.showToast({ title: '已保存', icon: 'success', duration: 800 })
+    }).catch(() => {
+      // 失败必须有可见反馈——否则静默回滚的观感就是「点了没反应」
+      wx.showToast({ title: '保存失败，已还原', icon: 'none' })
       this.setData({
         notifyRows: this.data.notifyRows.map((r) => (r.key === key ? Object.assign({}, r, { on: !r.on }) : r))
       })

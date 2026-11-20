@@ -12,6 +12,19 @@
 
   <block wx:else>
 
+  <!-- 实时语音条（2026-11-20，LiveKit RTMP 桥）：收听教师语音 + 开麦发言 -->
+  <view class="card audio-bar">
+    <view class="between">
+      <view class="audio-state {{audioState === 'listening' ? 'ok' : audioState === 'offline' ? 'off' : 'wait'}}">
+        <view class="audio-dot"></view>
+        <text class="small">{{audioState === 'listening' ? (audioMicOn ? '语音已连接 · 正在发言' : '收听教师语音中') : audioState === 'offline' ? '仅同步课件' : '连接语音中…'}}</text>
+      </view>
+      <view class="audio-mic-btn {{audioMicOn ? 'on' : ''}} {{audioMuted || audioState !== 'listening' ? 'disabled' : ''}}" bindtap="toggleMic">
+        {{audioMuted ? '已被禁言' : (audioMicOn ? '闭麦' : '开麦')}}
+      </view>
+    </view>
+  </view>
+
   <!-- 课堂状态卡 -->
   <view class="card">
     <view class="between">
@@ -28,8 +41,56 @@
   </view>
 
   <!-- 导航：课堂 | 随堂测试 -->
+  <!-- 实时画布（2026-11-16）：教师端课件笔迹实时同步（搬运自学生PC舞台链路；帧已到本页 WS，这里补渲染） -->
+  <view class="card stage-card" wx:if="{{!noClass}}">
+    <view class="between">
+      <view class="strong" style="font-size:28rpx;">实时画布</view>
+      <view class="stage-head-right">
+        <view class="small muted" wx:if="{{!stageEmpty}}">{{stageName}}<text wx:if="{{stageTotal && stageKind !== 'video' && stageKind !== 'native'}}"> · 第 {{stagePage}}/{{stageTotal}} 页</text></view>
+        <!-- 全屏切换（2026-11-20 修复可见性）：放标题行、不依赖画布 hidden 容器——
+             absolute 按钮叠在 canvas 上，部分真机同层渲染未生效时被原生组件盖住不可见不可点 -->
+        <view wx:if="{{!stageEmpty && stageKind !== 'video' && stageKind !== 'native'}}" class="btn-stage-full" bindtap="toggleStageFull">全屏</view>
+      </view>
+    </view>
+    <!-- canvas 常驻（2026-11-18 修复）：不再用 wx:if 销毁重建——此前 stageEmpty 初始为 true 时
+         initCanvas 查不到节点、ctx 永不建立，slide 帧把 stageEmpty 翻 false 后节点才插入但无人重查，
+         导致笔迹帧到达却画不出来。改 hidden 控制显隐，节点始终可查询。 -->
+    <view class="stage-wrap" hidden="{{stageEmpty || stageKind === 'video' || stageKind === 'native'}}">
+      <canvas type="2d" id="stageCanvas" class="stage-canvas"></canvas>
+    </view>
+    <!-- 视频课件（2026-11-18 多类型）：画布内直接播放，教师切换视频课件时自动跟随 -->
+    <view class="stage-media" wx:if="{{stageKind === 'video'}}">
+      <video src="{{stageFileUrl}}" class="stage-video" controls object-fit="contain"></video>
+    </view>
+    <!-- 原生文档课件（doc/docx/xls 等，2026-11-18 多类型）：画布不渲染页面，下载后 openDocument 预览 -->
+    <view class="stage-doc-card" wx:if="{{stageKind === 'native'}}">
+      <view class="stage-doc-icon">📄</view>
+      <view class="small">{{stageFileName || '文档文件'}}</view>
+      <view class="small muted">该格式暂不在画布内渲染页面，可打开原生预览</view>
+      <view class="btn btn-primary btn-sm" bindtap="openStageDoc">打开文件预览</view>
+    </view>
+    <view wx:if="{{stageEmpty}}" class="center small muted" style="padding:30rpx 0;">教师尚未展示课件内容</view>
+    <!-- 页图加载失败提示（2026-11-20）：替代静默白底；教师翻页/重进课堂会自动重试加载 -->
+    <view wx:if="{{!stageEmpty && stageLoadFail}}" class="stage-fail-hint">
+      <view>课件页图加载失败</view>
+      <view class="small muted">请等待教师翻页自动重试，或下拉刷新重新进入</view>
+    </view>
+  </view>
+
+  <!-- 全屏画布覆盖层（2026-11-18）：fixed 铺满 + 独立 canvas 节点，进入时全量重绘、增量帧双画布同步 -->
+  <view class="stage-full" wx:if="{{stageFull}}" catchtouchmove="noop">
+    <view class="stage-full-bar">
+      <view class="stage-full-title">{{stageName}}<text wx:if="{{stageTotal}}"> · 第 {{stagePage}}/{{stageTotal}} 页</text></view>
+      <view class="stage-full-exit" bindtap="toggleStageFull">退出全屏</view>
+    </view>
+    <view class="stage-full-wrap">
+      <canvas type="2d" id="stageCanvasFull" class="stage-full-canvas"></canvas>
+    </view>
+  </view>
+
   <view class="live-nav card">
     <view class="live-nav-item {{tab === 'class' ? 'on' : ''}}" bindtap="switchTab" data-tab="class">课堂</view>
+    <view class="live-nav-item {{tab === 'chat' ? 'on' : ''}}" bindtap="switchTab" data-tab="chat">聊天</view>
     <view class="live-nav-item {{tab === 'quiz' ? 'on' : ''}}" bindtap="switchTab" data-tab="quiz">
       随堂测试
       <view wx:if="{{quizDot}}" class="dot"></view>
@@ -110,6 +171,27 @@
     </view>
   </block>
 
+  <!-- ============ 聊天 tab（2026-11-20 在线互动：课堂聊天，口径对齐学生端 PC） ============ -->
+  <block wx:if="{{tab === 'chat'}}">
+    <view class="card chat-card">
+      <scroll-view class="chat-list" scroll-y scroll-into-view="{{chatScrollInto}}" scroll-with-animation>
+        <view wx:if="{{!messages.length}}" class="small muted center chat-empty">还没有消息，说点什么吧</view>
+        <view wx:for="{{messages}}" wx:key="messageId" id="msg-{{item.messageId}}"
+          class="chat-row {{item.mine ? 'mine' : ''}}">
+          <view class="chat-meta">{{item.senderName}} · {{item.timeShort}}</view>
+          <!-- 历史语音消息占位（2026-11-20 录音功能已移除，仅兼容显示不裂版） -->
+          <view wx:if="{{item.msgType === 'voice'}}" class="chat-bubble voice-placeholder {{item.mine ? 'bubble-mine' : 'bubble-other'}}">[语音消息 {{item.duration || 1}}″]</view>
+          <view wx:else class="chat-bubble {{item.mine ? 'bubble-mine' : 'bubble-other'}}">{{item.content}}</view>
+        </view>
+      </scroll-view>
+      <view class="chat-input-bar">
+        <input class="chat-input" value="{{chatInput}}" placeholder="说点什么…" maxlength="500"
+          confirm-type="send" bindinput="onChatInput" bindconfirm="sendChat" />
+        <view class="chat-send {{chatInput ? '' : 'off'}}" bindtap="sendChat">发送</view>
+      </view>
+    </view>
+  </block>
+
   <!-- 签到方式面板（教师发布后弹出） -->
   <view wx:if="{{signinPanel}}" class="mask" bindtap="closeSigninPanel">
     <view class="sheet" catchtap="">
@@ -140,5 +222,13 @@
   </view>
 
   </block>
+
+  <!-- 实时语音流组件（2026-11-20，LiveKit RTMP 桥）：纯音频，透明收纳在页面底部，仅真机生效 -->
+  <live-player wx:if="{{audioPullUrl}}" id="audioPlayer" src="{{audioPullUrl}}" mode="live"
+    autoplay muted="{{false}}" orientation="vertical" object-fit="fill"
+    class="audio-player" bindstatechange="onAudioPlayerState"></live-player>
+  <live-pusher wx:if="{{audioPushUrl}}" src="{{audioPushUrl}}" mode="live" autopush
+    enable-camera="{{false}}" enable-mic="{{true}}" enable-agc="{{true}}" enable-ans="{{true}}"
+    class="audio-pusher" bindstatechange="onAudioPusherState"></live-pusher>
 
 </view>

@@ -39,7 +39,7 @@
         <view wx:if="{{item.ongoing && isThisWeek && current === today}}" class="badge badge-success">进行中</view>
       </view>
       <view class="small muted mt8">📍 {{item.loc}} · {{item.tc}}</view>
-      <view wx:if="{{item.ongoing && isThisWeek && current === today}}" class="btn btn-primary btn-sm mt8" bindtap="goLive">📺 进入课堂</view>
+      <view wx:if="{{item.ongoing && isThisWeek && current === today}}" class="btn btn-primary btn-sm mt8" bindtap="goLive" data-sid="{{item.scheduleId}}">📺 进入课堂</view>
     </view>
   </view>
 

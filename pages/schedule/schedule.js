@@ -78,6 +78,8 @@ Page({
           loc: it.classroomName || '教室待定',
           tc: it.teacherName || '',
           weekRef: it.weekRef || 0,
+          // 独立课堂入口（2026-11-18）：保留排课 id，进入课堂按钮按课定向解析各自的课堂会话
+          scheduleId: it.scheduleId,
           ongoing: it.status === 'ongoing'
         }
       })
@@ -177,6 +179,26 @@ Page({
     return this.courseColors[name]
   },
 
-  // 进入课堂（进行中课程）。课堂会话 id 后端暂无发现接口，live 页使用默认演示课堂
-  goLive() { wx.navigateTo({ url: '/pages/live/live' }) }
+  // 进入课堂（独立课堂入口，2026-11-18）：按各课自己的排课 id 解析它自己的课堂会话，
+  // 再带 sessionId 跳实时课堂页——多课同窗时各按钮指向各自课堂，不再共用全局 current
+  async goLive(e) {
+    const scheduleId = Number(e.currentTarget.dataset.sid) || 0
+    if (!scheduleId) return
+    try {
+      const r = await api.classroom.sessionBySchedule(scheduleId)
+      const d = (r && r.data) || r || {}
+      const sid = Number(d.sessionId) || 0
+      if (d.sessionStatus === 'no_session' || !sid) {
+        wx.showToast({ title: '教师尚未开课，请稍后再来', icon: 'none' })
+        return
+      }
+      if (d.sessionStatus === 'ended') {
+        wx.showToast({ title: '本节课已结束', icon: 'none' })
+        return
+      }
+      wx.navigateTo({ url: '/pages/live/live?sessionId=' + sid })
+    } catch (err) {
+      // 403 未选修 / 422 排课不存在：request 已弹错误提示，这里静默
+    }
+  }
 })

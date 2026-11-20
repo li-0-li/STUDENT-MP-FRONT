@@ -88,13 +88,26 @@ Page({
   applyFilter() {
     const kw = (this.data.keyword || '').trim().toLowerCase()
     const sel = this.data.selected
+    const fails = this.avFail || {}
     const list = this.data.roster.filter(function (s) {
       if (!kw) return true
       return (s.name || '').toLowerCase().indexOf(kw) >= 0 || (s.studentNo || '').toLowerCase().indexOf(kw) >= 0
     }).map(function (s) {
-      return Object.assign({}, s, { checked: !!sel[s.studentId] })
+      return Object.assign({}, s, { checked: !!sel[s.studentId], avFail: !!fails[s.studentId] })
     })
     this.setData({ filtered: list })
+  },
+
+  // 头像加载失败兜底（2026-11-16）：binderror 记忆到 avFail 映射（搜索重渲染后仍生效）
+  onAvError(e) {
+    const id = Number(e.currentTarget.dataset.id)
+    this.avFail = this.avFail || {}
+    this.avFail[id] = true
+    const upd = {}
+    this.data.filtered.forEach(function (s, i) {
+      if (s.studentId === id) upd['filtered[' + i + '].avFail'] = true
+    })
+    this.setData(upd)
   },
 
   // 选人：group 翻转多选；direct 弹确认后直接建私聊

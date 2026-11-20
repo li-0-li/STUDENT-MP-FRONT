@@ -16,15 +16,62 @@ Page({
   data: {
     loading: true,
     members: [],   // [{userId, displayName, memberRole, studentNo, isMe, isOwner, avatarUrl}]
-    profile: null  // 成员资料弹层（2026-11-12：点头像/姓名查看）
+    profile: null, // 成员资料弹层（2026-11-12：点头像/姓名查看）
+    groupName: '',      // 2026-11-16 群信息头（群头像更换入口）
+    groupAvatar: '',
+    groupInitial: ''
   },
 
   onLoad(options) {
     this.conversationId = Number(options.conversationId || 0)
+    // 群信息（2026-11-16）：name/avatar 由消息页 openMembers 传入
+    const name = decodeURIComponent(options.name || '')
+    const avatar = decodeURIComponent(options.avatar || '')
+    this.setData({ groupName: name, groupAvatar: avatar, groupInitial: name.slice(0, 1) })
     wx.setNavigationBarTitle({ title: '群成员', fail: function () {} })
   },
 
   onShow() { this.load() },
+
+  // 点群头像 → 选图上传更换（2026-11-16；权限=仅群主，前端预检 + 后端校验双层）
+  changeGroupAvatar() {
+    const that = this
+    if (!this.data.isMeOwner) {
+      wx.showToast({ title: '仅群主可以更换群头像', icon: 'none' })
+      return
+    }
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      success(res) {
+        const f = res.tempFiles && res.tempFiles[0]
+        if (!f || !f.tempFilePath) {
+          wx.showToast({ title: '未取得图片', icon: 'none' })
+          return
+        }
+        wx.showLoading({ title: '上传中…', mask: true })
+        api.message.setGroupAvatar(that.conversationId, f.tempFilePath).then(function (r) {
+          wx.hideLoading()
+          const avatar = (r && r.avatar) || ''
+          that.setData({ groupAvatar: avatar, groupAvFail: false })
+          wx.showToast({ title: '群头像已更新', icon: 'success' })
+        }).catch(function () {
+          wx.hideLoading()
+        })
+      },
+      fail(err) {
+        // 选图取消/失败此前被静默吞掉（用户观感=点了没反应）
+        if (err && err.errMsg && err.errMsg.indexOf('cancel') < 0) {
+          wx.showToast({ title: '选图失败：' + (err.errMsg || ''), icon: 'none' })
+        }
+      }
+    })
+  },
+
+  // 群头像加载失败 → 首字兜底
+  onGroupAvError() {
+    this.setData({ groupAvFail: true })
+  },
 
   async load() {
     this.setData({ loading: true })
@@ -50,7 +97,9 @@ Page({
       })
       // 2026-11-13：按姓名拼音首字母排序（需求：群成员列表按姓名首字母顺序）
       members.sort(function (a, b) { return a.name.localeCompare(b.name, 'zh') })
-      this.setData({ members, loading: false })
+      // 2026-11-16：群头像更换权限=仅群主（控制「改」角标显隐）
+      const iAmOwner = members.some(function (m) { return m.isMe && m.isOwner })
+      this.setData({ members, isMeOwner: iAmOwner, loading: false })
       wx.setNavigationBarTitle({ title: '群成员（' + members.length + '）', fail: function () {} })
     } catch (e) {
       this.setData({ loading: false })
@@ -66,6 +115,55 @@ Page({
 
   hideProfile() {
     this.setData({ profile: null })
+  }
+  ,
+  // 头像加载失败兜底（2026-11-16）：binderror 切默认头像
+  onAvError(e) {
+    this.setData({ ['members[' + e.currentTarget.dataset.idx + '].avFail']: true })
+  },
+  onCardAvError() {
+    this.setData({ 'profile.avFail': true })
+  },
+
+  // ===== 群主管理（2026-11-18：踢人 / 解散，权限=仅群主，前端预检 + 后端校验双层） =====
+
+  // 资料卡内「移出群聊」：群主对普通成员可见；确认后踢出并刷新列表
+  kickMember() {
+    const that = this
+    const p = this.data.profile
+    if (!p || !this.data.isMeOwner || p.isMe || p.isOwner) return
+    wx.showModal({
+      title: '移出成员',
+      content: '确定将「' + p.name + '」移出群聊？移出后其将不再收到本群消息。',
+      confirmColor: '#dc2626',
+      success(res) {
+        if (!res.confirm) return
+        api.message.kick(that.conversationId, p.userId).then(function (r) {
+          wx.showToast({ title: (r && r.message) || '已移出群聊', icon: 'success' })
+          that.setData({ profile: null })
+          that.load()
+        }).catch(function () {})
+      }
+    })
+  },
+
+  // 页面底部「解散群聊」（仅群主可见）：二次确认（不可逆）。解散后所有人不可再发言，
+  // 但群保留在所有人会话列表（历史消息可查看）；成功后返回消息页（列表由消息页刷新）
+  dissolveGroup() {
+    const that = this
+    if (!this.data.isMeOwner) return
+    wx.showModal({
+      title: '解散群聊',
+      content: '解散后所有成员将被移出且不可恢复。确定解散「' + (this.data.groupName || '本群') + '」？',
+      confirmColor: '#dc2626',
+      success(res) {
+        if (!res.confirm) return
+        api.message.dissolve(that.conversationId).then(function () {
+          wx.showToast({ title: '群聊已解散', icon: 'success' })
+          setTimeout(function () { wx.navigateBack({ fail: function () {} }) }, 900)
+        }).catch(function () {})
+      }
+    })
   }
 
 })

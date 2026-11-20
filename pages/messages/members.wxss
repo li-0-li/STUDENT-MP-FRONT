@@ -44,3 +44,61 @@
 .mem-card-av-txt { background: #0d9488; color: #fff; font-size: 56rpx;
   display: flex; align-items: center; justify-content: center; }
 .mem-card-name { font-size: 34rpx; font-weight: 600; margin-top: 16rpx; }
+
+/* 群信息头（2026-11-16 群头像更换入口） */
+.mem-group-head {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+.mem-group-av-wrap { position: relative; }
+.mem-group-av {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+}
+.mem-group-av-txt {
+  background: #0d9488;
+  color: #fff;
+  font-size: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mem-group-av-edit {
+  position: absolute;
+  right: -6rpx;
+  bottom: -6rpx;
+  background: #0d9488;
+  color: #fff;
+  font-size: 18rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 12rpx;
+}
+.mem-group-mid { margin-left: 20rpx; }
+.mem-group-name { font-size: 30rpx; font-weight: 600; }
+
+/* 群主管理（2026-11-18 踢人/解散）：危险操作红色系 */
+.mem-card-btn {
+  margin-top: 32rpx;
+  width: 100%;
+  text-align: center;
+  font-size: 30rpx;
+  padding: 20rpx 0;
+  border-radius: 16rpx;
+  background: #f1f5f9;
+  color: var(--ink-700, #334155);
+}
+.mem-card-btn-danger { background: #fef2f2; color: #dc2626; }
+.mem-dissolve {
+  margin: 40rpx 32rpx 60rpx;
+  padding: 24rpx 0;
+  text-align: center;
+  background: #fff;
+  color: #dc2626;
+  font-size: 30rpx;
+  border-radius: 16rpx;
+}

@@ -8,15 +8,6 @@
   color: #fff;
 }
 .hero-title { font-size: 32rpx; font-weight: 700; color: #fff; }
-.hero-pill {
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
-  padding: 4rpx 18rpx;
-  border-radius: 999rpx;
-  font-size: 20rpx;
-  font-weight: 600;
-  flex: none;
-}
 
 /* ② 今日课程条目 */
 .todo-item { display: flex; gap: 20rpx; align-items: center; }

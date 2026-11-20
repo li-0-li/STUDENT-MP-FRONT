@@ -110,17 +110,18 @@ function mapMsg(m, myUserId) {
 function mapConv(c, idx) {
   const type = c.conv_type
   // 2026-11-12 修复：私聊显示对方姓名（后端 other_name = 对方 display_name/昵称/账号），
-  // 群聊显示群名；都不存在才回落「会话」
+  // 群聊显示群名；都不存在才回落「会话」。
+  // 2026-11-18 解散口径：解散群保留在列表，群聊优先用 title_display（[已解散] 前缀）
   const name = type === 'direct'
     ? (c.other_name || c.title || '会话')
-    : (c.title || '会话')
+    : (c.title_display || c.title || '会话')
   // direct=私聊 / group=学生自建群（期2）/ course_group=教师建的课程群
   const sub = type === 'direct' ? '私聊'
     : type === 'group' ? '群聊'
     : type === 'course_group' ? ((c.class_name ? c.class_name + ' · ' : '') + '课程群聊')
     : '会话'
-  // 会话列表头像（2026-11-13）：私聊用对方真头像（可读形态），群聊/不可读回退首字
-  const av = type === 'direct' ? avatarUrl(c.other_avatar) : ''
+  // 会话列表头像（2026-11-13 私聊对方头像；2026-11-16 群聊/课程群用会话头像，无则回退首字）
+  const av = avatarUrl(type === 'direct' ? c.other_avatar : c.avatar)
   return {
     id: c.conversation_id,
     type,
@@ -229,16 +230,17 @@ Page({
       const list = await api.message.notifications()
       const cmap = await this.ensureCourseMap()
       // groupId=0 为「系统通知」组；课程组按最近通知时间排序在前
-      const groups = { 0: { title: '系统通知', unread: false, time: '', count: 0 } }
+      // unread 为未读「数量」（★ 2026-11-19 红点角标显数）：0 不显示，>0 红点内显示数字
+      const groups = { 0: { title: '系统通知', unread: 0, time: '', count: 0 } }
       const order = []
       ;(list || []).forEach(function (n) {
         const gid = noticeGroupKey(n)
         if (!groups[gid]) {
-          groups[gid] = { title: cmap[gid] || '课程 ' + gid, unread: false, time: n.create_time, count: 0 }
+          groups[gid] = { title: cmap[gid] || '课程 ' + gid, unread: 0, time: n.create_time, count: 0 }
           order.push(gid)
         }
         groups[gid].count++
-        if (!n.is_read) groups[gid].unread = true
+        if (!n.is_read) groups[gid].unread++
       })
       order.sort((a, b) => String(groups[b].time || '').localeCompare(String(groups[a].time || '')))
       const orderKeys = order.filter((g) => g !== 0)
@@ -288,9 +290,21 @@ Page({
   },
 
   // 未读汇总（通知 + 会话）→ tabBar 角标
+  // 头像加载失败兜底（2026-11-16）：URL 非空但 404/坏时 wx:else 不触发，binderror 切默认头像
+  onConvAvError(e) {
+    this.setData({ ['chats[' + e.currentTarget.dataset.idx + '].avFail']: true })
+  },
+  onMsgAvError(e) {
+    this.setData({ ['chat.msgs[' + e.currentTarget.dataset.idx + '].avFail']: true })
+  },
+  onSpAvError() {
+    this.setData({ 'senderProfile.avFail': true })
+  },
+
   refreshBadge() {
     api.message.unreadCount().then((s) => {
-      const n = (s && s.total) || 0
+      // 2026-11-16 修复：后端返回纯数字（Result<Long>），此前按 s.total 解析恒为 0，角标从不显示
+      const n = typeof s === 'number' ? s : ((s && s.total) || 0)
       if (n > 0) {
         wx.setTabBarBadge({ index: 3, text: n > 99 ? '99+' : String(n), fail: function () {} })
       } else {
@@ -361,7 +375,10 @@ Page({
   // 2026-11-16：课程群（course_group）此前被 === 'group' 条件漏掉，无成员入口
   openMembers() {
     if (!this.data.chat.type || this.data.chat.type === 'direct') return
-    wx.navigateTo({ url: '/pages/messages/members?conversationId=' + this.data.chat.id })
+    const conv = (this.data.chats || []).find(function (c) { return c.id === this.data.chat.id }, this)
+    const name = encodeURIComponent(this.data.chat.name || '')
+    const avatar = encodeURIComponent((conv && conv.avatarUrl) || '')
+    wx.navigateTo({ url: '/pages/messages/members?conversationId=' + this.data.chat.id + '&name=' + name + '&avatar=' + avatar })
   },
 
   // 聊天输入 / 发送（表 2-11，服务端返回 messageId + sendTime）
@@ -608,15 +625,9 @@ Page({
     this.setData({ senderProfile: null })
   },
 
-  // 视频消息点按（2026-11-12 方案A）→ 全屏预览（previewMedia 自带退出按钮），不再内联播放
-  previewVideo(e) {
-    const url = e.currentTarget.dataset.url
-    if (!url) return
-    if (wx.previewMedia) {
-      wx.previewMedia({ sources: [{ url: url, type: 'video' }] })
-    } else {
-      wx.showToast({ title: '当前微信版本不支持视频预览', icon: 'none' })
-    }
+  // 视频内联播放器加载失败（2026-11-16）：URL 坏/文件缺失时给明确提示
+  onVideoError(e) {
+    wx.showToast({ title: '视频加载失败，文件可能已被移除', icon: 'none' })
   },
 
   // 图片消息点按 → 全屏预览（当前会话内所有图片可左右滑）

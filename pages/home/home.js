@@ -44,10 +44,10 @@ Page({
     greeting: '你好',
     // 今日课程（当天课表，开始时间已过的剔除、进行中保留，按上课时间升序）
     todayCourses: [],
-    // 快捷功能宫格（按 7.3：AI 答疑 / 上课入口 / 添加课程 / 消息）
+    // 快捷功能宫格（2026-11-16：删「上课入口」，增「我的学情」；AI 答疑 / 我的学情 / 添加课程 / 消息）
     quicks: [
       { icon: '✨', label: 'AI 答疑', url: '/pages/ai/ai' },
-      { icon: '📺', label: '上课入口', url: '/pages/live/live' },
+      { icon: '📊', label: '我的学情', url: '/pages/analytics/analytics' },
       { icon: '➕', label: '添加课程', url: '/pages/course-add/course-add' },
       { icon: '💬', label: '消息', url: '/pages/messages/messages' }
     ],
@@ -95,23 +95,37 @@ Page({
         const tb = parseTime(b.classTime)
         return (ta ? ta.getTime() : 0) - (tb ? tb.getTime() : 0)
       })
-      .map((it) => ({
-        id: 'sch-' + it.scheduleId,
-        icon: '📺',
-        name: it.courseName || '未命名课程',
-        // 与 schedule 页同款：取 ISO 时间的 HH:mm 段
-        time: String(it.startTime || '').replace('T', ' ').slice(11, 16)
-          + '-' + String(it.endTime || '').replace('T', ' ').slice(11, 16)
-          + (it.periodName ? ' · ' + it.periodName : ''),
-        place: it.classroomName || '地点待定',
+      .map((it) => {
+        const st = parseTime(it.startTime)
+        const et = parseTime(it.endTime) || parseTime(it.classTime)
         // 上课中判定双保险：后端 status 可能滞后，再按「当前时间在起止之间」兜底
-        ongoing: it.status === 'ongoing'
-          || (!!(parseTime(it.startTime) && parseTime(it.startTime) <= now
-            && parseTime(it.endTime) && now < parseTime(it.endTime))),
-        statusText: it.status === 'ongoing' ? '上课中' : it.status === 'canceled' ? '已取消' : '待上课',
-        badge: it.status === 'ongoing' ? 'badge-success' : it.status === 'canceled' ? 'badge-neutral' : 'badge-warning',
-        url: '/pages/schedule/schedule'
-      }))
+        const ongoing = it.status === 'ongoing' || (!!(st && st <= now && et && now < et))
+        // 入口提前 20 分钟开放（2026-11-18）：课前 20 分钟 ~ 下课时间内显示「进入课堂」按钮；
+        // 已取消的课不显示入口（后端 by-schedule 同口径拒绝）
+        const preOpen = !!(st && it.status !== 'canceled'
+          && (st.getTime() - 20 * 60000) <= now.getTime() && (!et || now.getTime() < et.getTime()))
+        return {
+          id: 'sch-' + it.scheduleId,
+          // 独立课堂入口（2026-11-18）：保留排课 id，进入课堂按钮按课定向解析各自的课堂会话
+          scheduleId: it.scheduleId,
+          icon: '📺',
+          name: it.courseName || '未命名课程',
+          // 与 schedule 页同款：取 ISO 时间的 HH:mm 段
+          time: String(it.startTime || '').replace('T', ' ').slice(11, 16)
+            + '-' + String(it.endTime || '').replace('T', ' ').slice(11, 16)
+            + (it.periodName ? ' · ' + it.periodName : ''),
+          place: it.classroomName || '地点待定',
+          ongoing: ongoing,
+          preOpen: preOpen,
+          statusText: ongoing ? '上课中'
+            : (preOpen && it.status !== 'canceled' ? '即将开课'
+              : it.status === 'canceled' ? '已取消' : '待上课'),
+          badge: ongoing ? 'badge-success'
+            : (preOpen && it.status !== 'canceled' ? 'badge-warning'
+              : it.status === 'canceled' ? 'badge-neutral' : 'badge-warning'),
+          url: '/pages/schedule/schedule'
+        }
+      })
 
     this.setData({ name, todayCourses })
 
@@ -260,6 +274,29 @@ Page({
       wx.switchTab({ url })
     } else {
       wx.navigateTo({ url })
+    }
+  },
+
+  /** 进入课堂（独立课堂入口，2026-11-18）：按各课自己的排课 id 解析它自己的课堂会话，
+   *  再带 sessionId 跳实时课堂页——不再共用全局 current，多课同窗时不会进错课 */
+  async goLive(e) {
+    const scheduleId = Number(e.currentTarget.dataset.sid) || 0
+    if (!scheduleId) return
+    try {
+      const r = await api.classroom.sessionBySchedule(scheduleId)
+      const d = (r && r.data) || r || {}
+      const sid = Number(d.sessionId) || 0
+      if (d.sessionStatus === 'no_session' || !sid) {
+        wx.showToast({ title: '教师尚未开课，请稍后再来', icon: 'none' })
+        return
+      }
+      if (d.sessionStatus === 'ended') {
+        wx.showToast({ title: '本节课已结束', icon: 'none' })
+        return
+      }
+      wx.navigateTo({ url: '/pages/live/live?sessionId=' + sid })
+    } catch (err) {
+      // 403 未选修 / 422 排课不存在：request 已弹错误提示，这里静默
     }
   }
 })

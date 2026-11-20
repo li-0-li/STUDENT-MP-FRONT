@@ -126,3 +126,237 @@
   color: var(--muted, #64748b);
   font-size: 26rpx;
 }
+
+/* 实时语音条（2026-11-20，LiveKit RTMP 桥）：极简卡片风，teal 主色 */
+.audio-bar { margin-bottom: 16rpx; }
+.audio-state {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+.audio-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+.audio-state.ok .audio-dot {
+  background: #0d9488;
+  animation: audio-pulse 1.6s ease-in-out infinite;
+}
+.audio-state.off .audio-dot { background: #cbd5e1; }
+@keyframes audio-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.35); }
+  50% { box-shadow: 0 0 0 10rpx rgba(13, 148, 136, 0); }
+}
+.audio-state.ok text { color: #1e293b; }
+.audio-state.off text { color: #94a3b8; }
+.audio-mic-btn {
+  flex-shrink: 0;
+  padding: 10rpx 34rpx;
+  font-size: 26rpx;
+  color: #0d9488;
+  background: #e6f5f3;
+  border: 1rpx solid #b5e3dc;
+  border-radius: 999rpx;
+}
+.audio-mic-btn.on {
+  color: #ffffff;
+  background: #0d9488;
+  border-color: #0d9488;
+  animation: audio-pulse 1.6s ease-in-out infinite;
+}
+.audio-mic-btn.disabled {
+  color: #cbd5e1;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+/* 音频流组件：纯音频透明收纳（真机渲染，不占视觉空间） */
+.audio-player { width: 2rpx; height: 2rpx; position: fixed; left: -20rpx; bottom: -20rpx; opacity: 0.01; }
+.audio-pusher { width: 2rpx; height: 2rpx; position: fixed; left: -20rpx; bottom: -20rpx; opacity: 0.01; }
+
+/* 实时画布（2026-11-16） */
+.stage-card { margin-bottom: 16rpx; }
+/* 页图加载失败提示（2026-11-20）：替代静默白底 */
+.stage-fail-hint {
+  margin-top: 16rpx;
+  padding: 40rpx 0;
+  text-align: center;
+  font-size: 28rpx;
+  color: #e6a23c;
+  background: #fdf6ec;
+  border: 1rpx solid #faecd8;
+  border-radius: 12rpx;
+}
+.stage-wrap {
+  position: relative;   /* 全屏按钮锚点（2026-11-20 移入画布内右下角） */
+  margin-top: 16rpx;
+  width: 100%;
+  height: 380rpx;
+  background: #ffffff;
+  border: 1rpx solid #e2e8f0;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+.stage-canvas { width: 100%; height: 100%; }
+
+/* 视频课件容器（2026-11-18 多类型）：与画布同尺寸，video 组件铺满 */
+.stage-media {
+  margin-top: 16rpx;
+  width: 100%;
+  height: 380rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  background: #0f172a;
+}
+.stage-video { width: 100%; height: 100%; display: block; }
+
+/* 原生文档课件卡片（2026-11-18 多类型）：doc/docx 等不在画布渲染，引导 openDocument */
+.stage-doc-card {
+  margin-top: 16rpx;
+  padding: 40rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  background: #f8fafc;
+  border: 1rpx solid #e2e8f0;
+  border-radius: 12rpx;
+}
+.stage-doc-icon { font-size: 56rpx; }
+
+/* 画布标题行右侧（名称页码） */
+.stage-head-right {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+/* 全屏按钮（2026-11-20 修复可见性）：标题行右侧黑色小胶囊，纯 view 不受 canvas 层级影响 */
+.btn-stage-full {
+  flex-shrink: 0;
+  padding: 8rpx 28rpx;
+  font-size: 24rpx;
+  color: #ffffff;
+  background: #000000;
+  border-radius: 999rpx;
+}
+.btn-stage-full:active {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+/* ===== 课堂聊天（2026-11-20 在线互动） ===== */
+.chat-card {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16rpx;
+}
+.chat-list {
+  height: 640rpx;
+  padding: 20rpx 20rpx 8rpx;
+  box-sizing: border-box;
+}
+.chat-empty { padding: 180rpx 0; }
+.chat-row {
+  margin-bottom: 22rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.chat-row.mine { align-items: flex-end; }
+.chat-meta {
+  font-size: 20rpx;
+  color: #909399;
+  margin-bottom: 8rpx;
+}
+.chat-bubble {
+  max-width: 76%;
+  padding: 16rpx 24rpx;
+  border-radius: 18rpx;
+  font-size: 28rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+.bubble-other {
+  background: #f0f2f5;
+  color: #303133;
+  border-top-left-radius: 6rpx;
+}
+.bubble-mine {
+  background: #2e75b6;
+  color: #ffffff;
+  border-top-right-radius: 6rpx;
+}
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 20rpx calc(16rpx + env(safe-area-inset-bottom) / 2);
+  border-top: 1rpx solid #eef1f5;
+}
+.chat-input {
+  flex: 1;
+  height: 72rpx;
+  padding: 0 28rpx;
+  background: #f5f7fa;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  color: #303133;
+}
+/* 历史语音消息占位（2026-11-20 录音功能移除后的兼容显示） */
+.voice-placeholder {
+  color: #94a3b8;
+  font-style: italic;
+}
+.chat-send {
+  flex-shrink: 0;
+  padding: 14rpx 34rpx;
+  font-size: 26rpx;
+  color: #ffffff;
+  background: #2e75b6;
+  border-radius: 999rpx;
+}
+.chat-send.off { opacity: 0.4; }
+
+/* 全屏画布覆盖层（2026-11-18）：fixed 铺满，iOS/Android 真机与开发者工具行为一致 */
+.stage-full {
+  position: fixed;
+  left: 0; top: 0; right: 0; bottom: 0;
+  z-index: 999;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+}
+.stage-full-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 30rpx calc(24rpx + env(safe-area-inset-top));
+}
+.stage-full-title {
+  font-size: 26rpx;
+  color: #e2e8f0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stage-full-exit {
+  flex-shrink: 0;
+  padding: 10rpx 28rpx;
+  font-size: 26rpx;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999rpx;
+}
+.stage-full-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.stage-full-canvas {
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%;
+  height: 100%;
+}

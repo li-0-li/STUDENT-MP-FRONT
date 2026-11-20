@@ -1,8 +1,22 @@
-<!-- 群成员列表（期2）：群主在前，本人标「我」 -->
+<!-- 群成员列表（期2）：群主在前，本人标「我」；2026-11-16 顶部群信息头（群头像更换入口） -->
 <view class="page">
+  <view wx:if="{{groupName}}" class="mem-group-head">
+    <view class="mem-group-av-wrap" bindtap="changeGroupAvatar">
+      <image wx:if="{{groupAvatar && !groupAvFail}}" class="mem-group-av" src="{{groupAvatar}}" mode="aspectFill"
+             binderror="onGroupAvError" />
+      <view wx:else class="mem-group-av mem-group-av-txt">{{groupInitial}}</view>
+      <view wx:if="{{isMeOwner}}" class="mem-group-av-edit">改</view>
+    </view>
+    <view class="mem-group-mid">
+      <view class="mem-group-name">{{groupName}}</view>
+      <view class="small muted">{{isMeOwner ? '点击头像可更换群头像' : '仅群主可更换群头像'}}</view>
+    </view>
+  </view>
+
   <view wx:for="{{members}}" wx:key="userId" class="mem-row" bindtap="showProfile" data-id="{{item.userId}}">
-    <image wx:if="{{item.avatarShow}}" class="mem-av-img" src="{{item.avatarUrl}}" mode="aspectFill" />
-    <image wx:else class="mem-av-img" src="/images/default-avatar.png" mode="aspectFill" />
+    <image wx:if="{{item.avatarShow && !item.avFail}}" class="mem-av-img" src="{{item.avatarUrl}}" mode="aspectFill"
+           data-idx="{{index}}" binderror="onAvError" />
+    <view wx:else class="mem-av">{{item.initial}}</view>
     <view class="mem-mid">
       <view class="mem-name">{{item.name}}
         <text wx:if="{{item.isOwner}}" class="mem-tag">群主</text>
@@ -22,14 +36,21 @@
   <!-- 成员资料卡（2026-11-12「个人主页」轻量版） -->
   <view wx:if="{{profile}}" class="mem-mask" bindtap="hideProfile">
     <view class="mem-card" catchtap="">
-      <image wx:if="{{profile.avatarShow}}" class="mem-card-av" src="{{profile.avatarUrl}}" mode="aspectFill" />
-      <image wx:else class="mem-card-av" src="/images/default-avatar.png" mode="aspectFill" />
+      <image wx:if="{{profile.avatarShow && !profile.avFail}}" class="mem-card-av" src="{{profile.avatarUrl}}" mode="aspectFill"
+             binderror="onCardAvError" />
+      <view wx:else class="mem-card-av mem-card-av-txt">{{profile.initial}}</view>
       <view class="mem-card-name">{{profile.name}}
         <text wx:if="{{profile.isOwner}}" class="mem-tag">群主</text>
       </view>
       <view class="small muted mt4" wx:if="{{profile.studentNo}}">学号 {{profile.studentNo}}</view>
       <view class="small muted mt4" wx:if="{{profile.className}}">班级 {{profile.className}}</view>
       <view class="small muted mt4">角色：{{profile.isOwner ? '群主' : (profile.isMe ? '本人' : '成员')}}</view>
+      <!-- 群主移出成员（2026-11-18）：对普通成员显示，本人/群主不显示 -->
+      <view wx:if="{{isMeOwner && !profile.isMe && !profile.isOwner}}" class="mem-card-btn mem-card-btn-danger"
+            catchtap="kickMember">移出群聊</view>
     </view>
   </view>
+
+  <!-- 群主解散群聊（2026-11-18）：仅群主可见，二次确认后解散 -->
+  <view wx:if="{{isMeOwner && members.length}}" class="mem-dissolve" bindtap="dissolveGroup">解散群聊</view>
 </view>

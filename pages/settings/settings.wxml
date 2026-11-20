@@ -10,7 +10,10 @@
   </view>
 
   <view class="section-title">通知</view>
-  <view class="set-row" wx:for="{{notifyRows}}" wx:key="key" bindtap="toggleNotify" data-key="{{item.key}}">
+  <!-- 2026-11-16 修复双重触发：此前行 bindtap + 开关 catchchange 同时生效，
+       点开关时 change 翻转一次、tap 冒泡到行再翻转一次，互相抵消（UI 不动但保存两次）。
+       现只保留开关自身 catchchange；行 bindtap 移除 -->
+  <view class="set-row" wx:for="{{notifyRows}}" wx:key="key">
     <text>{{item.label}}</text>
     <switch checked="{{item.on}}" color="#0d9488" catchchange="toggleNotify" data-key="{{item.key}}" />
   </view>

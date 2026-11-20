@@ -1,12 +1,9 @@
 <!-- 首页 —— 原型：ui-prototype/mp/app-home.html（UI 设计文档 7.3） -->
 <!-- 数据：users/me + schedules + assignments + experiments + practice/recommend（真实接口） -->
 <view class="page">
-  <!-- ① 欢迎卡（2026-10-28 改版：删除学习指标与掌握度六维图，仅留问候） -->
+  <!-- ① 欢迎卡（2026-10-28 改版：删除学习指标与掌握度六维图，仅留问候；2026-11-16 删「学情概览」角标） -->
   <view class="card hero">
-    <view class="between">
-      <text class="hero-title">{{greeting}}，{{name}} 👋</text>
-      <view class="hero-pill">学情概览</view>
-    </view>
+    <text class="hero-title">{{greeting}}，{{name}} 👋</text>
   </view>
 
   <!-- ② 今日课程：当天课表（已开始的课剔除，进行中保留；按上课时间升序）。
@@ -21,8 +18,11 @@
         <view class="row" style="gap:10rpx;align-items:center;min-width:0">
           <text class="small strong">{{item.name}}</text>
           <view wx:if="{{item.ongoing}}" class="badge badge-success live-tag">上课中</view>
-        </view>
-        <view wx:if="{{item.ongoing}}" class="btn-live" catchtap="go" data-url="/pages/live/live">进入课堂</view>
+          <view wx:elif="{{item.preOpen && item.statusText === '即将开课'}}" class="badge badge-warning">即将开课</view>
+          </view>
+          <!-- 入口提前 20 分钟开放（2026-11-18）：preOpen 窗口内显示，进行中优先；
+               独立课堂入口（2026-11-18）：按各课 scheduleId 定向解析各自的课堂 -->
+          <view wx:if="{{item.preOpen}}" class="btn-live" catchtap="goLive" data-sid="{{item.scheduleId}}">进入课堂</view>
         <view wx:else class="badge {{item.badge}}">{{item.statusText}}</view>
       </view>
       <view class="small muted mt4">{{item.time}} · {{item.place}}</view>
