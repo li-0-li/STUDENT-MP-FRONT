@@ -33,14 +33,6 @@
     <view class="small">今天没有课程，劳逸结合</view>
   </view>
 
-  <!-- ③ 快捷功能宫格：AI 答疑 / 上课入口 / 添加课程 / 消息 -->
-  <view class="section-title">快捷功能</view>
-  <view class="card quick-grid">
-    <view wx:for="{{quicks}}" wx:key="label" class="quick-item" bindtap="go" data-url="{{item.url}}">
-      <view class="icon-box">{{item.icon}}</view>
-      <view class="small mt4 quick-label">{{item.label}}</view>
-    </view>
-  </view>
 
   <!-- ④ 继续学习（最近学习资源；暂无接口，无数据时整块隐藏） -->
   <block wx:if="{{continueLearn}}">
@@ -60,27 +52,23 @@
   </view>
   </block>
 
-  <!-- ⑤ 我的作业：全部课程中未到截止时间的作业+实验（已提交未截止的也保留；
-       已过截止但允许逾期提交的也保留；已批改且过截止的剔除）。
-       四梯队排序：未提交（超期可补交最上、未到期截止近者靠上）→ 已提交未批改 → 申诉中 → 已提交已批改；
-       可滚动，底部「查看全部」进作业页 -->
-  <view class="section-title">我的作业</view>
-  <view class="card hw-todo-card">
-    <scroll-view wx:if="{{todoTasks.length}}" scroll-y class="hw-todo-scroll">
-      <view
-        wx:for="{{todoTasks}}" wx:key="id"
-        class="hw-todo-item" bindtap="go" data-url="{{item.url}}">
-        <view>
-          <view class="small strong">{{item.type === '实验' ? '🧪 ' : '📝 '}}{{item.title}}</view>
-          <view class="small muted mt8">{{item.courseName}} · {{item.deadline}}</view>
+  <view class="section-title task-head">
+    <text>我的任务</text>
+    <text class="small link" bindtap="go" data-url="/pages/homework/homework">查看全部 →</text>
+  </view>
+  <!-- 外层边框容器（2026-11-24）：与 .card 同款描边/圆角，浅色不突兀，rpx 自适应各屏；
+       内部为独立卡片形态（每条待办一张固定大小卡片，外层可滚动），底部「查看全部」 -->
+  <view class="task-box">
+    <scroll-view wx:if="{{todoTasks.length}}" scroll-y class="task-scroll">
+      <view wx:for="{{todoTasks}}" wx:key="id" class="card task-card" bindtap="go" data-url="{{item.url}}">
+        <view class="between">
+          <text class="small strong task-title">{{item.type === '实验' ? '🧪 ' : '📝 '}}{{item.title}}</text>
+          <view class="badge {{item.badge}}">{{item.status}}</view>
         </view>
-        <view class="badge {{item.badge}}">{{item.status}}</view>
+        <view class="small muted mt8">{{item.courseName}} · {{item.deadline}}</view>
       </view>
     </scroll-view>
-    <view wx:else class="hw-todo-empty small muted">暂未截止的作业和实验</view>
-    <view class="hw-todo-footer" bindtap="go" data-url="/pages/homework/homework">
-      <text class="small link">查看全部 →</text>
-    </view>
+    <view wx:else class="card center hw-todo-empty small muted">暂无待办任务</view>
   </view>
 
   <!-- ⑥ 为你推荐（AI 学习建议）—— 点击进学情分析看完整建议 -->

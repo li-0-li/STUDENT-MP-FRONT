@@ -20,8 +20,9 @@ const DEVTOOLS_BACKEND = 'local';
 let BASE_HOST = '';
 
 if (isDevTools) {
-  // 在电脑开发者工具里：按开关选择本机后端或服务器网关
-  BASE_HOST = DEVTOOLS_BACKEND === 'server' ? PROD_URL : DEV_URL;
+  // 在电脑开发者工具里：按开关选择本机后端或服务器网关（2026-11-24 修正：原三元表达式
+  // 写反了——开关 'local' 时连的是服务器网关，导致新字段（如课程首课时间）在工具端取不到）
+  BASE_HOST = DEVTOOLS_BACKEND === 'local' ? DEV_URL : PROD_URL;
 } else {
   // 在真机上运行：联调期连电脑局域网 IP 的本机后端（与电脑同 Wi-Fi，小程序关闭域名校验）；
   // MP 实时语音等新接口部署到服务器后，改为 BASE_HOST = PROD_URL

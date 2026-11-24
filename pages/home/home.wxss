@@ -26,38 +26,6 @@
 .todo-mid { flex: 1; min-width: 0; }
 .strong { font-weight: 600; }
 
-/* ③ 快捷功能宫格：4 列 */
-.quick-grid { display: flex; flex-wrap: wrap; padding: 24rpx 12rpx; }
-.quick-item {
-  width: 25%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 24rpx;
-  text-align: center;
-}
-.quick-label { color: var(--ink-600); }
-
-/* ④ 继续学习「继续 →」链接色 */
-.link { color: var(--brand-600); font-weight: 600; }
-
-/* ⑤ 我的作业卡：固定高度可滚动列表 + 底部「查看全部」入口 */
-.hw-todo-card { padding-bottom: 0; }
-.hw-todo-scroll { max-height: 480rpx; }
-.hw-todo-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20rpx;
-  padding: 20rpx 4rpx;
-  border-bottom: 1rpx solid var(--line, #f0f0f0);
-}
-.hw-todo-empty { padding: 40rpx 0; text-align: center; }
-.hw-todo-footer {
-  padding: 20rpx 0 24rpx;
-  text-align: center;
-  border-top: 1rpx solid var(--line, #f0f0f0);
-}
 
 /* 今日课程 · 上课中课程：名称旁小标签 + 右侧进入课堂按钮（2026-10-29） */
 .live-tag {
@@ -79,3 +47,49 @@
   background: var(--brand-600, #0d9488);
   border-radius: 999rpx;
 }
+
+/* 我的任务（2026-11-24 独立卡片形态，原型方案）：
+   每条待办一张固定大小卡片，外层 scroll-view 可滚动 */
+.task-scroll {
+  max-height: 560rpx;
+  margin: 0 0 8rpx;
+}
+.task-card {
+  min-height: 132rpx;              /* 固定大小：两行内容统一高度 */
+  margin-bottom: 16rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.task-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task-footer {
+  padding: 16rpx 0 4rpx;
+  text-align: center;
+}
+.hw-todo-empty { padding: 32rpx 0; }
+
+/* 我的任务外层边框容器（2026-11-24）：简洁描边与 .card 同视觉语言，
+   rpx + CSS 变量自适应各类屏幕，不改变内部布局与间距 */
+.task-box {
+  margin: 0 24rpx 20rpx;             /* 与 .card 左右对齐 */
+  border: 1rpx solid var(--border);
+  border-radius: 24rpx;
+  padding: 16rpx;
+}
+.task-box .task-scroll { margin: 0; }
+.task-box .card { margin: 0 0 12rpx; }  /* 嵌套后去掉 .card 自带的页面级左右边距 */
+.task-box .task-card:last-child { margin-bottom: 8rpx; }
+/* 查看全部入口：置于「我的任务」标题右侧（2026-11-24 移入标题行） */
+.task-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-right: 24rpx;   /* 与 .task-box 左右对齐 */
+}
+.task-box .hw-todo-empty { margin: 0; }

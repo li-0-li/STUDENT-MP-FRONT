@@ -27,8 +27,9 @@
     <view class="badge week-badge">{{weekBadge}}</view>
   </view>
 
-  <!-- 课程时间块列表 -->
-  <view wx:for="{{list}}" wx:key="index" class="card cls-card" style="border-left:8rpx solid {{item.color}}">
+  <!-- 课程时间块列表（2026-11-24：点击课次卡跳转该门课的课程详情页） -->
+  <view wx:for="{{list}}" wx:key="index" class="card cls-card" style="border-left:8rpx solid {{item.color}}"
+        bindtap="goCourse" data-cid="{{item.courseId}}">
     <view class="cls-time">
       <view class="small strong">{{item.s}}</view>
       <view class="small muted cls-time-t">{{item.t}}</view>
@@ -39,7 +40,7 @@
         <view wx:if="{{item.ongoing && isThisWeek && current === today}}" class="badge badge-success">进行中</view>
       </view>
       <view class="small muted mt8">📍 {{item.loc}} · {{item.tc}}</view>
-      <view wx:if="{{item.ongoing && isThisWeek && current === today}}" class="btn btn-primary btn-sm mt8" bindtap="goLive" data-sid="{{item.scheduleId}}">📺 进入课堂</view>
+      <view wx:if="{{item.ongoing && isThisWeek && current === today}}" class="btn btn-primary btn-sm mt8" catchtap="goLive" data-sid="{{item.scheduleId}}">📺 进入课堂</view>
     </view>
   </view>
 

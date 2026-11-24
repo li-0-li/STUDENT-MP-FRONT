@@ -8,6 +8,16 @@
     <view class="btn btn-primary btn-sm" bindtap="goAddCourse">＋ 添加课程</view>
   </view>
 
+  <!-- 学期筛选下拉（2026-11-24：当前学期起往前五年，倒序，'全部'置底；课程按首课时间归属学期） -->
+  <view class="term-bar">
+    <picker mode="selector" range="{{termOptions}}" value="{{termIndex}}" bindchange="onTermChange">
+      <view class="term-picker">
+        <text>{{currentTerm}}</text>
+        <text class="term-arrow">▾</text>
+      </view>
+    </picker>
+  </view>
+
   <view wx:for="{{courses}}" wx:key="courseId" class="course-card" bindtap="goDetail" data-id="{{item.courseId}}">
     <view class="between">
       <text class="title">{{item.name}}</text>

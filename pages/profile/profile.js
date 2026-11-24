@@ -28,6 +28,9 @@ Page({
     ],
     // 学习入口（2026-11-11 改版：移除「我的课程」入口，课程走底部 tabBar）
     studyEntries: [
+      { key: 'courses', icon: '📚', label: '课程' },
+      { key: 'ai', icon: '✨', label: 'AI 答疑' },
+      { key: 'course-add', icon: '➕', label: '添加课程'  },
       { key: 'analytics', icon: '📊', label: '我的学情' }
     ],
     // 通用入口（2026-11-11 改版：移除「实名认证」入口）
@@ -94,6 +97,9 @@ Page({
   goEntry(e) {
     const key = e.currentTarget.dataset.key
     const urls = {
+      courses: '/pages/courses/courses',
+      ai: '/pages/ai/ai',
+      'course-add': '/pages/course-add/course-add',
       analytics: '/pages/analytics/analytics',
       settings: '/pages/settings/settings',
       support: '/pages/support/support'

@@ -64,20 +64,14 @@
         "selectedIconPath": "assets/tabbar/home-on.png"
       },
       {
-        "pagePath": "pages/courses/courses",
-        "text": "我的课程",
-        "iconPath": "assets/tabbar/course.png",
-        "selectedIconPath": "assets/tabbar/course-on.png"
-      },
-      {
         "pagePath": "pages/schedule/schedule",
-        "text": "我的课表",
+        "text": "课表",
         "iconPath": "assets/tabbar/schedule.png",
         "selectedIconPath": "assets/tabbar/schedule-on.png"
       },
       {
         "pagePath": "pages/messages/messages",
-        "text": "消息通知",
+        "text": "消息",
         "iconPath": "assets/tabbar/message.png",
         "selectedIconPath": "assets/tabbar/message-on.png"
       },

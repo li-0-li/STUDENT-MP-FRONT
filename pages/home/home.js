@@ -1,12 +1,5 @@
 // 首页 —— 原型：ui-prototype/mp/app-home.html（UI 设计文档 7.3）
-// 结构：欢迎卡 → 今日课程 → 快捷功能宫格 → 继续学习 → 待办任务 → 为你推荐
-// 2026-10-28 改版：
-//   ① 欢迎卡删除「今日待办/已掌握知识点/掌握度」指标与掌握度六维图（雷达）；
-//   ② 「今日待办」改为「今日课程」：当天课表，剔除上课开始时间已过的课（进行中保留），
-//      按上课时间升序；展示课程名 + 上课时间 + 上课地点；
-//   ③ 「我的作业」卡：全部课程中未到截止时间的作业+实验（已提交未截止的也保留），
-//      已过截止但允许逾期提交且未出分的也保留；扁平列表按发布时间排列，
-//      可滚动 + 底部「查看全部」进作业页。
+// 结构：欢迎卡 → 今日课程 → 继续学习 → 我的任务 → 为你推荐
 // 接入（真实接口）：
 //   api.user.me        —— 表 2-14 当前用户（欢迎语姓名）
 //   scheduleApi.mine   —— 表 3-12 课表（按 classTime 当天过滤出今日课程）
@@ -14,11 +7,11 @@
 //   experimentApi.list —— 实验任务列表（待办任务；含 published_at/sub_status）
 //   aiApi.recommend    —— 表 3-19 薄弱点推荐（为你推荐卡）
 // tabBar 页必须 wx.switchTab（不能带参数），其余页面用 wx.navigateTo
+// 2026-11-24：TAB_PAGES 同步 tabBar 现状（courses 移入"我的"页列表，不再是 tab 页）
 const api = require('../../utils/api')
 
 const TAB_PAGES = [
   '/pages/home/home',
-  '/pages/courses/courses',
   '/pages/schedule/schedule',
   '/pages/messages/messages',
   '/pages/profile/profile'
@@ -42,18 +35,9 @@ Page({
   data: {
     name: '',
     greeting: '你好',
-    // 今日课程（当天课表，开始时间已过的剔除、进行中保留，按上课时间升序）
-    todayCourses: [],
-    // 快捷功能宫格（2026-11-16：删「上课入口」，增「我的学情」；AI 答疑 / 我的学情 / 添加课程 / 消息）
-    quicks: [
-      { icon: '✨', label: 'AI 答疑', url: '/pages/ai/ai' },
-      { icon: '📊', label: '我的学情', url: '/pages/analytics/analytics' },
-      { icon: '➕', label: '添加课程', url: '/pages/course-add/course-add' },
-      { icon: '💬', label: '消息', url: '/pages/messages/messages' }
-    ],
     // 继续学习（暂无「最近学习资源」接口，无数据时整块隐藏）
     continueLearn: null,
-    // 我的作业卡（未截止的作业+实验，含已提交未截止；过截止但允许逾期的也保留；按发布顺序）
+    // 我的任务卡（2026-11-24 收敛回原型方案：只收待处理——未提交/草稿/已退回；逾期可补交也收）
     todoTasks: [],
     // 为你推荐（aiApi.recommend 第一条）
     recommend: { title: '暂无推荐', desc: '完成更多练习后，AI 会为你生成个性化学习建议' }
@@ -145,10 +129,8 @@ Page({
     if (candidates.length) this.loadRecommend(candidates)
   },
 
-  // ③ 我的作业卡：全部课程中未到截止时间的作业 + 实验（已提交未截止的也保留）；
-  //    已过截止但「允许逾期提交」且未出分的也保留。
-  //    排序（2026-10-29 四梯队）：未提交 → 已提交未批改 → 申诉中 → 已提交已批改；
-  //    「已提交已批改」仅收录当前时间仍在截止日期前的条目。
+  // ③ 我的任务卡：只收「待处理」条目（未提交/草稿/已退回，含逾期可补交），
+  //    已提交/批改中/申诉中/已完成不占首页，去作业页查看——原型方案（2026-11-24 收敛）。
   async loadTasks() {
     const now = new Date()
     const items = []
@@ -164,25 +146,18 @@ Page({
         // myStatus 值域（McStatus）：finished=已完成(成绩有效) / returned=已退回 /
         // appealing=申诉中 / submitted·queued·grading·manual=批改中(已提交) / 空=待提交
         const st = it.myStatus != null ? String(it.myStatus).toLowerCase() : ''
-        let status, badge
-        if (!st || st === 'draft') { status = st === 'draft' ? '草稿' : '待提交'; badge = 'badge-warning' }
-        else if (st === 'finished') { status = '已完成'; badge = 'badge-success' }
-        else if (st === 'returned') { status = '已退回'; badge = 'badge-error' }
-        else if (st === 'appealing') { status = '申诉中'; badge = 'badge-info' }
-        else { status = '已提交'; badge = 'badge-info' }
-        if (dl < now && st === 'finished') return // 已过截止且已出分的不收
+        // 2026-11-24 收敛回原型方案：首页待办只收"需要学生处理"的——未提交/草稿/已退回；
+        // 已提交、批改中、申诉中、已完成的不再占首页（去作业页查看），解决列表过长问题
+        if (st && st !== 'draft' && st !== 'returned') return
+        const status = st === 'draft' ? '草稿' : st === 'returned' ? '已退回' : '待提交'
+        const badge = st === 'returned' ? 'badge-error' : 'badge-warning'
         items.push({
           id: 'hw-' + it.assignmentId,
           type: '作业',
           title: it.title,
           courseName: it.courseName || '',
           publish: parseTime(it.startTime),
-          // 排序辅助：梯队（0未提交含草稿/退回，1已提交未批改，2申诉中，3已提交已批改）；
-          // 截止时间戳；是否已过截止
-          _todo: !st || st === 'draft' || st === 'returned',
-          _tier: !st || st === 'draft' || st === 'returned' ? 0
-            : st === 'finished' ? 3
-            : st === 'appealing' ? 2 : 1,
+          // 排序辅助：截止时间戳、是否已过截止
           _dl: dl.getTime(),
           _overdue: dl < now,
           deadline: '截止 ' + String(it.deadline || '').replace('T', ' ').slice(0, 16) + overText(dl),
@@ -203,22 +178,17 @@ Page({
         if (!allowLate) return
         // sub_status 大小写不敏感（lab 页同口径）：null=未提交 / GRADED / REVISION(RETURNED)=已退回 / SUBMITTED
         const st = it.sub_status != null ? String(it.sub_status).toUpperCase() : null
-        let status, badge
-        if (st == null) { status = '待提交'; badge = 'badge-warning' }
-        else if (st === 'GRADED') { status = '已批阅'; badge = 'badge-success' }
-        else if (st === 'REVISION' || st === 'RETURNED') { status = '已退回'; badge = 'badge-error' }
-        else { status = '已提交'; badge = 'badge-info' }
-        if (dl < now && st === 'GRADED') return // 已过截止且已批阅的不收
+        // 2026-11-24 同作业口径：只收未提交/已退回
+        if (st && st !== 'REVISION' && st !== 'RETURNED') return
+        const status = (st === 'REVISION' || st === 'RETURNED') ? '已退回' : '待提交'
+        const badge = status === '已退回' ? 'badge-error' : 'badge-warning'
         items.push({
           id: 'exp-' + it.task_id,
           type: '实验',
           title: it.title,
           courseName: it.course_name || '',
           publish: parseTime(it.published_at),
-          // 排序辅助：梯队（0未提交含退回，1已提交待批阅，3已批阅）；截止时间戳；是否已过截止
-          _todo: st == null || st === 'REVISION' || st === 'RETURNED',
-          _tier: st == null || st === 'REVISION' || st === 'RETURNED' ? 0 : st === 'GRADED' ? 3 : 1,
-          _dl: dl.getTime(),
+          // 排序辅助：截止时间戳、是否已过截止
           _overdue: dl < now,
           deadline: '截止 ' + String(it.deadline || '').replace('T', ' ').slice(0, 16) + overText(dl),
           status,
@@ -230,20 +200,10 @@ Page({
       // request 层已 toast，作业部分照常
     }
 
-    // 排序（2026-10-29 四梯队口径）：
-    //   1) 未提交（含草稿/退回）——组内：已过截止（可补交）在上、超期越久越上（_dl 升序），
-    //      未到截止的随后、截止越近越上；
-    //   2) 已提交未批改；3) 申诉中；4) 已提交已批改（已过截止的在收录阶段剔除）。
-    //   第 2~4 梯队内部按发布时间由近到远。
+    // 排序（2026-11-24 单一待办口径）：已过截止（可补交）在上、截止越早越上
     items.sort((a, b) => {
-      if (a._tier !== b._tier) return a._tier - b._tier          // 梯队：未提交 → 未批改 → 申诉 → 已批改
-      if (a._tier === 0) {
-        if (a._overdue !== b._overdue) return a._overdue ? -1 : 1 // 已过截止（可补交）在上
-        return a._dl - b._dl                                      // 截止越早越上
-      }
-      const pa = a.publish ? a.publish.getTime() : 0              // 2~4 梯队：发布由近到远
-      const pb = b.publish ? b.publish.getTime() : 0
-      return pb - pa
+      if (a._overdue !== b._overdue) return a._overdue ? -1 : 1
+      return a._dl - b._dl
     })
     this.setData({ todoTasks: items })
   },

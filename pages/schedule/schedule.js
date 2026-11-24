@@ -78,6 +78,8 @@ Page({
           loc: it.classroomName || '教室待定',
           tc: it.teacherName || '',
           weekRef: it.weekRef || 0,
+          // 2026-11-24 新增：课程 id，点击课次卡跳转该课的课程详情页
+          courseId: it.courseId,
           // 独立课堂入口（2026-11-18）：保留排课 id，进入课堂按钮按课定向解析各自的课堂会话
           scheduleId: it.scheduleId,
           ongoing: it.status === 'ongoing'
@@ -181,6 +183,17 @@ Page({
 
   // 进入课堂（独立课堂入口，2026-11-18）：按各课自己的排课 id 解析它自己的课堂会话，
   // 再带 sessionId 跳实时课堂页——多课同窗时各按钮指向各自课堂，不再共用全局 current
+  // 2026-11-24 新增：点击课次卡 → 该门课的课程详情页（courseId 来自排课数据；
+  // 排课记录缺 courseId 时（脏数据）toast 提示，不跳转）
+  goCourse(e) {
+    const cid = e.currentTarget.dataset.cid
+    if (!cid) {
+      wx.showToast({ title: '该课暂无课程详情', icon: 'none' })
+      return
+    }
+    wx.navigateTo({ url: '/pages/course-detail/course-detail?courseId=' + cid })
+  },
+
   async goLive(e) {
     const scheduleId = Number(e.currentTarget.dataset.sid) || 0
     if (!scheduleId) return

@@ -11,3 +11,25 @@
 
 /* 学习进度条标签行 */
 .co-pro-label { margin-bottom: 6rpx; }
+
+
+/* 学期筛选下拉（2026-11-24） */
+.term-bar {
+  padding: 8rpx 24rpx 16rpx;
+}
+.term-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 12rpx 28rpx;
+  border-radius: 28rpx;
+  font-size: 26rpx;
+  color: #0d9488;
+  background: #f0fdfa;
+  border: 1rpx solid #99f6e4;
+  font-weight: 600;
+}
+.term-arrow {
+  font-size: 22rpx;
+  color: #14b8a6;
+}
