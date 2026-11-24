@@ -9,10 +9,13 @@
         <view class="icon-box">∑</view>
         <view>
           <view class="cd-title">{{course.courseName}}</view>
-          <view class="small muted mt4">{{course.teacherName}} · {{course.statusText}}</view>
+          <view class="small muted mt4">{{course.teacherName}}</view>
         </view>
       </view>
-      <view class="badge {{course.badge}}">{{course.statusText}}</view>
+      <view style="text-align:right;">
+        <view class="badge {{course.badge}}">{{course.statusText}}</view>
+        <view class="small muted" style="margin-top:8rpx;">已选 {{course.studentCount}} 人</view>
+      </view>
     </view>
     <view class="small muted mt8">课程码 <text class="cd-code">{{course.courseCode}}</text></view>
   </view>

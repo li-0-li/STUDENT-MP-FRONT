@@ -57,11 +57,14 @@ Page({
         intro,
         course: {
           courseName: course.courseName || '未命名课程',
-          teacherName: course.teacherName || '教师',
+          // 2026-11-24：teacherName 来自详情响应顶层（后端 detail 单独透传；Course 实体只有 teacherId）
+          teacherName: detail.teacherName || course.teacherName || '教师',
           // 原型状态徽章：进行中 / 已结课
           statusText: course.status === 'ended' ? '已结课' : '进行中',
           badge: course.status === 'ended' ? 'badge-neutral' : 'badge-info',
-          courseCode: course.courseCode || '—'
+          courseCode: course.courseCode || '—',
+          // 已选人数（Course 实体字段，后端随 course 直接返回）
+          studentCount: course.studentCount != null ? course.studentCount : 0
         },
         chapterCount: (detail.weeks || []).length,
         weekLabel: cur ? cur.label : '',
