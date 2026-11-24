@@ -19,7 +19,8 @@
         <view class="audio-dot"></view>
         <text class="small">{{audioState === 'listening' ? (audioMicOn ? '语音已连接 · 正在发言' : '收听教师语音中') : audioState === 'offline' ? '仅同步课件' : '连接语音中…'}}</text>
       </view>
-      <view class="audio-mic-btn {{audioMicOn ? 'on' : ''}} {{audioMuted || audioState !== 'listening' ? 'disabled' : ''}}" bindtap="toggleMic">
+      <!-- 2026-11-24 上行与下行解耦：收听失败(offline)不再禁用开麦，仅教师禁言时禁用 -->
+      <view class="audio-mic-btn {{audioMicOn ? 'on' : ''}} {{audioMuted ? 'disabled' : ''}}" bindtap="toggleMic">
         {{audioMuted ? '已被禁言' : (audioMicOn ? '闭麦' : '开麦')}}
       </view>
     </view>

@@ -89,6 +89,7 @@
       }
     ]
   },
+  "requiredBackgroundModes": ["audio"],
   "style": "v2",
   "sitemapLocation": "sitemap.json"
 }

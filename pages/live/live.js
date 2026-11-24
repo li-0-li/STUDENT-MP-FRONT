@@ -1,4 +1,4 @@
-// 实时课堂（2026-10-29 改版：删投屏/直播/课堂互动，保留在线人数；新增导航「课堂/随堂测试」）
+﻿// 实时课堂（2026-10-29 改版：删投屏/直播/课堂互动，保留在线人数；新增导航「课堂/随堂测试」）
 // 结构：课堂状态卡 → 导航（课堂 | 随堂测试[红点]）
 //   课堂 tab：在线人数 + 签到按钮（教师发布签到显红点；五种方式）+ 花名册（只读，10s 轮询自动刷新）
 //   随堂测试 tab：当前测试信息 + 开始测试；未发布时空态 + 查看历史测试
@@ -220,8 +220,12 @@ Page({
     this.fullCanvas = null
     this.fullCtx = null
     // 实时语音清理（2026-11-20）：卸载推流组件释放麦克风占用；拉流随页面销毁自动释放
+    // 2026-11-23 桥接模式：BackgroundAudioManager 是全局单例，离开课堂必须显式停掉
+    if (this.bgm) { try { this.bgm.stop(); } catch (e) {} this.bgm = null }
+    if (this.uplinkWs) { try { this.uplinkWs.close({}); } catch (e) {} this.uplinkWs = null }
+    if (this.recorder) { try { this.recorder.stop(); } catch (e) {} this.recorder = null }
     if (this.data.audioMicOn) this.setData({ audioMicOn: false, audioPushUrl: '' })
-    this.setData({ audioPullUrl: '' })
+    this.setData({ audioPullUrl: '', audioStreamUrl: '' })
   },
 
   /** 全屏覆盖层拦截滚动（wxml catchtouchmove 占位） */
@@ -1114,7 +1118,26 @@ Page({
       const r = await api.classroom.mpAudioDownlink(this.data.sessionId)
       const d = (r && (r.data || r)) || {}
       if (!d.pullUrl) throw new Error('empty pullUrl')
-      this.setData({ audioPullUrl: d.pullUrl, audioState: 'listening' })
+      const room = d.room || ('session-' + this.data.sessionId)
+      // 2026-11-23 桥接模式（live-player 无类目权限）：BackgroundAudioManager 播音频桥的 mp3 流；
+      // 权限开通后可切回 live-player（audioPullUrl 直接用 pullUrl）
+      const config = require('../../utils/config.js')
+      const bgm = wx.getBackgroundAudioManager()
+      // 2026-11-24 防双连接：换房间前显式停旧播放（bgm 全局单例，src 重复设置会让播放器
+      // 短暂保持旧连接造成桥端双房间竞争）
+      try { bgm.stop() } catch (e) {}
+      bgm.title = (this.data.current.course || '课堂') + ' 直播音频'
+      // 2026-11-24 加错误监听：真机播放失败（如明文 http 域名被微信拦截）此前完全静默，
+      // 反复重连无感知——现在显式提示并降级
+      bgm.onError((e) => {
+        console.error('[mp3] bgm onError', e && (e.errMsg || e), e && e.errCode)
+        wx.showToast({ title: '语音播放失败 ' + ((e && e.errCode) || '') + ' ' + ((e && e.errMsg) || '').slice(0, 40), icon: 'none', duration: 3000 })
+        this.setData({ audioState: 'offline' })
+      })
+      bgm.onEnded(() => console.warn('[mp3] bgm 播放意外结束（流中断）'))
+      bgm.src = config.BRIDGE_HOST + '/audio/' + room + '.mp3'
+      this.bgm = bgm
+      this.setData({ audioPullUrl: '', audioStreamUrl: bgm.src, audioState: 'listening' })
     } catch (e) {
       // 503（音频服务未配置/桥接组件未部署）或其他：一律「仅同步课件」，不打断课堂
       this.setData({ audioState: 'offline', audioPullUrl: '' })
@@ -1127,23 +1150,74 @@ Page({
       wx.showToast({ title: '已被教师关闭麦克风', icon: 'none' })
       return
     }
-    if (this.data.audioState !== 'listening') {
-      wx.showToast({ title: '语音未连接，仅同步课件', icon: 'none' })
+    // 2026-11-24 上行与下行解耦：收听通道(offline)不影响发言——上行 WS 独立建连
+    if (this.data.audioMicOn) {
+      // 闭麦：停录音分片上行 + 关 WS（桥端随之杀掉 ffmpeg 停止推 ingress）
+      this.stopUplinkBridge()
+      this.setData({ audioMicOn: false, audioPushUrl: '' })
       return
     }
-    if (this.data.audioMicOn) {
-      // 闭麦：卸载 live-pusher 停止推流（释放麦克风占用）
-      this.setData({ audioMicOn: false, audioPushUrl: '' })
+    // 2026-11-23 联调加固：开麦前显式申请麦克风授权（拒绝过则引导去设置页），避免组件静默失败
+    try {
+      await new Promise((resolve, reject) => wx.authorize({ scope: 'scope.record', success: resolve, fail: reject }))
+    } catch (e) {
+      wx.showModal({
+        title: '需要麦克风权限',
+        content: '开麦发言需要麦克风权限，请在设置中开启',
+        confirmText: '去设置',
+        success: (r) => { if (r.confirm) wx.openSetting() }
+      })
       return
     }
     try {
       const r = await api.classroom.mpAudioUplink(this.data.sessionId)
       const d = (r && (r.data || r)) || {}
       if (!d.pushUrl) throw new Error('empty pushUrl')
-      this.setData({ audioPushUrl: d.pushUrl, audioMicOn: true })
+      console.log('[uplink] pushUrl =', d.pushUrl)
+      // 2026-11-23 桥接模式（live-pusher 无类目权限）：RecorderManager PCM 分片 → WS → 桥 ffmpeg 推 ingress
+      const config = require('../../utils/config.js')
+      const wsUrl = config.BRIDGE_HOST.replace(/^http/, 'ws') + '/ws/uplink'
+        + '?pushUrl=' + encodeURIComponent(d.pushUrl)
+        + '&identity=' + encodeURIComponent(d.identity || this.data.userId || 'mp-stu')
+      const task = wx.connectSocket({ url: wsUrl, protocols: [], fail: (e) => console.error('[uplink ws] connect fail', e) })
+      this.uplinkWs = task
+      task.onOpen(() => {
+        console.log('[uplink ws] 已连接，开始录音分片上行')
+        const rec = wx.getRecorderManager()
+        this.recorder = rec
+        rec.onFrameRecorded((res) => {
+          if (res.frameBuffer && task && this.data.audioMicOn) {
+            task.send({ data: res.frameBuffer, fail: () => {} })
+          }
+        })
+        rec.onError((e) => {
+          console.error('[recorder] error', e)
+          wx.showToast({ title: '录音失败 code:' + (e.errMsg || ''), icon: 'none' })
+          this.stopUplinkBridge()
+          this.setData({ audioMicOn: false, audioPushUrl: '' })
+        })
+        rec.onStop(() => console.log('[recorder] stopped'))
+        // 16kHz 16bit 单声道 PCM，4KB 一帧（约128ms）延迟与开销均衡
+        rec.start({ format: 'pcm', sampleRate: 16000, numberOfChannels: 1, frameSize: 8 }) // 2026-11-24: 4KB帧过碎致上行卡顿，加大帧减少WS包频率
+      })
+      task.onError((e) => {
+        console.error('[uplink ws] error', e)
+        wx.showToast({ title: '语音上行连接失败', icon: 'none' })
+        this.setData({ audioMicOn: false, audioPushUrl: '' })
+      })
+      task.onClose(() => { if (this.recorder) { try { this.recorder.stop(); } catch (e) {} } })
+      // 桥接模式不设 audioPushUrl（避免挂载无权限的 live-pusher 组件）
+      this.pushUrl = d.pushUrl
+      this.setData({ audioPushUrl: '', audioMicOn: true })
     } catch (e) {
       wx.showToast({ title: '开麦失败，请稍后重试', icon: 'none' })
     }
+  },
+
+  /** 停止上行桥资源：录音器 + WS（桥端 ffmpeg 随 WS 断开自动退出） */
+  stopUplinkBridge() {
+    if (this.recorder) { try { this.recorder.stop(); } catch (e) {} this.recorder = null }
+    if (this.uplinkWs) { try { this.uplinkWs.close({}); } catch (e) {} this.uplinkWs = null }
   },
 
   /** 教师禁言/恢复信令（audio-mic 帧）：按 studentId 匹配本人 → 更新按钮态 */
@@ -1152,7 +1226,8 @@ Page({
     if (Number(payload.studentId) !== Number(this.myUserId)) return
     const enabled = !!payload.enabled
     if (!enabled) {
-      // 立即闭麦：卸载推流组件
+      // 立即闭麦：停上行桥资源（桥端 ffmpeg 随 WS 断开自动停止推流）
+      this.stopUplinkBridge()
       this.setData({ audioMuted: true, audioMicOn: false, audioPushUrl: '' })
       wx.showToast({ title: '教师已关闭你的麦克风', icon: 'none' })
     } else {
@@ -1173,10 +1248,13 @@ Page({
   /** live-pusher 状态回调：推流失败（含授权拒绝）→ 复位按钮并提示 */
   onAudioPusherState(e) {
     const code = e && e.detail ? e.detail.code : 0
-    if (code === -3007 || code === -3001) {
+    console.log('[pusher state]', code, e && e.detail ? JSON.stringify(e.detail) : '')
+    // 2026-11-23 临时调试：真机定位推流环节，把状态码直接显示出来
+    wx.showToast({ title: 'pusher:' + code, icon: 'none', duration: 1500 })
+    if (code === -3007 || code === -3001 || code === -1302 || code === -1301 || code === -1307) {
       // 麦克风授权拒绝 / 推流失败：复位开麦态
       this.setData({ audioMicOn: false, audioPushUrl: '' })
-      wx.showToast({ title: '麦克风不可用或权限未授予', icon: 'none' })
+      wx.showToast({ title: '推流失败 code:' + code, icon: 'none' })
     }
   },
 
