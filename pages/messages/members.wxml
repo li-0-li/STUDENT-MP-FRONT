@@ -11,6 +11,8 @@
       <view class="mem-group-name">{{groupName}}</view>
       <view class="small muted">{{isMeOwner ? '点击头像可更换群头像' : '仅群主可更换群头像'}}</view>
     </view>
+    <!-- 邀请同学入群（2026-11-24）：群主与成员均可，选人范围=该群课程花名册（已在群的人不显示邀请） -->
+    <view class="mem-invite-btn" bindtap="goInvite">＋ 邀请</view>
   </view>
 
   <view wx:for="{{members}}" wx:key="userId" class="mem-row" bindtap="showProfile" data-id="{{item.userId}}">

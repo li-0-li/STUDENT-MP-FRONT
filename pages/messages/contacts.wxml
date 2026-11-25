@@ -1,42 +1,104 @@
-<!-- 选联系人（期2 建群/私聊）：课程选择条 + 花名册搜索 + 选人 -->
+<!-- 选联系人（期2 建群/私聊；2026-11-24 + 邀请入群） -->
+<!-- invite 模式（2026-11-24 口径B）：搜索式选人（本校学生+教师全校可搜）——搜索结果卡片
+     右侧「添加」；底部已选横滑栏（头像右上角红叉取消、头像下方姓名）；发送邀请统一批量 -->
 <view class="page">
-  <!-- 课程横滑选择条 -->
-  <scroll-view class="course-bar" scroll-x>
+  <!-- ===== 建群/私聊模式：课程横滑选择条 ===== -->
+  <scroll-view wx:if="{{mode !== 'invite'}}" class="course-bar" scroll-x>
     <view class="course-pill {{courseId === item.courseId ? 'on' : ''}}"
           wx:for="{{courses}}" wx:key="courseId"
           bindtap="selectCourse" data-id="{{item.courseId}}" data-name="{{item.courseName}}">{{item.courseName}}</view>
   </scroll-view>
 
-  <!-- 搜索框（姓名/学号） -->
-  <view class="search-row">
-    <input class="input search-input" value="{{keyword}}" bindinput="onSearch"
-           placeholder="按姓名或学号搜索…" confirm-type="search" />
-  </view>
-
-  <!-- 花名册 -->
-  <view wx:for="{{filtered}}" wx:key="studentId" class="stu-row {{item.checked ? 'on' : ''}}"
-        bindtap="tapStudent" data-id="{{item.studentId}}">
-    <view class="stu-av">
-      <image wx:if="{{item.avatarUrl && !item.avFail}}" class="stu-av-img" src="{{item.avatarUrl}}" mode="aspectFill"
-             data-id="{{item.studentId}}" binderror="onAvError" />
-      <view wx:else>{{item.initial}}</view>
+  <!-- ===== 建群/私聊模式：搜索框 + 花名册（本地过滤） ===== -->
+  <block wx:if="{{mode !== 'invite'}}">
+    <view class="search-row">
+      <input class="input search-input" value="{{keyword}}" bindinput="onSearch"
+             placeholder="按姓名或学号搜索…" confirm-type="search" />
     </view>
-    <view class="stu-mid">
-      <view class="stu-name">{{item.name}}</view>
-      <view class="small muted">学号 {{item.studentNo}}</view>
+
+    <view wx:for="{{filtered}}" wx:key="studentId"
+          class="stu-row {{item.checked ? 'on' : ''}}"
+          bindtap="tapStudent" data-id="{{item.studentId}}">
+      <view class="stu-av">
+        <image wx:if="{{item.avatarUrl && !item.avFail}}" class="stu-av-img" src="{{item.avatarUrl}}" mode="aspectFill"
+               data-id="{{item.studentId}}" binderror="onAvError" />
+        <view wx:else>{{item.initial}}</view>
+      </view>
+      <view class="stu-mid">
+        <view class="stu-name">{{item.name}}</view>
+        <view class="small muted">学号 {{item.studentNo}}</view>
+      </view>
+      <view class="stu-check {{mode === 'direct' ? 'hidden' : (item.checked ? 'on' : '')}}">{{item.checked ? '✓' : ''}}</view>
     </view>
-    <view class="stu-check {{mode === 'group' ? (item.checked ? 'on' : '') : 'hidden'}}">{{item.checked ? '✓' : ''}}</view>
-  </view>
 
-  <view wx:if="{{loading}}" class="center muted small list-end">加载中…</view>
-  <view wx:if="{{!loading && !filtered.length}}" class="empty">
-    <view class="empty-icon">🔍</view>
-    <view class="small">{{roster.length ? '没有匹配的同学' : '该课程暂无其他选课学生'}}</view>
-  </view>
+    <view wx:if="{{loading}}" class="center muted small list-end">加载中…</view>
+    <view wx:if="{{!loading && !filtered.length}}" class="empty">
+      <view class="empty-icon">🔍</view>
+      <view class="small">{{roster.length ? '没有匹配的同学' : '该课程暂无其他选课学生'}}</view>
+    </view>
+  </block>
 
-  <!-- 建群底栏 -->
-  <view wx:if="{{mode === 'group'}}" class="group-foot">
-    <text class="small muted">{{courseName}} · 已选 {{selectedCount}} 人</text>
-    <view class="btn btn-primary btn-sm {{selectedCount ? '' : 'btn-disabled'}}" bindtap="createGroup">创建群聊</view>
+  <!-- ===== 邀请模式（2026-11-24 口径B）：搜索式选人 ===== -->
+  <block wx:if="{{mode === 'invite'}}">
+    <!-- 搜索框：输入学号/工号/姓名，防抖 300ms 自动搜索 -->
+    <view class="search-row">
+      <input class="input search-input" value="{{searchKeyword}}" bindinput="onInviteSearchInput"
+             placeholder="输入学号或工号搜索（支持姓名）…" confirm-type="search" />
+    </view>
+    <view class="small muted invite-tip">可邀请本校学生与老师；已在群内的人不可重复邀请</view>
+
+    <!-- 搜索结果卡片：头像 + 姓名 + 学号/工号 + 身份标签；右侧「添加」/「已在群聊」 -->
+    <view wx:for="{{searchResults}}" wx:key="userId"
+          class="stu-row {{item.inGroup || item.added ? 'stu-disabled' : ''}}">
+      <view class="stu-av">
+        <image wx:if="{{item.avatarUrl && !item.avFail}}" class="stu-av-img" src="{{item.avatarUrl}}" mode="aspectFill"
+               data-id="{{item.userId}}" binderror="onAvError" />
+        <view wx:else>{{item.initial}}</view>
+      </view>
+      <view class="stu-mid">
+        <view class="stu-name">{{item.name}}</view>
+        <view class="small muted">{{item.userType === 'teacher' ? '工号' : '学号'}} {{item.userNo || '—'}}</view>
+      </view>
+      <text class="stu-tag {{item.userType === 'teacher' ? 'tag-teacher' : 'tag-student'}}">
+        {{item.userType === 'teacher' ? (item.jobTitle || '教师') : '学生'}}
+      </text>
+      <!-- 右侧：已在群 → 灰字；已添加 → 「已添加」灰字；否则「添加」按钮 -->
+      <text wx:if="{{item.inGroup}}" class="small muted stu-ingrp">已在群聊</text>
+      <text wx:elif="{{item.added}}" class="small muted stu-ingrp">已添加</text>
+      <view wx:else class="stu-add-btn" bindtap="tapAdd" data-id="{{item.userId}}">添加</view>
+    </view>
+
+    <!-- 搜索状态与空态 -->
+    <view wx:if="{{searching}}" class="center muted small list-end">搜索中…</view>
+    <view wx:if="{{!searching && searchDone && !searchResults.length && searchKeyword.length >= 2}}" class="empty">
+      <view class="empty-icon">🔍</view>
+      <view class="small">未找到该学号/工号对应的同学或老师</view>
+    </view>
+    <view wx:if="{{!searchDone && searchKeyword.length < 2}}" class="empty">
+      <view class="empty-icon">👆</view>
+      <view class="small">输入至少 2 个字符开始搜索</view>
+    </view>
+  </block>
+
+  <!-- 底栏：建群按钮 / 邀请模式=已选横滑栏 + 发送邀请 -->
+  <view wx:if="{{mode === 'group' || mode === 'invite'}}" class="group-foot {{mode === 'invite' ? 'foot-col' : ''}}">
+    <!-- 已选横滑栏（邀请模式）：头像右上角红叉取消、头像下方姓名，可左右滑动 -->
+    <scroll-view wx:if="{{mode === 'invite' && selectedList.length}}" class="sel-bar" scroll-x>
+      <view class="sel-item" wx:for="{{selectedList}}" wx:key="userId">
+        <view class="sel-av-wrap">
+          <image wx:if="{{item.avatarUrl && !item.avFail}}" class="sel-av" src="{{item.avatarUrl}}" mode="aspectFill"
+                 data-id="{{item.userId}}" binderror="onAvError" />
+          <view wx:else class="sel-av sel-av-txt">{{item.initial}}</view>
+          <view class="sel-x" catchtap="removeSelected" data-id="{{item.userId}}">×</view>
+        </view>
+        <view class="sel-name">{{item.name}}</view>
+      </view>
+    </scroll-view>
+    <view class="foot-row">
+      <text class="small muted" wx:if="{{mode === 'group'}}">{{courseName}} · 已选 {{selectedCount}} 人</text>
+      <text class="small muted" wx:else>已选 {{selectedCount}} 人</text>
+      <view wx:if="{{mode === 'group'}}" class="btn btn-primary btn-sm foot-btn {{selectedCount ? '' : 'btn-disabled'}}" bindtap="createGroup">创建群聊</view>
+      <view wx:else class="btn btn-primary btn-sm foot-btn {{selectedCount ? '' : 'btn-disabled'}}" bindtap="sendInvites">发送邀请</view>
+    </view>
   </view>
 </view>

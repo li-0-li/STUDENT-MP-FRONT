@@ -518,7 +518,9 @@ Page({
    * 换任何课程都推同一门课的重复题。流程：拉推荐 → 取题目 → 开弹层，
    * 全程有按钮 loading 态，失败也不会把弹层留在半开状态。
    */
-  async startPractice() {
+  async startPractice(d) {
+    // 重试深度：AI 出题失败弹窗点「重试」会带数字递归调用；bindtap 事件对象不算深度
+    const depth = typeof d === 'number' ? d : 0
     if (this.data.practiceStarting) return
     if (this.recommendCourseId == null) {
       wx.showToast({ title: '暂无可选课程，无法推荐练习', icon: 'none' })
@@ -531,6 +533,25 @@ Page({
       // 而且绕过缓存才能让后端「出题账本去重」每次生效（同学生不推重复题）
       const rec = await api.ai.recommend(this.recommendCourseId)
       this.recommend = rec
+      // AI 自适应出题通报（2026-11-25）：failed → 弹窗告知原因并提供重试；off → 仅提示原因
+      const gen = rec && rec.aiGen
+      if (gen && gen.status === 'failed') {
+        const wantRetry = await new Promise((resolve) => {
+          wx.showModal({
+            title: 'AI 出题失败',
+            content: gen.message || '未知原因',
+            confirmText: '重试',
+            cancelText: '继续旧题',
+            success: (r) => resolve(r.confirm)
+          })
+        })
+        if (wantRetry && depth < 3) {
+          this.setData({ practiceStarting: false })
+          return this.startPractice(depth + 1)
+        }
+      } else if (gen && gen.status === 'off') {
+        wx.showToast({ title: gen.message || 'AI 出题未启用', icon: 'none' })
+      }
       const items = (rec && rec.list) || []
       const ids = []
       items.forEach(function (it) {

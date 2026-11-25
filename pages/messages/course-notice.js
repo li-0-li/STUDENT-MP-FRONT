@@ -53,7 +53,11 @@ Page({
             title: n.title || '通知',
             text: n.content || '',
             time: fmtListTime(n.create_time),
-            unread: !n.is_read
+            unread: !n.is_read,
+            // 群聊邀请（2026-11-24）：biz_type=group_invite，biz_id=inviteId，
+            // 点击弹出「同意 / 拒绝」处理（其余通知维持详情弹窗）
+            bizType: n.biz_type || '',
+            bizId: n.biz_id || null
           }
         })
       this.setData({ items })
@@ -64,19 +68,58 @@ Page({
   },
 
   // 点击查看详情；未读则标记已读（表 2-17），返回上一页时红点自动刷新
+  // 群聊邀请（2026-11-24）：弹「同意 / 拒绝」，同意后入群并跳进该群聊
   openNotice(e) {
     const idx = e.currentTarget.dataset.idx
     const n = this.data.items[idx]
     if (!n) return
+    if (n.unread) {
+      this.setData({ ['items[' + idx + '].unread']: false })
+      api.message.markRead({ noticeIds: [n.id] }).catch(function () {})
+    }
+    if (n.bizType === 'group_invite' && n.bizId) {
+      this.handleInvite(n)
+      return
+    }
     wx.showModal({
       title: n.title,
       content: ((n.text || '') + (n.time ? '\n\n' + n.time : '')) || '（无正文）',
       showCancel: false
     })
-    if (n.unread) {
-      this.setData({ ['items[' + idx + '].unread']: false })
-      api.message.markRead({ noticeIds: [n.id] }).catch(function () {})
-    }
+  },
+
+  // 群聊邀请处理：同意 → 入群并跳进群聊；拒绝 → 仅置 declined（不通知邀请人，用户口径）
+  handleInvite(n) {
+    wx.showModal({
+      title: '群聊邀请',
+      content: (n.text || '') + '\n\n同意后将加入该群聊。',
+      confirmText: '同意',
+      cancelText: '拒绝',
+      success(res) {
+        if (res.confirm) {
+          api.message.inviteAccept(n.bizId).then(function (r) {
+            wx.showToast({ title: (r && r.message) || '已加入群聊', icon: 'success' })
+            const convId = r && r.conversationId
+            // 回消息页并打开该群聊（conversationId 来自 accept 返回）
+            setTimeout(function () {
+              wx.navigateBack({
+                complete: function () {
+                  const pages = getCurrentPages()
+                  const page = pages[pages.length - 1]
+                  if (page && page.openChatAfterLoad && convId) {
+                    page.openChatAfterLoad(convId, '')
+                  }
+                }
+              })
+            }, 800)
+          }).catch(function () {})
+        } else if (res.cancel) {
+          api.message.inviteDecline(n.bizId).then(function () {
+            wx.showToast({ title: '已拒绝邀请', icon: 'none' })
+          }).catch(function () {})
+        }
+      }
+    })
   },
 
   // 长按删除（软删，仅本人）；删完返回上一页文件夹列表自动刷新

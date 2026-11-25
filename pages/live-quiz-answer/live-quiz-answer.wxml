@@ -1,33 +1,45 @@
-<!-- 随堂测试 · 作答卷（readonly=1 时只读浏览，无提交按钮） -->
-<view class="page">
-  <view wx:if="{{loading}}" class="card center"><view class="small muted">加载中…</view></view>
+<!-- 随堂测试 · 作答卷（readonly=1 时只读浏览，无提交按钮）
+     2026-11-25 UI 重设计：任务头卡 + 题号/题型徽标 + 选中态✓ + 吸底提交条；data 绑定与事件不变 -->
+<view class="page {{!readonly ? 'has-submitbar' : ''}}">
+  <view wx:if="{{loading}}" class="card"><view class="empty"><view class="empty-icon">⏳</view>加载中…</view></view>
 
   <block wx:else>
-    <view class="card">
-      <view class="strong">{{title}}</view>
-      <view class="small muted mt4">共 {{total}} 题 · 截止：{{deadline}}</view>
+    <!-- 任务头卡：标题 + 题数/截止徽标 -->
+    <view class="card quiz-head">
+      <view class="quiz-head-title">{{title}}</view>
+      <view class="between quiz-head-meta">
+        <view class="badge badge-info">共 {{total}} 题</view>
+        <view wx:if="{{deadline}}" class="badge badge-neutral">截止 {{deadline}}</view>
+      </view>
     </view>
 
-    <view wx:for="{{questions}}" wx:key="seq" wx:for-index="qi" class="card">
-      <view class="strong">{{item.seq}}. {{item.content}}<text wx:if="{{item.multi}}" class="small muted">（多选）</text></view>
+    <view wx:for="{{questions}}" wx:key="seq" wx:for-index="qi" class="card quiz-qcard">
+      <view class="between quiz-qhead">
+        <view class="quiz-seq">第 {{item.seq}} 题</view>
+        <view class="badge {{item.multi ? 'badge-warning' : (item.options.length ? 'badge-info' : 'badge-neutral')}}">{{item.multi ? '多选' : (item.options.length ? '单选' : '简答')}}</view>
+      </view>
+      <view class="quiz-content">{{item.content}}</view>
 
       <!-- 有选项（single / judge / multi）→ 选项框，选中态统一用 sel 标记 -->
-      <view wx:if="{{item.options.length}}" class="mt16 quiz-options">
+      <view wx:if="{{item.options.length}}" class="quiz-options">
         <view wx:for="{{item.options}}" wx:for-item="op" wx:key="key"
           class="quiz-option {{op.sel ? 'on' : ''}}"
           bindtap="pick" data-idx="{{qi}}" data-key="{{op.key}}">
           <text class="quiz-option-key">{{op.key}}</text>
           <text class="quiz-option-text">{{op.text}}</text>
+          <text wx:if="{{op.sel}}" class="quiz-check">✓</text>
         </view>
       </view>
 
       <!-- 无选项题型（填空/简答）→ 文本作答 -->
-      <textarea wx:else class="quiz-textarea mt16" value="{{item.picked}}"
+      <textarea wx:else class="quiz-textarea" value="{{item.picked}}"
         bindinput="typeAnswer" data-idx="{{qi}}" disabled="{{readonly}}"
         placeholder="{{readonly ? '（未作答）' : '输入你的答案'}}" maxlength="500" auto-height />
     </view>
 
-    <view wx:if="{{!readonly}}" class="btn-submit" bindtap="submit">{{submitting ? '提交中…' : '提交测试'}}</view>
-    <view wx:else class="small muted center mt16">— 仅浏览，无作答权限 —</view>
+    <view wx:if="{{!readonly}}" class="quiz-submitbar">
+      <view class="btn btn-primary btn-block" bindtap="submit">{{submitting ? '提交中…' : '提交测试'}}</view>
+    </view>
+    <view wx:else class="empty">— 仅浏览，无作答权限 —</view>
   </block>
 </view>

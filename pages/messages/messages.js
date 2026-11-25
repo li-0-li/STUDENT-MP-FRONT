@@ -134,7 +134,9 @@ function mapConv(c, idx) {
     pinned: !!(c.is_pinned),
     muted: !!(c.is_muted),
     initial: name.slice(0, 1),
-    last: c.last_message || ''
+    last: c.last_message || '',
+    // course_id 透传（2026-11-24 bug修复）：群聊邀请（members 页 goInvite）需要该群所属课程，此前丢字段导致恒报「该群暂不支持邀请」
+    course_id: c.course_id || null
   }
 }
 
@@ -150,6 +152,9 @@ Page({
     loading: true,
     notices: [],
     chats: [],
+    // 顶部 pill 红点（2026-11-24）：通知=通知列表未读总和；会话=会话未读总和（tabbar=两者合计）
+    noticeUnread: 0,
+    chatUnread: 0,
     // 聊天详情（页内浮层，表 2-11/2-12）
     chatOpen: false,
     chat: {},
@@ -249,7 +254,9 @@ Page({
       const sections = orderKeys.map(function (g) {
         return { id: g, gid: g, title: groups[g].title, unread: groups[g].unread }
       })
-      this.setData({ notices: sections })
+      // 顶部「通知」pill 红点（2026-11-24）：全部分组未读之和
+      const noticeUnread = sections.reduce((t, s) => t + s.unread, 0)
+      this.setData({ notices: sections, noticeUnread })
     } catch (e) {
       // request 层已 toast
     }
@@ -283,7 +290,9 @@ Page({
       const chats = (list || [])
         .filter(function (c) { return c.conv_type !== 'notice' })
         .map(mapConv)
-      this.setData({ chats })
+      // 顶部「会话」pill 红点（2026-11-24）：会话列表未读数总和
+      const chatUnread = chats.reduce((t, c) => t + (c.unread || 0), 0)
+      this.setData({ chats, chatUnread })
     } catch (e) {
       // request 层已 toast
     }
@@ -306,9 +315,9 @@ Page({
       // 2026-11-16 修复：后端返回纯数字（Result<Long>），此前按 s.total 解析恒为 0，角标从不显示
       const n = typeof s === 'number' ? s : ((s && s.total) || 0)
       if (n > 0) {
-        wx.setTabBarBadge({ index: 3, text: n > 99 ? '99+' : String(n), fail: function () {} })
+        wx.setTabBarBadge({ index: 2, text: n > 99 ? '99+' : String(n), fail: function () {} })
       } else {
-        wx.removeTabBarBadge({ index: 3, fail: function () {} })
+        wx.removeTabBarBadge({ index: 2, fail: function () {} })
       }
     }).catch(function () {})
   },
@@ -340,7 +349,12 @@ Page({
     }).catch(function () {})
     // 聊天为全屏浮层：打开时隐藏 tabBar（本页是 tabBar 页），关闭时恢复
     wx.hideTabBar({ animation: false, fail: function () {} })
-    this.setData({ ['chats[' + idx + '].unread']: 0 })
+    // 打开会话即视为已读：条目清零 + 顶部「会话」pill 红点同步扣减（tabbar 由 app.js 轮询自动跟平）
+    const prev = (this.data.chats[idx] && this.data.chats[idx].unread) || 0
+    this.setData({
+      ['chats[' + idx + '].unread']: 0,
+      chatUnread: Math.max(0, this.data.chatUnread - prev)
+    })
     // 标记会话已读（服务端清零未读数 + 记录已读位点）
     api.message.read(id).catch(function () {})
     // 期3 状态复位：无更多历史标记清零（搜索已改为独立页面 chat-records）
@@ -378,7 +392,9 @@ Page({
     const conv = (this.data.chats || []).find(function (c) { return c.id === this.data.chat.id }, this)
     const name = encodeURIComponent(this.data.chat.name || '')
     const avatar = encodeURIComponent((conv && conv.avatarUrl) || '')
-    wx.navigateTo({ url: '/pages/messages/members?conversationId=' + this.data.chat.id + '&name=' + name + '&avatar=' + avatar })
+    // courseId（2026-11-24）：邀请入群功能需要该群所属课程（列表条目带 course_id）
+    const courseId = (conv && conv.course_id) || ''
+    wx.navigateTo({ url: '/pages/messages/members?conversationId=' + this.data.chat.id + '&name=' + name + '&avatar=' + avatar + '&courseId=' + courseId })
   },
 
   // 聊天输入 / 发送（表 2-11，服务端返回 messageId + sendTime）

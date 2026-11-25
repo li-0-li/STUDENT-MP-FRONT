@@ -1,10 +1,20 @@
 <!-- 消息通知 —— 原型：ui-prototype/mp/app-messages.html（UI 设计文档 7.14） -->
 <!-- 聚合系统通知 + 师生会话；数据：表 2-10/2-11/2-12 会话消息 + 表 2-13 通知 -->
 <view class="page">
-  <!-- 顶部切换：通知 / 会话 -->
-  <view class="pilltabs top-tabs">
-    <view class="pill {{tab === 'notice' ? 'active' : ''}}" bindtap="selectTab" data-key="notice">通知</view>
-    <view class="pill {{tab === 'chat' ? 'active' : ''}}" bindtap="selectTab" data-key="chat">会话</view>
+  <!-- 顶部切换：通知 / 会话（2026-11-24：右侧加号=新建会话入口，与两 pill 同一水平线） -->
+  <view class="tabs-row">
+    <view class="pilltabs top-tabs">
+      <!-- pill 未读红点（2026-11-24）：通知=通知列表未读总和；会话=会话未读总和；tabbar=两者合计 -->
+      <view class="pill {{tab === 'notice' ? 'active' : ''}}" bindtap="selectTab" data-key="notice">
+        通知
+        <view wx:if="{{noticeUnread}}" class="pill-dot">{{noticeUnread > 99 ? '99+' : noticeUnread}}</view>
+      </view>
+      <view class="pill {{tab === 'chat' ? 'active' : ''}}" bindtap="selectTab" data-key="chat">
+        会话
+        <view wx:if="{{chatUnread}}" class="pill-dot">{{chatUnread > 99 ? '99+' : chatUnread}}</view>
+      </view>
+    </view>
+    <view wx:if="{{tab === 'chat' && !chatOpen}}" class="fab-top" bindtap="fabTap">＋</view>
   </view>
 
   <!-- ① 通知：按课程分组的「文件夹」，点击进入该课程通告子页（course-notice） -->
@@ -52,8 +62,6 @@
   <view class="center muted small msg-end">— 长按会话可置顶 / 免打扰 / 删除 —</view>
 
   <!-- 发起新对话：群聊 / 私聊同学 / 联系任课教师 -->
-  <view wx:if="{{tab === 'chat' && !chatOpen}}" class="fab" bindtap="fabTap">＋</view>
-
   <!-- 聊天详情浮层（表 2-11/2-12 会话消息；期3：图片/文件/撤回/转发/历史/搜索） -->
   <view wx:if="{{chatOpen}}" class="chat-page">
     <view class="chat-head">
@@ -71,18 +79,20 @@
       bindscrolltoupper="loadHistory" scroll-upper-threshold="30">
       <view class="chat-bub-sys" wx:if="{{chat.msgs.length === 0}}">会话已建立，发送第一条消息吧</view>
       <view wx:for="{{chat.msgs}}" wx:key="index" id="m-{{item.id}}"
-        class="{{item.recalled ? 'chat-msg-sys-row' : 'chat-msg ' + (item.from === 'me' ? 'u' : 'a')}}"
+        class="{{item.recalled || item.type === 'system' ? 'chat-msg-sys-row' : 'chat-msg ' + (item.from === 'me' ? 'u' : 'a')}}"
         bindlongpress="longPressMsg" data-idx="{{index}}">
+        <!-- 入群系统气泡（2026-11-24）：居中灰色小字「'某某'加入了群聊」，无头像无气泡框 -->
+        <view wx:if="{{item.type === 'system'}}" class="chat-recalled-sys">{{item.text}}</view>
         <!-- 头像列（2026-11-12）：QQ 式，自己靠右（.u 行 row-reverse 自动置右）；点按看资料卡 -->
-        <view wx:if="{{!item.recalled}}" class="chat-av-wrap" bindtap="showSenderProfile" data-id="{{item.senderId}}">
+        <view wx:elif="{{!item.recalled}}" class="chat-av-wrap" bindtap="showSenderProfile" data-id="{{item.senderId}}">
           <image wx:if="{{item.avatarUrl && !item.avFail}}" class="chat-av" src="{{item.avatarUrl}}" mode="aspectFill"
                  data-idx="{{index}}" binderror="onMsgAvError" />
           <view wx:else class="chat-av chat-av-txt">{{item.senderInitial}}</view>
         </view>
         <!-- 已撤回：居中灰色小字系统提示，无气泡框，群聊/私聊同款（期3修订） -->
         <view wx:if="{{item.recalled}}" class="chat-recalled-sys">该消息已被撤回</view>
-        <!-- 气泡容器（2026-11-13）：群聊时发送者名在气泡上方 -->
-        <view wx:if="{{!item.recalled}}" class="chat-main">
+        <!-- 气泡容器（2026-11-13）：群聊时发送者名在气泡上方；system 入群气泡不走气泡框 -->
+        <view wx:if="{{!item.recalled && item.type !== 'system'}}" class="chat-main">
           <view wx:if="{{chat.type !== 'direct' && item.senderName}}" class="chat-sender">{{item.senderName}}</view>
         <!-- 图片消息：气泡内缩略图，点按全屏预览。
              ★ 2026-11-16 此前写成 wx:elif，与上行 chat-sender 的 wx:if 构成同一条条件链——

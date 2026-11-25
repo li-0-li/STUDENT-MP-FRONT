@@ -1,36 +1,35 @@
-<!-- 随堂测试 · 历史测试卡片列表 -->
+<!-- 随堂测试 · 历史测试卡片列表（下拉刷新）
+     2026-11-25 UI 重设计：进行中卡片突出态 + 成绩右对齐 + 全局按钮体系；绑定不变 -->
 <view class="page">
-  <view wx:if="{{loading}}" class="card center"><view class="small muted">加载中…</view></view>
+  <view wx:if="{{loading}}" class="card"><view class="empty"><view class="empty-icon">⏳</view>加载中…</view></view>
 
   <block wx:elif="{{list.length}}">
-    <view wx:for="{{list}}" wx:key="quizId" class="card his-card">
-      <view class="his-top">
+    <view wx:for="{{list}}" wx:key="quizId" class="card his-card {{item.active ? 'is-doing' : ''}}">
+      <view class="between his-top">
         <view class="his-title">{{item.title || '随堂测试'}}</view>
-        <view wx:if="{{item.active}}" class="his-tag doing">进行中</view>
+        <view class="badge {{item.active ? 'badge-success' : 'badge-neutral'}}">{{item.active ? '进行中' : '已结束'}}</view>
       </view>
       <view class="small muted his-meta">
-        <text>发布于 {{item.publishTime || '—'}}</text>
-        <text wx:if="{{item.deadline}}">截止 {{item.deadline}}</text>
-        <text>共 {{item.total}} 题</text>
+        <text>📅 发布 {{item.publishTime || '—'}}</text>
+        <text wx:if="{{item.deadline}}">⏰ 截止 {{item.deadline}}</text>
+        <text>📋 共 {{item.total}} 题</text>
       </view>
 
-      <!-- 已参加：当时成绩 -->
-      <view wx:if="{{item.submitted}}" class="his-score">
-        <text class="his-accuracy">{{item.accuracy}}%</text>
-        <text class="small muted">正确率 · 做对 {{item.correctCount}}/{{item.total}} 题</text>
+      <!-- 已参加：成绩行 -->
+      <view wx:if="{{item.submitted}}" class="between his-score">
+        <view class="his-score-left">
+          <text class="his-accuracy">{{item.accuracy}}%</text>
+          <text class="small muted">正确率 · 做对 {{item.correctCount}}/{{item.total}} 题</text>
+        </view>
+        <view class="btn btn-outline btn-sm" data-quiz-id="{{item.quizId}}" data-submitted="{{item.submitted}}" bindtap="goDetail">查看详情</view>
       </view>
       <!-- 未参加 -->
-      <view wx:else class="his-score">
-        <text class="small muted">未参加测试</text>
-      </view>
-
-      <view class="his-foot">
-        <view class="btn-ghost btn-sm" data-quiz-id="{{item.quizId}}" data-submitted="{{item.submitted}}" bindtap="goDetail">查看详情</view>
+      <view wx:else class="between his-score">
+        <view class="badge badge-neutral">未参加测试</view>
+        <view class="btn btn-outline btn-sm" data-quiz-id="{{item.quizId}}" data-submitted="{{item.submitted}}" bindtap="goDetail">查看详情</view>
       </view>
     </view>
   </block>
 
-  <view wx:else class="card center">
-    <view class="small muted">该课程暂无历史测试</view>
-  </view>
+  <view wx:else class="card"><view class="empty"><view class="empty-icon">🗒️</view>该课程暂无历史测试</view></view>
 </view>

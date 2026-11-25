@@ -1,40 +1,35 @@
-<!-- 随堂测试 · 答题情况：正确率 + 逐题色圈（对=绿 / 错=红） -->
+<!-- 随堂测试 · 答题情况：成绩 hero（渐变深底）+ 逐题 chips 网格
+     2026-11-25 UI 重设计；data 绑定与事件（goDetail/goFirstDetail/goHistory）不变 -->
 <view class="page">
-  <view wx:if="{{loading}}" class="card center"><view class="small muted">加载中…</view></view>
+  <view wx:if="{{loading}}" class="card"><view class="empty"><view class="empty-icon">⏳</view>加载中…</view></view>
 
   <block wx:else>
-    <!-- 成绩卡：标题 + 正确率/做对数 横排 -->
-    <view class="card">
-      <view class="strong">{{title}}</view>
-      <view class="res-hero">
-        <view class="res-accuracy-box">
-          <text class="res-accuracy">{{accuracy}}</text>
-          <text class="res-percent">%</text>
-          <text class="small muted res-acc-label">正确率</text>
-        </view>
-        <view class="res-hero-divider"></view>
-        <view class="res-hero-right">
-          <view class="res-correct-num">{{correctCount}}<text class="res-correct-total">/{{total}}</text></view>
-          <view class="small muted">做对题数</view>
-        </view>
-      </view>
+    <!-- 成绩 hero：teal 渐变深底白字 + 档位徽章 -->
+    <view class="res-hero">
+      <view class="res-hero-title">{{title}}</view>
+      <view class="res-hero-acc">{{accuracy}}<text class="res-hero-pct">%</text></view>
+      <view class="res-hero-sub">正确率 · 做对 {{correctCount}}/{{total}} 题</view>
+      <view class="res-grade">{{accuracy >= 80 ? '优秀' : (accuracy >= 60 ? '良好' : '继续努力')}}</view>
     </view>
 
-    <!-- 题目序号色圈：点击进入该题详情 -->
+    <!-- 答题概览：逐题 chips（对=绿 / 错=红，点击进该题详情） -->
     <view class="card">
-      <view class="strong mb16">答题概览</view>
-      <view class="res-circles">
+      <view class="res-sec-title">答题概览</view>
+      <view class="res-grid">
         <view wx:for="{{answers}}" wx:key="seq"
-          class="res-circle {{item.correct ? 'ok' : 'bad'}}"
+          class="res-chip {{item.correct ? 'ok' : 'bad'}}"
           bindtap="goDetail" data-idx="{{index}}">{{item.seq}}</view>
       </view>
       <view class="res-legend">
-        <view class="row" style="gap:8rpx"><view class="res-circle ok res-demo"></view><text class="small muted">做对</text></view>
-        <view class="row" style="gap:8rpx"><view class="res-circle bad res-demo"></view><text class="small muted">做错</text></view>
+        <view class="row" style="gap: 8rpx;"><view class="res-chip ok res-demo"></view><text class="small muted">做对</text></view>
+        <view class="row" style="gap: 8rpx;"><view class="res-chip bad res-demo"></view><text class="small muted">做错</text></view>
       </view>
     </view>
 
-    <view class="btn-primary" bindtap="goFirstDetail">查看详情</view>
-    <view class="btn-ghost" bindtap="goHistory">历史测试</view>
+    <!-- 操作区（全局按钮体系） -->
+    <view class="res-actions">
+      <view class="btn btn-primary btn-block" bindtap="goFirstDetail">查看逐题解析</view>
+      <view class="res-history-link" bindtap="goHistory">历史测试 ›</view>
+    </view>
   </block>
 </view>

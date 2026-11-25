@@ -43,9 +43,4 @@
     <button class="btn btn-primary btn-block mt12" bindtap="save">确认更换</button>
   </view>
 
-  <view class="section-title">遇到问题</view>
-  <view class="set-row">
-    <text class="small">❓ 原手机号已无法使用？</text>
-    <text class="small link" bindtap="goSupport">联系客服申诉</text>
-  </view>
 </view>

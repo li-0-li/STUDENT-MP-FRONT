@@ -1,56 +1,75 @@
-/* 随堂测试 · 作答卷 —— 通用样式见 app.wxss */
-.mt4 { margin-top: 4rpx; }
-.mt16 { margin-top: 16rpx; }
-.center { text-align: center; }
+/* 随堂测试 · 作答卷 —— 全局 token 与 .btn/.badge/.empty 见 app.wxss；此处仅页面私有组件 */
 
-.quiz-options { display: flex; flex-direction: column; gap: 16rpx; }
+/* 任务头卡：brand 浅底渐变 */
+.quiz-head { background: linear-gradient(135deg, var(--brand-50) 0%, #fff 70%); }
+.quiz-head-title { font-size: 32rpx; font-weight: 700; line-height: 1.4; }
+.quiz-head-meta { margin-top: 16rpx; }
+
+/* 题卡头部：题号胶囊 + 题型徽标 */
+.quiz-qhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16rpx; }
+.quiz-seq {
+  font-size: 24rpx; font-weight: 700;
+  color: var(--brand-700); background: var(--brand-100);
+  padding: 4rpx 20rpx; border-radius: 999rpx;
+}
+.quiz-content { font-size: 30rpx; font-weight: 600; line-height: 1.6; color: var(--ink-900); }
+
+/* 选项：选中 = brand 描边 + 浅底 + ✓ */
+.quiz-options { display: flex; flex-direction: column; gap: 16rpx; margin-top: 24rpx; }
 .quiz-option {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  padding: 20rpx 24rpx;
-  border: 2rpx solid var(--line, #e2e8f0);
-  border-radius: 14rpx;
+  padding: 22rpx 24rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 16rpx;
+  background: #fff;
 }
 .quiz-option.on {
-  border-color: var(--brand-600, #0d9488);
-  background: rgba(13, 148, 136, 0.08);
+  border-color: var(--brand-600);
+  background: var(--brand-50);
 }
 .quiz-option-key {
   width: 44rpx; height: 44rpx;
+  flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%;
-  background: #f1f5f9;
+  background: var(--bg-soft);
+  color: var(--ink-600);
   font-weight: 700;
   font-size: 24rpx;
-  flex-shrink: 0;
 }
 .quiz-option.on .quiz-option-key {
-  background: var(--brand-600, #0d9488);
+  background: var(--brand-600);
   color: #fff;
 }
-.quiz-option-text { font-size: 28rpx; }
+.quiz-option-text { flex: 1; font-size: 28rpx; line-height: 1.5; }
+.quiz-check { color: var(--brand-600); font-weight: 700; font-size: 28rpx; }
 
-.btn-submit {
-  margin: 16rpx 0 40rpx;
-  text-align: center;
-  padding: 22rpx 0;
-  color: #fff;
-  background: var(--brand-600, #0d9488);
-  border-radius: 16rpx;
-  font-weight: 700;
-  font-size: 30rpx;
-}
-
-/* 无选项题型（填空/简答）的文本作答框 */
+/* 文本作答（填空/简答） */
 .quiz-textarea {
   width: 100%;
   box-sizing: border-box;
-  min-height: 120rpx;
+  min-height: 140rpx;
+  margin-top: 24rpx;
   padding: 20rpx 24rpx;
-  background: #f8fafc;
-  border: 2rpx solid #e2e8f0;
-  border-radius: 14rpx;
+  background: var(--bg-subtle);
+  border: 2rpx solid var(--border);
+  border-radius: 16rpx;
   font-size: 28rpx;
   line-height: 1.6;
+}
+
+/* 吸底提交条（readonly 不渲染） */
+.quiz-submitbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  padding: 16rpx 24rpx calc(env(safe-area-inset-bottom) + 16rpx);
+  background: #fff;
+  border-top: 1rpx solid var(--border);
+  box-sizing: border-box;
+  z-index: 10;
+}
+.page.has-submitbar {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 170rpx);
 }

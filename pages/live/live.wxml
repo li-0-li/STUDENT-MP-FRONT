@@ -168,7 +168,7 @@
     <view wx:else class="card center empty">
       <view class="empty-icon">📝</view>
       <view class="small muted">教师还未发布任何测试</view>
-      <view class="btn-primary mt16" bindtap="goQuizHistory">查看历史测试</view>
+      <view class="quiz-history-link" bindtap="goQuizHistory">查看历史测试 ›</view>
     </view>
   </block>
 

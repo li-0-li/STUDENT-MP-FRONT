@@ -34,7 +34,7 @@ App({
           // 未登录/已登出：清角标（仅状态切换时调一次 API）
           if (this._badgeLast !== 0) {
             this._badgeLast = 0
-            wx.removeTabBarBadge({ index: 3, fail: function () {} })
+            wx.removeTabBarBadge({ index: 2, fail: function () {} })
           }
           return
         }
@@ -45,9 +45,9 @@ App({
             const body = res.data || {}
             const n = body.code === 0 ? (Number(body.data) || 0) : 0
             if (n > 0) {
-              wx.setTabBarBadge({ index: 3, text: n > 99 ? '99+' : String(n), fail: function () {} })
+              wx.setTabBarBadge({ index: 2, text: n > 99 ? '99+' : String(n), fail: function () {} })
             } else if (this._badgeLast !== 0) {
-              wx.removeTabBarBadge({ index: 3, fail: function () {} })
+              wx.removeTabBarBadge({ index: 2, fail: function () {} })
             }
             this._badgeLast = n
           },

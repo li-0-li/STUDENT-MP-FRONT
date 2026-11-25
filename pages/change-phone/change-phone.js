@@ -107,7 +107,5 @@ Page({
         }
       }
     })
-  },
-
-  goSupport() { wx.navigateTo({ url: '/pages/support/support' }) }
+  }
 })

@@ -86,7 +86,5 @@ Page({
       // request 层已 toast（原密码不正确 / 强度不足等，校验规则与后端 biz_config 一致）
       wx.hideLoading()
     }
-  },
-
-  goForgot() { wx.navigateTo({ url: '/pages/forgot-password/forgot-password' }) }
+  }
 })

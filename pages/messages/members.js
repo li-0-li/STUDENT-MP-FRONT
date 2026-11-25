@@ -25,10 +25,24 @@ Page({
   onLoad(options) {
     this.conversationId = Number(options.conversationId || 0)
     // 群信息（2026-11-16）：name/avatar 由消息页 openMembers 传入
+    // courseId（2026-11-24）：邀请入群用的课程范围（该群所属课程）
+    this.courseId = Number(options.courseId || 0)
     const name = decodeURIComponent(options.name || '')
     const avatar = decodeURIComponent(options.avatar || '')
     this.setData({ groupName: name, groupAvatar: avatar, groupInitial: name.slice(0, 1) })
     wx.setNavigationBarTitle({ title: '群成员', fail: function () {} })
+  },
+
+  // 邀请同学入群（2026-11-24）：群主与成员均可 → contacts 页 invite 模式选人
+  goInvite() {
+    if (!this.conversationId || !this.courseId) {
+      wx.showToast({ title: '该群暂不支持邀请', icon: 'none' })
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/messages/contacts?mode=invite&conversationId=' + this.conversationId
+        + '&courseId=' + this.courseId + '&title=' + encodeURIComponent(this.data.groupName || '')
+    })
   },
 
   onShow() { this.load() },

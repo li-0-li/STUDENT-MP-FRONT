@@ -1,15 +1,22 @@
-<!-- 随堂测试 · 单题详情：可左右滑动，首题无上一题、末题无下一题 -->
+<!-- 随堂测试 · 单题详情：可左右滑动，顶部进度条 + 对错徽标，首题无上一题、末题无下一题
+     2026-11-25 UI 重设计；data 绑定与事件（onSwiper/prev/next）不变 -->
 <view class="page detail-page">
-  <view wx:if="{{loading}}" class="card center"><view class="small muted">加载中…</view></view>
+  <view wx:if="{{loading}}" class="card"><view class="empty"><view class="empty-icon">⏳</view>加载中…</view></view>
 
   <block wx:elif="{{answers.length}}">
-    <!-- 顶部：题号 + 左右翻题按钮 -->
+    <!-- 顶部：细进度条 + 题号/对错徽标 + 左右翻题 -->
     <view class="detail-head">
-      <view wx:if="{{idx > 0}}" class="detail-nav" bindtap="prev">‹ 上一题</view>
-      <view wx:else class="detail-nav placeholder"></view>
-      <view class="detail-title">第 {{answers[idx].seq}} 题<text class="{{answers[idx].correct ? 'ok' : 'bad'}}">{{answers[idx].correct ? ' · 做对' : ' · 做错'}}</text></view>
-      <view wx:if="{{idx < total - 1}}" class="detail-nav" bindtap="next">下一题 ›</view>
-      <view wx:else class="detail-nav placeholder"></view>
+      <view class="detail-progress"><view class="detail-progress-fill" style="width: {{(idx + 1) * 100 / total}}%"></view></view>
+      <view class="between detail-head-row">
+        <view wx:if="{{idx > 0}}" class="detail-nav" bindtap="prev">‹ 上一题</view>
+        <view wx:else class="detail-nav placeholder"></view>
+        <view class="detail-title">
+          <text>第 {{answers[idx].seq}} 题</text>
+          <view class="badge {{answers[idx].correct ? 'badge-success' : 'badge-error'}}">{{answers[idx].correct ? '✓ 做对' : '✗ 做错'}}</view>
+        </view>
+        <view wx:if="{{idx < total - 1}}" class="detail-nav" bindtap="next">下一题 ›</view>
+        <view wx:else class="detail-nav placeholder"></view>
+      </view>
     </view>
 
     <!-- 滑动区：每题一屏 -->
@@ -17,10 +24,10 @@
       <swiper-item wx:for="{{answers}}" wx:key="seq">
         <scroll-view scroll-y class="detail-scroll">
           <view class="card">
-            <view class="strong">{{item.content}}</view>
+            <view class="detail-content">{{item.content}}</view>
 
-            <!-- 有选项（single / judge / multi）→ 选项卡（我的答案/正确答案高亮，multi 按集合匹配） -->
-            <view wx:if="{{item.options.length}}" class="mt16">
+            <!-- 选项：正确答案=绿 / 我的错选=红（multi 按集合匹配） -->
+            <view wx:if="{{item.options.length}}" class="detail-options">
               <view wx:for="{{item.options}}" wx:for-item="op" wx:key="key"
                 class="detail-option {{op.mine ? 'mine' : ''}} {{op.right ? 'right' : ''}}">
                 <text class="detail-op-key">{{op.key}}</text>
@@ -30,28 +37,32 @@
               </view>
             </view>
 
-            <!-- 本人作答情况（所有题型都展示，醒目文字行） -->
-            <view class="mt16 detail-verdict {{item.correct ? 'v-ok' : 'v-bad'}}">
-              <view class="detail-verdict-row">
-                <text class="detail-verdict-label">我的答案</text>
-                <text class="detail-verdict-value">{{item.myAnswer || '（未作答）'}}</text>
+            <!-- 我的答案 vs 正确答案 双列对照 -->
+            <view class="detail-verdict {{item.correct ? 'v-ok' : 'v-bad'}}">
+              <view class="detail-verdict-cols">
+                <view class="detail-verdict-cell">
+                  <view class="detail-verdict-label">我的答案</view>
+                  <view class="detail-verdict-value">{{item.myAnswer || '（未作答）'}}</view>
+                </view>
+                <view class="detail-verdict-divider"></view>
+                <view class="detail-verdict-cell">
+                  <view class="detail-verdict-label">正确答案</view>
+                  <view class="detail-verdict-value">{{item.rightAnswer || '—'}}</view>
+                </view>
               </view>
-              <view class="detail-verdict-row">
-                <text class="detail-verdict-label">正确答案</text>
-                <text class="detail-verdict-value">{{item.rightAnswer || '—'}}</text>
-              </view>
-              <view class="detail-verdict-badge">{{item.correct ? '✓ 回答正确' : '✗ 回答错误'}}</view>
+              <view class="badge {{item.correct ? 'badge-success' : 'badge-error'}} detail-verdict-badge">{{item.correct ? '✓ 回答正确' : '✗ 回答错误'}}</view>
             </view>
           </view>
 
-          <view class="card">
-            <view class="small muted">答案解析</view>
-            <view class="mt8 detail-analysis">{{item.analysis || '（教师未提供解析）'}}</view>
+          <!-- 解析卡：brand 浅底 -->
+          <view class="detail-analysis-card">
+            <view class="detail-analysis-head">📖 答案解析</view>
+            <view class="detail-analysis">{{item.analysis || '（教师未提供解析）'}}</view>
           </view>
         </scroll-view>
       </swiper-item>
     </swiper>
   </block>
 
-  <view wx:else class="card center"><view class="small muted">暂无答题数据</view></view>
+  <view wx:else class="card"><view class="empty"><view class="empty-icon">🗒️</view>暂无答题数据</view></view>
 </view>

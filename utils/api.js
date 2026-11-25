@@ -15,11 +15,7 @@ const authApi = {
   /* ===== M-A 认证服务（8081，request.js 自动路由）===== */
   /** 发送验证码：POST /api/v1/auth/captcha/send（target: 手机号/邮箱，channel: phone/email，scene: register/forgot_pwd） */
   sendCaptcha: (data) => request.post('/v1/auth/captcha/send', data),
-  /** 用户注册：POST /api/v1/auth/register（验证码校验 + 绑定学生角色），返回 { userId } */
-  register: (data) => request.post('/v1/auth/register', data),
-  /** 重置密码：POST /api/v1/auth/password/reset（target + channel + code + newPassword） */
-  resetPassword: (data) => request.post('/v1/auth/password/reset', data)
-}
+  }
 
 /* ===== M-B 课程资源（表 3-1~3-4） ===== */
 const courseApi = {
@@ -261,24 +257,20 @@ const messageApi = {
   kick: (conversationId, userId) => request.post('/v1/conversations/' + conversationId + '/members/' + userId + '/kick'),
   /** 群主解散群聊（2026-11-18）：POST /api/v1/conversations/{id}/dissolve（仅群主，不可逆） */
   dissolve: (conversationId) => request.post('/v1/conversations/' + conversationId + '/dissolve'),
+  /** 群聊邀请（2026-11-24）：POST /api/v1/conversations/{id}/invitations（群主/成员均可，仅被邀请人收通知） */
+  invite: (conversationId, data) => request.post('/v1/conversations/' + conversationId + '/invitations', data),
+  /** 同意邀请入群：POST /api/v1/group-invites/{inviteId}/accept → {conversationId} 供跳群聊 */
+  inviteAccept: (inviteId) => request.post('/v1/group-invites/' + inviteId + '/accept'),
+  /** 拒绝邀请：POST /api/v1/group-invites/{inviteId}/decline（不通知邀请人） */
+  inviteDecline: (inviteId) => request.post('/v1/group-invites/' + inviteId + '/decline'),
+  /** 邀请选人搜索（2026-11-24 口径B）：本校学生+教师全校可搜，keyword≥2字符 */
+  searchUser: (keyword) => request.get('/v1/conversations/search-user', { keyword: keyword }),
   /** 删除通知/会话：POST /api/v1/messages/delete（targetType: notice/conversation） */
   remove: (data) => request.post('/v1/messages/delete', data),
   /** 标记会话已读：POST /api/v1/conversations/{id}/read（进入聊天/收到新消息后调用） */
   read: (conversationId) => request.post('/v1/conversations/' + conversationId + '/read'),
   /** 会话偏好（置顶/免打扰）：POST /api/v1/conversations/{id}/prefs {isPinned?, isMuted?} */
   prefs: (conversationId, data) => request.post('/v1/conversations/' + conversationId + '/prefs', data)
-}
-
-/* ===== M-D 客服（表 3-20/3-23~3-25） ===== */
-const supportApi = {
-  /** 表 3-20 客服咨询：POST /api/v1/support/consult */
-  consult: (data) => request.post('/v1/support/consult', data),
-  /** 表 3-23 客服会话列表：GET /api/v1/support/tickets */
-  tickets: () => request.get('/v1/support/tickets'),
-  /** 表 3-24 客服消息查询：GET /api/v1/support/tickets/{ticketId}/messages */
-  messages: (ticketId) => request.get('/v1/support/tickets/' + ticketId + '/messages'),
-  /** 表 3-25 发送客服消息：POST /api/v1/support/tickets/{ticketId}/messages */
-  sendMessage: (ticketId, data) => request.post('/v1/support/tickets/' + ticketId + '/messages', data)
 }
 
 /* ===== M-D 个人中心（表 2-6/2-7/2-8/2-9/2-16） ===== */
@@ -345,7 +337,7 @@ module.exports = {
   experiment: experimentApi,
   classroom: classroomApi,
   message: messageApi,
-  support: supportApi,
+
   user: userApi,
   ai: aiApi,
   dev: devApi

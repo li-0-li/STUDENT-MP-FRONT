@@ -26,17 +26,15 @@ Page({
       { num: '-', label: '平均分' },
       { num: '-', label: '已交作业' }
     ],
-    // 学习入口（2026-11-11 改版：移除「我的课程」入口，课程走底部 tabBar）
+    // 学习入口（2026-11-11 改版：移除「我的课程」入口，课程走底部 tabBar；2026-11-25 移除「添加课程」入口，加课入口保留在「课程」页顶部）
     studyEntries: [
       { key: 'courses', icon: '📚', label: '课程' },
       { key: 'ai', icon: '✨', label: 'AI 答疑' },
-      { key: 'course-add', icon: '➕', label: '添加课程'  },
       { key: 'analytics', icon: '📊', label: '我的学情' }
     ],
     // 通用入口（2026-11-11 改版：移除「实名认证」入口）
     generalEntries: [
-      { key: 'settings', icon: '⚙️', label: '设置' },
-      { key: 'support', icon: '🎧', label: '客服', badge: 0 }
+      { key: 'settings', icon: '⚙️', label: '设置' }
     ]
   },
 
@@ -99,10 +97,8 @@ Page({
     const urls = {
       courses: '/pages/courses/courses',
       ai: '/pages/ai/ai',
-      'course-add': '/pages/course-add/course-add',
       analytics: '/pages/analytics/analytics',
-      settings: '/pages/settings/settings',
-      support: '/pages/support/support'
+      settings: '/pages/settings/settings'
     }
     if (urls[key]) wx.navigateTo({ url: urls[key] })
   },

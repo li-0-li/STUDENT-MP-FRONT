@@ -1,8 +1,44 @@
 /* 消息通知 —— 通知/会话 tab / 会话条目 / 聊天详情；.card/.pilltabs/.empty/.chat-msg 等见 app.wxss */
 
 /* 顶部 通知 / 会话 切换 tab 通栏 */
-.top-tabs { margin: 24rpx 24rpx 16rpx; }
-.top-tabs .pill { flex: 1; }
+/* 顶部分类行（2026-11-24）：tabs 占满剩余宽度，右侧为新建会话入口 */
+.tabs-row {
+  display: flex;
+  align-items: center;
+  margin: 24rpx 24rpx 16rpx;
+}
+.top-tabs { flex: 1; margin: 0; min-width: 0; }
+.top-tabs .pill { flex: 1; position: relative; }
+
+/* 顶部 pill 未读红点（2026-11-24）：通知/会话各显本栏未读总和，0 不渲染；数值口径同 tabbar */
+.pill-dot {
+  position: absolute;
+  top: -10rpx;
+  right: -6rpx;
+  min-width: 30rpx;
+  height: 30rpx;
+  padding: 0 8rpx;
+  border-radius: 999rpx;
+  background: var(--error, #ef4444);
+  border: 3rpx solid #fff;
+  color: #fff;
+  font-size: 18rpx;
+  line-height: 26rpx;
+  font-weight: 600;
+  text-align: center;
+  box-sizing: border-box;
+  z-index: 2;
+}
+
+/* 新建会话入口：顶部右侧、无边框无底色无阴影（去掉圆框），黑色加号 */
+.fab-top {
+  flex: none;
+  padding: 0 8rpx 0 20rpx;
+  color: #000;
+  font-size: 44rpx;
+  font-weight: 600;
+  line-height: 1;
+}
 
 /* 消息条目（通知 + 会话共用头像样式） */
 .msg { display: flex; gap: 20rpx; align-items: flex-start; }
@@ -78,24 +114,7 @@
 }
 .msg-end { padding: 24rpx 0 48rpx; }
 
-/* 发起新对话悬浮按钮（原型 .fab，仅学生会话页显示） */
-.fab {
-  position: fixed;
-  right: 32rpx;
-  bottom: 64rpx;
-  width: 92rpx;
-  height: 92rpx;
-  border-radius: 50%;
-  background: var(--brand-600);
-  color: #fff;
-  font-size: 44rpx;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 28rpx rgba(13, 148, 136, 0.4);
-  z-index: 60;
-}
+/* 发起新对话悬浮按钮（原型 .fab）已于 2026-11-24 移至顶部 tabs 行右侧（.fab-top），旧样式删除 */
 
 /* 聊天详情浮层（原型 .chat-view，静态演示 TODO M-E） */
 .chat-page {

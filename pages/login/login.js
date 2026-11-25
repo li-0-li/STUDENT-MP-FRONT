@@ -140,9 +140,5 @@ Page({
       if (this.data.phoneCode.trim().length < 6) { wx.showToast({ title: '请输入 6 位验证码', icon: 'none' }); return }
     }
     wx.showToast({ title: 'TODO 联调：验证码登录（M-A）', icon: 'none' })
-  },
-
-  goRegister() { wx.navigateTo({ url: '/pages/register/register' }) },
-  goForgot() { wx.navigateTo({ url: '/pages/forgot-password/forgot-password' }) },
-  goSupport() { wx.navigateTo({ url: '/pages/support/support' }) }
+  }
 })

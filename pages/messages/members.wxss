@@ -78,7 +78,17 @@
   padding: 2rpx 10rpx;
   border-radius: 12rpx;
 }
-.mem-group-mid { margin-left: 20rpx; }
+.mem-group-mid { margin-left: 20rpx; flex: 1; min-width: 0; } /* 2026-11-25 邀请按钮推至最右 */
+/* 邀请同学入群按钮（2026-11-24）：群信息头右侧，群主与成员均可点 */
+.mem-invite-btn {
+  flex: none;
+  padding: 10rpx 24rpx;
+  border-radius: 999rpx;
+  background: var(--brand-600, #0d9488);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+}
 .mem-group-name { font-size: 30rpx; font-weight: 600; }
 
 /* 群主管理（2026-11-18 踢人/解散）：危险操作红色系 */
