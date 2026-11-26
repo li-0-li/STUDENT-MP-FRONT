@@ -40,6 +40,12 @@
       <view wx:for="{{lab.materials}}" wx:key="*this" class="small mt8">· {{item}}</view>
     </view>
 
+    <!-- 实验模板文件（教师端上传落 MinIO，经代理下载预览；2026-11-26 新链路 report_template.fileKey） -->
+    <view wx:if="{{lab.templateFile}}" class="card" bindtap="openTemplateFile">
+      <view class="ed-sec">📄 实验模板</view>
+      <view class="small mt8 ed-file-link">{{lab.templateFile.title}} · 点击查看</view>
+    </view>
+
     <!-- 评分标准 -->
     <view wx:if="{{lab.rubricItems.length}}" class="card">
       <view class="ed-sec">💯 评分标准</view>
@@ -65,7 +71,7 @@
         <view class="btn btn-primary btn-sm ed-action" bindtap="submitReport">✓ 提交报告</view>
         <view class="btn btn-outline btn-sm ed-action" bindtap="uploadAttachment">📎 上传附件</view>
       </view>
-      <view class="small muted mt4">教师批阅前不允许修改；附件暂以文件名登记（文件服务建设中）</view>
+      <view class="small muted mt4">教师批阅前不允许修改</view>
     </view>
     <view wx:elif="{{lab.myReportSections.length || lab.myDataFiles.length}}" class="card">
       <view class="ed-sec">📝 我的报告内容{{lab.versionNo ? '（第 ' + lab.versionNo + ' 版）' : ''}}</view>

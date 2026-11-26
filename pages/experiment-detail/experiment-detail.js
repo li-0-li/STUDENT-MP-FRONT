@@ -89,10 +89,15 @@ function mapDetail(t) {
     points: (it && (it.keyPoints || it.desc)) || ''
   }))
   // 报告模板：{"sections":[{section,required}]} → 在线填写表单的小节骨架
-  const tplSections = parseList(t.report_template).map((s) => ({
+  // 2026-11-26 教师端改造：模板文件落 MinIO，section 带 {type:'file', fileKey}（如 RESOURCE/2026/.../xx.docx）——
+  // file 类小节是附件模板（学生下载查看），不是填写项，从表单骨架中排除
+  const rawSections = parseList(t.report_template)
+  const tplSections = rawSections.filter((s) => !(s && typeof s === 'object' && s.fileKey)).map((s) => ({
     title: typeof s === 'string' ? s : ((s && (s.section || s.title)) || ''),
     required: !!(s && typeof s === 'object' && s.required)
   }))
+  // 实验模板文件：report_template 中 type==='file' 的 section（走 /files/obj/ MinIO 代理下载）
+  const templateFile = rawSections.find((s) => s && typeof s === 'object' && s.fileKey) || null
   // 实验材料：数组（字符串或对象，发布时可为空）
   const materials = parseList(t.materials).map((m) =>
     typeof m === 'string' ? m : ((m && (m.name || m.title || m.url)) || '')
@@ -115,6 +120,7 @@ function mapDetail(t) {
     materials,
     rubricItems,
     tplSections,
+    templateFile,
     startTime: fmtFull(t.start_time),
     deadline: fmtFull(t.deadline),
     lateText: t.allow_late
@@ -203,6 +209,36 @@ Page({
     }).catch(() => {})
   },
 
+  /** 查看实验模板文件（教师端上传，落 MinIO；经 /files/obj/ 代理下载后 openDocument 预览） */
+  openTemplateFile() {
+    const f = this.data.lab && this.data.lab.templateFile
+    if (!f || !f.fileKey) return
+    const ext = (String(f.fileKey).split('?')[0].split('.').pop() || '').toLowerCase()
+    wx.showLoading({ title: '加载中…', mask: true })
+    wx.downloadFile({
+      // FILE_BASE_URL 不含 /api（config.js），代理路径需自带 /api/v1 前缀；代理需登录态
+      url: FILE_BASE_URL + '/api/v1/files/obj/' + f.fileKey,
+      header: { 'Authorization': 'Bearer ' + auth.getToken(), clientType: 'mp_student' },
+      success: (res) => {
+        wx.hideLoading()
+        if (res.statusCode !== 200) {
+          wx.showToast({ title: '下载失败（' + res.statusCode + '）', icon: 'none' })
+          return
+        }
+        wx.openDocument({
+          filePath: res.tempFilePath,
+          fileType: ext,
+          showMenu: true,
+          fail: () => wx.showToast({ title: '该格式暂不支持在线预览', icon: 'none' })
+        })
+      },
+      fail: () => {
+        wx.hideLoading()
+        wx.showToast({ title: '下载失败，请检查网络', icon: 'none' })
+      }
+    })
+  },
+
   /** 在线填写：textarea 输入 → 草稿 */
   onSectionInput(e) {
     const title = e.currentTarget.dataset.title
@@ -285,7 +321,9 @@ Page({
             } catch (e2) {
               wx.hideLoading()
               if (!e2 || !e2.handled) {
-                wx.showToast({ title: '附件上传失败，请重试', icon: 'none' })
+                // 透出后端真实原因（如「文件存储失败」）；网络层失败保持通用提示
+                const msg = (e2 && e2.message && e2.message.indexOf('request:fail') < 0) ? e2.message : '附件上传失败，请重试'
+                wx.showToast({ title: msg, icon: 'none' })
               }
             }
           }
@@ -301,15 +339,24 @@ Page({
         url: FILE_BASE_URL + '/api/v1/files/upload',
         filePath: f.path,
         name: 'file',
-        header: { Authorization: 'Bearer ' + auth.getToken() },
+        header: { Authorization: 'Bearer ' + auth.getToken(), clientType: 'mp_student' },
         success: (res) => {
           try {
             const body = JSON.parse(res.data)
             if (body && (body.code === 0 || body.code === 200) && body.data && body.data.url) {
               resolve(body.data.url)
-            } else {
-              reject(new Error('上传失败'))
+              return
             }
+            // 2026-11-26 修复：接口业务失败一律 HTTP 200（如 token 过期返回 {code:401}），
+            // 裸 uploadFile 不走 request.js 统一拦截 → 之前一律弹「附件上传失败」误导。
+            // 401 与 request.js 同口径：清登录态跳登录页；其余透出后端真实原因。
+            if (body && body.code === 401 && auth.getToken()) {
+              auth.clear()
+              wx.reLaunch({ url: '/pages/login/login' })
+              reject(Object.assign(new Error('登录已失效，请重新登录'), { handled: true }))
+              return
+            }
+            reject(new Error((body && (body.msg || body.message)) || '上传失败'))
           } catch (e) {
             reject(e)
           }
