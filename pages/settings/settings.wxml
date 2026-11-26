@@ -4,10 +4,6 @@
   <view class="set-row" bindtap="goChangePwd">
     <text>修改密码</text><text class="chevron">›</text>
   </view>
-  <view class="set-row" bindtap="goChangePhone">
-    <view>绑定手机号 <text class="small muted">{{phone}}</text></view>
-    <text class="chevron">›</text>
-  </view>
 
   <view class="section-title">通知</view>
   <!-- 2026-11-16 修复双重触发：此前行 bindtap + 开关 catchchange 同时生效，

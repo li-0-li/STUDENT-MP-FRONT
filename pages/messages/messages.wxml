@@ -136,6 +136,7 @@
         <view class="mem-card-name">{{senderProfile.name}}</view>
         <view class="small muted mt4" wx:if="{{senderProfile.studentNo}}">学号 {{senderProfile.studentNo}}</view>
         <view class="small muted mt4" wx:if="{{senderProfile.className}}">班级 {{senderProfile.className}}</view>
+        <view class="small muted mt4" wx:if="{{senderProfile.phone}}">手机号 {{senderProfile.phone}}</view>
         <view class="small muted mt4" wx:if="{{chat.type !== 'direct'}}">角色：{{senderProfile.isOwner ? '群主' : '成员'}}</view>
       </view>
     </view>

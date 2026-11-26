@@ -35,7 +35,6 @@
     "pages/user-info/user-info",
 
     "pages/resource-view/resource-view",
-    "pages/change-phone/change-phone",
     "pages/change-pwd/change-pwd",
     "pages/dev-login/dev-login"
   ],

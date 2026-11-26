@@ -39,7 +39,8 @@ App({
           return
         }
         wx.request({
-          url: BASE_URL + '/api/v1/notifications/unread-count',
+          // BASE_URL 已含 /api 前缀（config.js），此处只需拼 /v1/...（2026-11-26 修复：原拼 /api/v1 双前缀 404，角标轮询从未生效）
+          url: BASE_URL + '/v1/notifications/unread-count',
           header: { Authorization: 'Bearer ' + getToken() },
           success: (res) => {
             const body = res.data || {}

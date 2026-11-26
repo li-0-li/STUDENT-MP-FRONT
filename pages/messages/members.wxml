@@ -46,6 +46,7 @@
       </view>
       <view class="small muted mt4" wx:if="{{profile.studentNo}}">学号 {{profile.studentNo}}</view>
       <view class="small muted mt4" wx:if="{{profile.className}}">班级 {{profile.className}}</view>
+      <view class="small muted mt4" wx:if="{{profile.phone}}">手机号 {{profile.phone}}</view>
       <view class="small muted mt4">角色：{{profile.isOwner ? '群主' : (profile.isMe ? '本人' : '成员')}}</view>
       <!-- 群主移出成员（2026-11-18）：对普通成员显示，本人/群主不显示 -->
       <view wx:if="{{isMeOwner && !profile.isMe && !profile.isOwner}}" class="mem-card-btn mem-card-btn-danger"

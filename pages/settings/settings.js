@@ -1,8 +1,9 @@
 // 设置 —— 原型：ui-prototype/mp/app-settings.html（账号安全 / 通知 / 通用 / 隐私设置 / 退出）
 // 接入（真实接口）：
-//   api.user.me         表 2-14 当前用户（绑定手机号 + 通知偏好 notifyPref）
+//   api.user.me         表 2-14 当前用户（通知偏好 notifyPref；手机号展示已迁至个人信息页）
 //   api.user.notifyPref 表 2-16 通知偏好设置（homework / live / notice / message 四类开关）
 // 2026-11-11 改版：移除「个性化学习推荐」开关；通知开关已在投递侧按 notify_pref 过滤生效。
+// 2026-11-26 改版：移除「绑定手机号」入口（手机号展示与修改迁至个人信息页 user-info）
 const api = require('../../utils/api')
 const auth = require('../../utils/auth')
 
@@ -13,11 +14,6 @@ const NOTIFY_KEYS = [
   { key: 'notice', label: '课程公告' },
   { key: 'message', label: '消息通知' }
 ]
-
-/** 手机号脱敏：138****0003 */
-function maskPhone(p) {
-  return p && p.length === 11 ? p.slice(0, 3) + '****' + p.slice(7) : (p || '未绑定')
-}
 
 /** 本地缓存真实大小 */
 function cacheText() {
@@ -30,7 +26,6 @@ function cacheText() {
 
 Page({
   data: {
-    phone: '—',             // 绑定手机号（脱敏展示，来自表 2-14）
     version: 'v1.0.0',
     cacheSize: '—',
     notifyRows: []          // 通知开关（来自 notifyPref，改动即调表 2-16 持久化）
@@ -40,7 +35,7 @@ Page({
     this.load()
   },
 
-  /** 表 2-14 当前用户：手机号 + 通知偏好 */
+  /** 表 2-14 当前用户：通知偏好 */
   async load() {
     this.setData({ cacheSize: cacheText() })
     let rows = NOTIFY_KEYS.map(n => ({ key: n.key, label: n.label, on: true }))
@@ -49,7 +44,6 @@ Page({
       let pref = {}
       try { pref = me.notifyPref ? JSON.parse(me.notifyPref) : {} } catch (e) { /* notifyPref 非法 JSON 时用默认值 */ }
       rows = NOTIFY_KEYS.map(n => ({ key: n.key, label: n.label, on: pref[n.key] !== false }))
-      this.setData({ phone: maskPhone(me.phone) })
     } catch (e) {
       // request 层已 toast，开关回落默认值
     }
@@ -87,7 +81,6 @@ Page({
   },
 
   goChangePwd() { wx.navigateTo({ url: '/pages/change-pwd/change-pwd' }) },
-  goChangePhone() { wx.navigateTo({ url: '/pages/change-phone/change-phone' }) },
 
   // 清除缓存：保留登录令牌（itap_token / itap_role，见 utils/auth.js）
   clearCache() {

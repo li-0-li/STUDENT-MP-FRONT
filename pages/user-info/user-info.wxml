@@ -1,4 +1,4 @@
-<!-- 个人信息（2026-11-11 新增）：头像可改，其余管理端维护只读 -->
+<!-- 个人信息（2026-11-11 新增）：头像可改；2026-11-26 手机号可改，其余管理端维护只读 -->
 <view class="page">
   <!-- 头像卡（点击换头像） -->
   <view class="card ui-avatar-card" bindtap="changeAvatar">
@@ -11,8 +11,8 @@
     <view class="ui-cam">📷 换头像</view>
   </view>
 
-  <!-- 基本信息（只读：管理端维护） -->
-  <view class="section-title">基本信息（由学校/管理员维护）</view>
+  <!-- 基本信息（手机号可改；其余由管理端维护只读） -->
+  <view class="section-title">基本信息（手机号可自行修改，其余由学校/管理员维护）</view>
   <view class="card">
     <view class="ui-row"><text class="ui-label">姓名</text><text class="ui-val">{{user.name}}</text></view>
     <view class="ui-row"><text class="ui-label">性别</text><text class="ui-val">{{user.sexText}}</text></view>
@@ -21,5 +21,12 @@
     <view class="ui-row"><text class="ui-label">专业</text><text class="ui-val">{{user.majorName}}</text></view>
     <view class="ui-row"><text class="ui-label">班级</text><text class="ui-val">{{user.className}}</text></view>
     <view class="ui-row"><text class="ui-label">学号</text><text class="ui-val">{{user.userNo}}</text></view>
+    <view class="ui-row">
+      <text class="ui-label">手机号</text>
+      <view class="flex1 ui-phone-wrap">
+        <text class="ui-val">{{user.phone || '未绑定'}}</text>
+        <text class="ui-phone-edit" catchtap="changePhone">修改</text>
+      </view>
+    </view>
   </view>
 </view>

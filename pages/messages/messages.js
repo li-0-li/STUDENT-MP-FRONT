@@ -632,6 +632,7 @@ Page({
         userId: m.userId, name: name, initial: name.slice(0, 1),
         avatarUrl: au, avatarShow: !!au,
         studentNo: m.studentNo || '', className: m.className || '',
+        phone: m.phone || '',
         isOwner: m.memberRole === 'owner'
       } })
     }).catch(function () {})

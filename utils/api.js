@@ -11,10 +11,8 @@ const authApi = {
   /** 表 2-1 用户登录：POST /api/v1/auth/login（clientType: 'mp_student'） */
   login: (data) => request.post('/v1/auth/login', Object.assign({ clientType: 'mp_student' }, data)),
   /** 表 2-14 当前用户信息：GET /api/v1/users/me */
-  getMe: () => request.get('/v1/users/me'),
-  /* ===== M-A 认证服务（8081，request.js 自动路由）===== */
-  /** 发送验证码：POST /api/v1/auth/captcha/send（target: 手机号/邮箱，channel: phone/email，scene: register/forgot_pwd） */
-  sendCaptcha: (data) => request.post('/v1/auth/captcha/send', data),
+  getMe: () => request.get('/v1/users/me')
+  // 2026-11-26 删除 sendCaptcha 封装（注册/忘记密码/验证码登录入口均已移除，后端接口保留未动）
   }
 
 /* ===== M-B 课程资源（表 3-1~3-4） ===== */

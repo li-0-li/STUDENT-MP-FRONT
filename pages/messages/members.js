@@ -101,6 +101,7 @@ Page({
           initial: name.slice(0, 1),
           studentNo: m.studentNo || '',
           className: m.className || '',
+          phone: m.phone || '',
           isOwner: m.memberRole === 'owner',
           isMe: meId != null && m.userId === meId,
           // 头像 URL 归一（2026-11-12）：http 原样 / /api·/files 开头拼 FILE_BASE；
